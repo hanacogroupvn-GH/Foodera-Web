@@ -1,0 +1,290 @@
+import React, { useMemo, useState } from 'react';
+import { Mail, Phone, Send } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+
+const Contact: React.FC = () => {
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const defaultSubject = 'Rice Export Inquiry';
+
+  const [form, setForm] = useState({
+    companyName: '',
+    fullName: '',
+    email: '',
+    phone: '',
+    subject: defaultSubject,
+    message: '',
+  });
+
+  const isValid = useMemo(() => {
+    // basic validation to avoid empty inserts
+    if (!form.companyName.trim()) return false;
+    if (!form.fullName.trim()) return false;
+    if (!form.email.trim()) return false;
+    if (!form.message.trim()) return false;
+    return true;
+  }, [form]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+
+    setErrorMsg(null);
+    setSent(false);
+
+    if (!isValid) {
+      setErrorMsg('Please fill in all required fields.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.from('contact_inquiries').insert([
+        {
+          company_name: form.companyName.trim(),
+          full_name: form.fullName.trim(),
+          email: form.email.trim(),
+          phone_whatsapp: form.phone.trim() || null,
+          subject: form.subject,
+          message: form.message.trim(),
+        },
+      ]);
+
+      if (error) {
+        setErrorMsg(error.message);
+        setLoading(false);
+        return;
+      }
+
+      setSent(true);
+      setForm({
+        companyName: '',
+        fullName: '',
+        email: '',
+        phone: '',
+        subject: defaultSubject,
+        message: '',
+      });
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to send. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white min-h-screen">
+      <div className="bg-foodmax-forest py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-5xl md:text-6xl font-black text-white mb-6">Connect With Us</h1>
+          <p className="text-xl text-green-100 max-w-2xl mx-auto">
+            Discuss your import requirements with our dedicated B2B export specialists.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Info Cards */}
+          <div className="space-y-6">
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="w-12 h-12 bg-green-50 text-foodmax-forest rounded-xl flex items-center justify-center mb-6">
+                <Mail size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Email Channels</h3>
+              <p className="text-sm text-gray-500 mb-4">Global Export Inquiries:</p>
+              <div className="space-y-2">
+                <a
+                  href="mailto:export@foodmax.vn"
+                  className="block text-md font-bold text-foodmax-forest hover:text-foodmax-lime transition-colors"
+                >
+                  export@foodmax.vn
+                </a>
+                <a
+                  href="mailto:support@foodmax.vn"
+                  className="block text-md font-bold text-foodmax-forest hover:text-foodmax-lime transition-colors"
+                >
+                  support@foodmax.vn
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 mt-6 leading-relaxed">
+                Both addresses monitored 24/7 by our international trade desk for immediate response.
+              </p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="w-12 h-12 bg-green-50 text-foodmax-forest rounded-xl flex items-center justify-center mb-6">
+                <Phone size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Direct Phone & WhatsApp</h3>
+              <p className="text-sm text-gray-500 mb-4">Export Hotline:</p>
+              <p className="text-lg font-bold text-foodmax-forest">+84 964 791 902</p>
+              <p className="text-xs text-gray-400 mt-2">Available for calls and WhatsApp messages 24/7</p>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="lg:col-span-2 bg-white p-10 rounded-2xl shadow-2xl border border-gray-50">
+            <h2 className="text-3xl font-black text-gray-900 mb-6">Direct Export Inquiry</h2>
+
+            {/* Status */}
+            {(errorMsg || sent) && (
+              <div
+                className={`mb-6 rounded-xl px-4 py-3 text-sm font-bold ${
+                  errorMsg ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'
+                }`}
+              >
+                {errorMsg ? errorMsg : "Inquiry received. We'll be in touch shortly."}
+              </div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.companyName}
+                    onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                    Phone / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Subject</label>
+                <select
+                  value={form.subject}
+                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                >
+                  <option>Rice Export Inquiry</option>
+                  <option>Coffee Export Inquiry</option>
+                  <option>Logistics & Shipping</option>
+                  <option>Private Label Partnership</option>
+                  <option>Other Corporate Inquiry</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  Message Detail
+                </label>
+                <textarea
+                  rows={5}
+                  required
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all resize-none"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-foodmax-forest hover:bg-foodmax-forest/90'
+                }`}
+              >
+                {loading ? 'SENDING...' : (
+                  <>
+                    <Send size={18} /> SEND MESSAGE
+                  </>
+                )}
+              </button>
+
+              <p className="text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold mt-4">
+                This inquiry will be stored in Supabase and visible to Admin.
+              </p>
+            </form>
+          </div>
+        </div>
+
+        {/* Interactive Google Map Section */}
+        <div className="mt-20 h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-gray-100 bg-gray-50 relative group">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.2312217143924!2d106.6966048!3d10.7886314!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f35502367ed%3A0x2f65bca97a0b52ed!2zMTcgxJDDrG5oIFRpw6puIEhvw6BuZywgxJGEIEthbywgUXXhuq1uIDEsIEjhu5MgQ2jDrSBNaW5oLCBWaWV0bmFt!5e0!3m2!1sen!2s!4v1738150000000!5m2!1sen!2s"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="grayscale hover:grayscale-0 transition-all duration-700 opacity-90 group-hover:opacity-100"
+            title="Foodmax Headquarters Location"
+          ></iframe>
+
+          <div className="absolute top-6 left-6 pointer-events-none">
+            <div className="bg-white/95 backdrop-blur-md px-6 py-5 rounded-3xl shadow-2xl border border-gray-100 max-w-xs group-hover:translate-y-[-4px] transition-transform duration-500">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-foodmax-lime animate-pulse"></div>
+                <h4 className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em]">Global Headquarters</h4>
+              </div>
+              <p className="text-[11px] font-bold text-gray-700 leading-relaxed mb-4">
+                17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam
+              </p>
+              <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">HQ Office</span>
+                <a
+                  href="https://www.google.com/maps/place/17+%C4%90inh+Ti%C3%AAn+Ho%C3%A0ng,+%C4%90a+Kao,+Qu%E1%BA%ADn+1,+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh,+Vietnam/@10.7886314,106.6966048,17z"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pointer-events-auto text-[9px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4"
+                >
+                  Get Directions
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default Contact;

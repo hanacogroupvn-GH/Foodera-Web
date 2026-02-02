@@ -1,0 +1,389 @@
+
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
+import { NewsItem, NewsCategory } from '../../types';
+import { 
+  FileText, 
+  Search, 
+  Plus, 
+  Edit3, 
+  Trash2, 
+  ChevronLeft, 
+  Calendar,
+  X,
+  Image as ImageIcon,
+  Save,
+  Loader2,
+  AlertCircle,
+  Clock,
+  Eye,
+  LogOut
+} from 'lucide-react';
+
+const AdminNews: React.FC = () => {
+  const { news, addNews, updateNews, deleteNews } = useData();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState<Partial<NewsItem>>({
+    title: '',
+    category: 'Market Insights',
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    excerpt: '',
+    content: [],
+    image: ''
+  });
+
+  // Derived state for the multi-line content textarea
+  const [contentString, setContentString] = useState('');
+
+  const filteredNews = news.filter(n => 
+    n.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    n.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const openModal = (item?: NewsItem) => {
+    if (item) {
+      setEditingItem(item);
+      setFormData(item);
+      setContentString(item.content.join('\n\n'));
+    } else {
+      setEditingItem(null);
+      const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      setFormData({
+        title: '',
+        category: 'Market Insights',
+        date: today,
+        excerpt: '',
+        content: [],
+        image: 'https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200'
+      });
+      setContentString('');
+    }
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    // Convert string to paragraphs
+    const paragraphs = contentString.split('\n').filter(p => p.trim() !== '');
+
+    setTimeout(() => {
+      const payload = {
+        ...formData,
+        content: paragraphs
+      } as NewsItem;
+
+      if (editingItem) {
+        updateNews(payload);
+      } else {
+        const newItem: NewsItem = {
+          ...payload,
+          id: `news-${Date.now()}`
+        };
+        addNews(newItem);
+      }
+      setIsSaving(false);
+      closeModal();
+    }, 600);
+  };
+
+  const handleDelete = (id: string, title: string) => {
+    if (window.confirm(`Are you sure you want to permanently delete the post: "${title}"?`)) {
+      deleteNews(id);
+    }
+  };
+
+  const handleExit = () => {
+    logout();
+    navigate('/');
+  };
+
+  const categories: NewsCategory[] = ['Market Insights', 'Company Updates', 'Sustainability', 'Events'];
+
+  return (
+    <div className="flex min-h-screen bg-gray-50 font-sans">
+      {/* Mini Sidebar */}
+      <aside className="w-22 bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
+        <Link to="/admin" className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
+        <div className="flex flex-col gap-6 flex-grow">
+          <Link to="/admin/news" className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><FileText size={24} /></Link>
+        </div>
+
+        {/* Mini Branded Exit Button */}
+        <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
+          <button 
+            onClick={handleExit}
+            className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
+            title="Exit to Homepage"
+          >
+            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
+               <div className="flex items-center relative">
+                  <span className="text-foodmax-forest font-[900] text-xl">F</span>
+               </div>
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodmax-lime rounded-full flex items-center justify-center border-2 border-foodmax-forest shadow-md">
+              <LogOut size={10} className="text-foodmax-forest" />
+            </div>
+            
+            {/* Tooltip Label */}
+            <div className="absolute left-full ml-4 py-2 px-3 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl">
+              Exit to Home
+              <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+            </div>
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-grow p-8 md:p-12 overflow-y-auto">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight">Insights & News Portal</h1>
+              <p className="text-gray-500 font-medium">Manage corporate communications and global market analysis reports.</p>
+            </div>
+            <button 
+              onClick={() => openModal()}
+              className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+            >
+              <Plus size={20} /> Create New Post
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search articles by title or category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
+              />
+            </div>
+          </div>
+
+          {/* News Table */}
+          <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100">
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Article Intelligence</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Category</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Publish Date</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredNews.map(item => (
+                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                          <img src={item.image} className="w-full h-full object-cover" alt={item.title} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900 leading-tight line-clamp-1">{item.title}</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">ID: {item.id.toUpperCase()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="px-3 py-1 bg-foodmax-forest/5 text-foodmax-forest text-[9px] font-black uppercase tracking-widest rounded-lg">
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Calendar size={14} className="text-foodmax-lime" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{item.date}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <Link 
+                          to={`/news/${item.id}`} 
+                          target="_blank"
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-900 hover:text-white transition-all shadow-sm"
+                        >
+                          <Eye size={18} />
+                        </Link>
+                        <button 
+                          onClick={() => openModal(item)}
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm"
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(item.id, item.title)}
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {filteredNews.length === 0 && (
+              <div className="py-20 text-center">
+                <AlertCircle size={48} className="mx-auto text-gray-200 mb-4" />
+                <p className="text-gray-400 font-black uppercase text-xs tracking-widest">No matching insights found</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Modal Slide-Over remains identical */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-end bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-3xl h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodmax-forest text-white">
+              <div>
+                <h2 className="text-xl font-black uppercase tracking-tight">
+                  {editingItem ? 'Edit Insight Post' : 'Compose New Insight'}
+                </h2>
+                <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">Market Analysis & Communication Hub</p>
+              </div>
+              <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="flex-grow overflow-y-auto p-10 space-y-8">
+              {/* Cover Image */}
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Featured Cover Image (URL)</label>
+                <div className="flex gap-6 items-center">
+                  <div className="w-48 h-28 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    {formData.image ? (
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="text-gray-200" size={32} />
+                    )}
+                  </div>
+                  <div className="flex-grow space-y-2">
+                    <input 
+                      type="url" 
+                      value={formData.image}
+                      onChange={(e) => setFormData({...formData, image: e.target.value})}
+                      placeholder="Enter Unsplash or Direct URL..."
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      required
+                    />
+                    <p className="text-[10px] text-gray-400 italic font-medium">Resolution: 1200x800px recommended for high-DPI displays.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Headline / Title</label>
+                <input 
+                  type="text" 
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-lg font-black"
+                  placeholder="e.g. Q4 Rice Export Stability Analysis..."
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Intelligence Category</label>
+                  <select 
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value as NewsCategory})}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                  >
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Release Date</label>
+                  <input 
+                    type="text" 
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                    placeholder="Feb 15, 2024"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Article Excerpt (Short Summary)</label>
+                <textarea 
+                  rows={2}
+                  value={formData.excerpt}
+                  onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                  placeholder="A brief hook for the news archive grid..."
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Full Article Content</label>
+                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">Newlines create paragraphs</span>
+                </div>
+                <textarea 
+                  rows={10}
+                  value={contentString}
+                  onChange={(e) => setContentString(e.target.value)}
+                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
+                  placeholder="Draft your professional analysis here..."
+                  required
+                />
+              </div>
+            </form>
+
+            <div className="p-8 border-t border-gray-100 bg-gray-50 flex items-center gap-4">
+              <button 
+                onClick={closeModal}
+                className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
+              >
+                Discard Draft
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <><Save size={18} /> {editingItem ? 'Update Publication' : 'Publish to Portal'}</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminNews;
