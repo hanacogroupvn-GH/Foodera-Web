@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download } from 'lucide-react';
+import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download, Sun, Moon } from 'lucide-react';
 import { PRODUCTS, NEWS } from '../constants';
 import { Product, NewsItem } from '../types';
 import Logo from '../Logo.png';
@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -45,10 +46,21 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isSearchOpen]);
 
+  useEffect(() => {
+    setIsDarkMode(document.documentElement.classList.contains('dark'));
+  }, []);
+
   const handleSearchNavigation = (path: string) => {
     setIsSearchOpen(false);
     setSearchQuery('');
     navigate(path);
+  };
+
+  const handleThemeToggle = () => {
+    const nextIsDark = !document.documentElement.classList.contains('dark');
+    document.documentElement.classList.toggle('dark', nextIsDark);
+    localStorage.setItem('theme', nextIsDark ? 'dark' : 'light');
+    setIsDarkMode(nextIsDark);
   };
 
   const BrandLogo = () => (
@@ -83,6 +95,15 @@ const Navbar: React.FC = () => {
                 <BarChart3 size={14} />
                 Commercial Tool
               </Link>
+              <button
+                onClick={handleThemeToggle}
+                className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest"
+                aria-label="Toggle dark mode"
+                title="Toggle dark mode"
+              >
+                {isDarkMode ? <Sun size={14} className="text-foodmax-lime" /> : <Moon size={14} className="text-foodmax-forest" />}
+                {isDarkMode ? 'Light' : 'Dark'}
+              </button>
               <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <Globe size={12} />
                 EN
@@ -267,11 +288,19 @@ const Navbar: React.FC = () => {
                 <Link to="/news" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">News</Link>
                 <Link to="/about" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">About Us</Link>
                 
-                <div className="flex items-center space-x-6">
-                  <button 
-                    onClick={() => setIsSearchOpen(true)}
-                    className="text-gray-500 hover:text-foodmax-forest transition-colors p-2 rounded-full hover:bg-gray-50"
-                  >
+              <div className="flex items-center space-x-6">
+                <button
+                  onClick={handleThemeToggle}
+                  className="text-gray-500 hover:text-foodmax-forest transition-colors p-2 rounded-full hover:bg-gray-50"
+                  aria-label="Toggle dark mode"
+                  title="Toggle dark mode"
+                >
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+                <button 
+                  onClick={() => setIsSearchOpen(true)}
+                  className="text-gray-500 hover:text-foodmax-forest transition-colors p-2 rounded-full hover:bg-gray-50"
+                >
                     <Search size={20} />
                   </button>
                   <Link to="/contact" className="px-7 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">

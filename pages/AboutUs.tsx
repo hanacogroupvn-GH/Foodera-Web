@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Logo from '../Logo.png';
-import { Target, ShieldCheck, Globe, Zap, Layers, Navigation, Landmark, Users } from 'lucide-react';
+import { ShieldCheck, Globe, Handshake, Leaf, Wheat, Coffee, Users } from 'lucide-react';
 
 const AboutUs: React.FC = () => {
   const teamMembers = [
@@ -39,80 +39,154 @@ const AboutUs: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen animate-in fade-in duration-700 font-sans">
-      {/* 1. OPENING - IDENTITY FIRST */}
-      <section className="relative pt-32 pb-24 border-b border-gray-100 overflow-hidden">
+      {/* 1. HERO */}
+      <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 border-b border-gray-100 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl md:text-7xl font-[900] text-gray-900 mb-8 tracking-tighter leading-[0.9]">
-              Heritage of Origin.<br />
-              <span className="text-foodmax-forest">Architecture of Trade.</span>
-            </h1>
-            <div className="h-1 w-24 bg-foodmax-lime mb-10"></div>
-            <p className="text-xl md:text-2xl text-gray-500 font-medium leading-relaxed">
-              Foodmax was not conceived as a simple brokerage. It was built from a deep respect for Vietnam's land heritage, shaped by rigorous agricultural research and on-the-ground supply development.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="max-w-3xl">
+              <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-8 tracking-tight leading-tight">
+                About Foodmax
+              </h1>
+              <div className="h-1 w-24 bg-foodmax-lime mb-8"></div>
+              <p className="text-lg md:text-2xl text-gray-600 font-medium leading-relaxed">
+                Foodmax is dedicated to elevating Vietnamese agricultural products to the global marketplace. With deep respect for
+                Vietnam’s farming traditions and a forward-looking mindset, we connect international buyers with ingredients that
+                embody quality, reliability, and natural excellence.
+              </p>
+            </div>
+            <div className="lg:pl-8">
+              <div className="aspect-[4/5] bg-gray-100 rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
+                <img
+                  src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&q=80&w=1200"
+                  alt="Coffee beans"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gray-50 -z-0 hidden lg:block"></div>
       </section>
 
-      {/* 2. FROM LAND TO GLOBAL MARKETS */}
-      <section className="py-24 border-b border-gray-100">
+      {/* 2. STORY & SUPPLY CHAIN */}
+      <section className="py-20 md:py-24 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="order-2 lg:order-1">
               <div className="aspect-[4/5] bg-gray-100 rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
-                <img src="https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200" alt="Supply Chain" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+                <img
+                  src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&q=80&w=1200"
+                  alt="Vietnamese agriculture"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
             <div className="order-1 lg:order-2">
-              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">The System</h2>
-              <h3 className="text-4xl font-black text-gray-900 mb-8 tracking-tight">An Integrated Supply Ecosystem</h3>
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed font-medium">
-                Foodmax operates as a multi-layered agricultural supply platform. We do not merely move products; we manage the narrative from the soil to the shipping container.
+              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">Our Foundation</h2>
+              <h3 className="text-3xl md:text-4xl font-black text-gray-900 mb-6 tracking-tight">
+                Sustainable Value Across the Supply Chain
+              </h3>
+              <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed font-medium">
+                Founded with the vision of creating sustainable value across the supply chain, Foodmax works hand in hand with
+                reputable growers, cooperatives, and processing facilities throughout Vietnam.
               </p>
-              <div className="space-y-8 mt-12">
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0 w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest"><Landmark size={24} /></div>
-                  <div>
-                    <h4 className="font-black text-gray-900 mb-1 uppercase text-xs tracking-widest">Controlled Sourcing</h4>
-                    <p className="text-sm text-gray-500 font-medium">Direct connection with specialized cooperatives and processors ensures upstream stability and quality control at the point of harvest.</p>
-                  </div>
-                </div>
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0 w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest"><Layers size={24} /></div>
-                  <div>
-                    <h4 className="font-black text-gray-900 mb-1 uppercase text-xs tracking-widest">Integrated Downstream</h4>
-                    <p className="text-sm text-gray-500 font-medium">Full ownership of the export cycle allows for high-precision traceability and custom processing specifications for diverse global markets.</p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-base md:text-lg text-gray-600 leading-relaxed font-medium">
+                We carefully oversee every step — from sourcing and quality control to logistics — ensuring that our products
+                consistently meet the expectations of today’s competitive international markets. Our commitment goes beyond trade;
+                we aim to contribute positively to farming communities while promoting responsible and sustainable agricultural practices.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. KEY LEADERSHIP SECTION */}
-      <section className="py-24 bg-white">
+      {/* 3. CORE OFFERINGS */}
+      <section className="py-20 md:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">Core Products</h2>
+            <h3 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">
+              Vietnam’s Most Sought-After Exports
+            </h3>
+            <p className="text-base md:text-lg text-gray-500 mt-4 max-w-3xl mx-auto font-medium">
+              Each product is chosen not only for its commercial value but for its ability to represent the distinctive flavors
+              and agricultural strength of Vietnam.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                <Wheat size={22} />
+              </div>
+              <h4 className="text-lg font-black text-gray-900 mb-2">Premium Rice</h4>
+              <p className="text-sm text-gray-500 font-medium">Carefully selected varieties with consistent grain quality and aroma.</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                <Coffee size={22} />
+              </div>
+              <h4 className="text-lg font-black text-gray-900 mb-2">Coffee Beans</h4>
+              <p className="text-sm text-gray-500 font-medium">High-grade beans with balanced profiles and export-ready consistency.</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                <Leaf size={22} />
+              </div>
+              <h4 className="text-lg font-black text-gray-900 mb-2">Coconut Milk</h4>
+              <p className="text-sm text-gray-500 font-medium">Rich, creamy coconut milk made to international food standards.</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                <Leaf size={22} />
+              </div>
+              <h4 className="text-lg font-black text-gray-900 mb-2">Black & White Pepper</h4>
+              <p className="text-sm text-gray-500 font-medium">Aromatic, clean, and carefully processed to preserve flavor.</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                <Leaf size={22} />
+              </div>
+              <h4 className="text-lg font-black text-gray-900 mb-2">Cashew Kernels</h4>
+              <p className="text-sm text-gray-500 font-medium">High-grade kernels with strict quality control and uniform grading.</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                <Globe size={22} />
+              </div>
+              <h4 className="text-lg font-black text-gray-900 mb-2">Global Market Fit</h4>
+              <p className="text-sm text-gray-500 font-medium">Specifications tailored for importers, distributors, and manufacturers.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. TEAM MEMBERS */}
+      <section className="py-20 md:py-24 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 md:mb-16">
             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 flex items-center justify-center gap-2">
               <Users size={14} className="text-foodmax-lime" /> Key Members
             </h2>
-            <h3 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">The Export Leadership Team</h3>
-            <p className="text-lg text-gray-500 mt-4 max-w-2xl mx-auto font-medium">Meet the strategic architects driving Vietnam's agricultural excellence to the world stage.</p>
+            <h3 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">The Export Leadership Team</h3>
+            <p className="text-base md:text-lg text-gray-500 mt-4 max-w-2xl mx-auto font-medium">
+              Meet the strategic architects driving Vietnam's agricultural excellence to the world stage.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
-              <div key={index} className="group relative bg-gray-50 rounded-[2rem] overflow-hidden border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
+              <div
+                key={index}
+                className="group relative bg-white rounded-[2rem] overflow-hidden border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500"
+              >
                 <div className="aspect-[4/5] overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700">
                   <img src={member.image} alt={member.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-foodmax-forest/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-foodmax-forest/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
-                <div className="p-8">
+                <div className="p-7">
                   <h4 className="text-2xl font-black text-gray-900 mb-1 group-hover:text-foodmax-forest transition-colors">{member.name}</h4>
-                  <p className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] mb-4">{member.title}</p>
+                  <p className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] mb-3">{member.title}</p>
                   <p className="text-sm text-gray-500 font-medium leading-relaxed line-clamp-3 group-hover:text-gray-700 transition-colors">
                     {member.highlight}
                   </p>
@@ -123,161 +197,48 @@ const AboutUs: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. STRATEGIC CONTEXT - IMPROVED WORLD MAP (ACCURATE REPRESENTATION) */}
-      <section className="py-24 lg:py-32 bg-[#0a121e] text-white overflow-hidden relative group">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-            <div className="animate-in slide-in-from-left duration-1000">
-              <h2 className="text-[10px] font-black text-foodmax-lime uppercase tracking-[0.5em] mb-8">Strategic Context</h2>
-              <h3 className="text-5xl md:text-7xl font-black mb-10 tracking-tighter leading-tight">
-                Vietnam as the <br />World's Pantry
+      {/* 5. PARTNERSHIP & PRINCIPLES */}
+      <section className="py-20 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div>
+              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">Our Commitment</h2>
+              <h3 className="text-3xl md:text-5xl font-black text-gray-900 mb-6 tracking-tight">
+                Partnerships Built on Transparency
               </h3>
-              <p className="text-lg text-white/50 mb-8 leading-relaxed font-medium">
-                With a diverse climate and fertile land, Vietnam sits at the heart of the global food security map. As the world's leading exporter of several key commodities, its role is strategic.
+              <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed font-medium">
+                At Foodmax, we believe that strong partnerships are built on transparency, consistency, and mutual growth.
+                Whether serving importers, distributors, or food manufacturers, we approach every collaboration with professionalism
+                and long-term commitment.
               </p>
-              <p className="text-lg text-white/50 mb-12 leading-relaxed font-medium">
-                Foodmax acts as the bridge between this local agricultural abundance and an international business mindset. We translate origin-specific complexity into reliable, global-standard supply.
+              <p className="text-base md:text-lg text-gray-600 leading-relaxed font-medium">
+                By combining local expertise with global standards, our mission is simple: to deliver dependable agricultural
+                solutions while sharing the true essence of Vietnam with customers around the world.
               </p>
-              
-              <div className="h-px bg-white/10 mb-12 w-full max-w-lg"></div>
-
-              <div className="grid grid-cols-2 gap-10">
-                <div>
-                  <p className="text-5xl font-black text-foodmax-lime mb-3">30+</p>
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Global Markets Served</p>
-                </div>
-                <div>
-                  <p className="text-5xl font-black text-foodmax-lime mb-3">100%</p>
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Export Compliance</p>
-                </div>
-              </div>
             </div>
-
-            {/* REALISTIC ROTATING GLOBE COLUMN */}
-            <div className="relative flex justify-center items-center">
-              <div className="w-full max-w-[550px] aspect-square relative flex items-center justify-center">
-                
-                {/* Orbit Rings */}
-                <div className="absolute inset-0 rounded-full border border-white/5 animate-[spin_35s_linear_infinite] group-hover:animate-[spin_15s_linear_infinite] transition-all duration-1000">
-                   <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-foodmax-lime/40 rounded-full blur-[2px]"></div>
-                </div>
-                <div className="absolute inset-12 rounded-full border border-white/5 animate-[spin_25s_linear_infinite_reverse] group-hover:animate-[spin_10s_linear_infinite_reverse] transition-all duration-1000"></div>
-
-                {/* THE GLOBE SPHERE */}
-                <div className="w-[85%] h-[85%] rounded-full bg-[#1e293b] border border-white/10 relative overflow-hidden flex items-center justify-center shadow-[0_0_120px_rgba(0,0,0,0.8)] group-hover:border-foodmax-lime/20 transition-all duration-700">
-                  
-                  {/* Accurate World Map - Horizontal Infinite Scrolling */}
-                  <style>{`
-                    @keyframes globeRotation {
-                      0% { transform: translateX(0); }
-                      100% { transform: translateX(-50%); }
-                    }
-                    .animate-globe {
-                      animation: globeRotation 60s linear infinite;
-                    }
-                    .group:hover .animate-globe {
-                      animation-duration: 25s;
-                    }
-                  `}</style>
-
-                  <div className="absolute inset-0 w-[200%] h-full flex animate-globe whitespace-nowrap opacity-40 group-hover:opacity-60 transition-all duration-1000">
-                    <div 
-                      className="w-full h-full"
-                      style={{
-                        backgroundImage: `url('https://images.unsplash.com/photo-1589519160732-57fc498494f8?auto=format&fit=crop&q=80&w=1200')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'grayscale(1) brightness(1.5) contrast(1.2)'
-                      }}
-                    ></div>
-                    <div 
-                      className="w-full h-full"
-                      style={{
-                        backgroundImage: `url('https://images.unsplash.com/photo-1589519160732-57fc498494f8?auto=format&fit=crop&q=80&w=1200')`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'grayscale(1) brightness(1.5) contrast(1.2)'
-                      }}
-                    ></div>
+            <div className="bg-foodmax-forest rounded-[2.5rem] p-10 md:p-12 text-white relative overflow-hidden">
+              <h4 className="text-[10px] font-black text-foodmax-lime uppercase tracking-[0.4em] mb-6">Core Principles</h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <ShieldCheck size={20} className="text-foodmax-lime" />
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest">Quality Without Compromise</p>
+                    <p className="text-xs text-white/70 mt-1">Consistent standards from farm to shipment.</p>
                   </div>
-
-                  {/* Sourcing Points (Fixed on sphere) */}
-                  <div className="absolute inset-0 pointer-events-none z-10">
-                    <div className="absolute top-[45%] left-[62%] w-3 h-3 bg-foodmax-lime rounded-full shadow-[0_0_15px_#8cc63f] animate-pulse"></div>
-                    <div className="absolute top-[55%] left-[18%] w-2 h-2 bg-foodmax-lime rounded-full shadow-[0_0_10px_#8cc63f] animate-pulse delay-500"></div>
-                    <div className="absolute top-[40%] left-[82%] w-2 h-2 bg-foodmax-lime rounded-full shadow-[0_0_10px_#8cc63f] animate-pulse delay-1000"></div>
+                </div>
+                <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <Leaf size={20} className="text-foodmax-lime" />
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest">Service With Integrity</p>
+                    <p className="text-xs text-white/70 mt-1">Responsible sourcing and responsive support.</p>
                   </div>
-
-                  {/* 3D Sphere Shading & Highlight */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[#0a121e]/80 via-transparent to-white/10 pointer-events-none z-20"></div>
-                  <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.7)] pointer-events-none z-20 rounded-full"></div>
-                  <div className="absolute top-[15%] left-[15%] w-[40%] h-[40%] bg-white/5 rounded-full blur-3xl pointer-events-none z-20"></div>
                 </div>
-
-                {/* Crosshair accents */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-px bg-white/20"></div>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-px bg-white/20"></div>
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-12 bg-white/20"></div>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-12 bg-white/20"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. QUALITY AS A SYSTEM */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row gap-20 items-center">
-            <div className="lg:w-1/2">
-              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">Mitigation of Risk</h2>
-              <h3 className="text-4xl font-black text-gray-900 mb-8 tracking-tight">Quality as a Systemic Design</h3>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed font-medium">
-                In international trade, quality is not a promise; it is a management of risk. We implement independent inspection protocols and rigorous process controls at every junction of the supply chain.
-              </p>
-              <div className="grid grid-cols-1 gap-4">
-                {['HACCP & ISO 22000 Integration', 'Phytosanitary Certification Protocols', 'Third-Party Independent Analysis', 'Internal Batch Traceability Systems'].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <ShieldCheck size={20} className="text-foodmax-forest" />
-                    <span className="text-sm font-black text-gray-700 uppercase tracking-widest">{item}</span>
+                <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <Handshake size={20} className="text-foodmax-lime" />
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest">Partnerships That Last</p>
+                    <p className="text-xs text-white/70 mt-1">Mutual growth with long-term focus.</p>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="lg:w-1/2 grid grid-cols-2 gap-4">
-              <div className="h-64 bg-gray-200 rounded-2xl overflow-hidden shadow-inner">
-                <img src="https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover grayscale" />
-              </div>
-              <div className="h-64 mt-12 bg-gray-200 rounded-2xl overflow-hidden shadow-inner">
-                <img src="https://images.unsplash.com/photo-1536304953491-a1312952467d?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover grayscale" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. LOGISTICS IS NOT OPTIONAL */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-foodmax-forest rounded-[3rem] p-12 md:p-20 text-white relative overflow-hidden">
-            <div className="max-w-3xl relative z-10">
-              <h2 className="text-[10px] font-black text-foodmax-lime uppercase tracking-[0.4em] mb-6">Core Competency</h2>
-              <h3 className="text-4xl md:text-5xl font-black mb-8 tracking-tight">The Door-to-Port Mindset</h3>
-              <p className="text-lg text-white/80 mb-10 leading-relaxed font-medium">
-                Logistics is the final pillar of agricultural integrity. Our expert export desk manages all aspects of documentation and container optimization, significantly reducing operational friction for international buyers.
-              </p>
-              <div className="flex flex-wrap gap-10">
-                <div className="flex items-center gap-2">
-                  <Navigation size={20} className="text-foodmax-lime" />
-                  <span className="text-xs font-black uppercase tracking-widest">Strategic Port Access</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Globe size={20} className="text-foodmax-lime" />
-                  <span className="text-xs font-black uppercase tracking-widest">Global Freight Network</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Zap size={20} className="text-foodmax-lime" />
-                  <span className="text-xs font-black uppercase tracking-widest">Rapid Documentation</span>
                 </div>
               </div>
             </div>
@@ -285,25 +246,18 @@ const AboutUs: React.FC = () => {
         </div>
       </section>
 
-      {/* 7. LONG-TERM VISION & CLOSING */}
-      <section className="py-32 border-t border-gray-100">
+      {/* 6. CLOSING */}
+      <section className="py-24 border-t border-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-8">Horizon 2030</h2>
-          <h3 className="text-4xl md:text-6xl font-black text-gray-900 mb-10 tracking-tighter leading-tight">
-            Building a Global Network of<br /> Agricultural Trust.
+          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-8">Looking Forward</h2>
+          <h3 className="text-3xl md:text-5xl font-black text-gray-900 mb-8 tracking-tight">
+            Sharing Vietnam’s Essence With The World
           </h3>
-          <p className="text-xl text-gray-500 mb-12 font-medium leading-relaxed">
-            Our vision is defined by long-term cooperation. We grow with our partners, investing in supply chain resilience that ensures stable commodities for decades to come, not just chasing immediate transactions.
+          <p className="text-lg text-gray-500 mb-10 font-medium leading-relaxed">
+            As we continue to grow, Foodmax remains guided by three core principles — quality without compromise, service with
+            integrity, and partnerships that last.
           </p>
-          <div className="pt-12 border-t border-gray-100 mt-12 flex flex-col items-center">
-            <img
-              src={Logo}
-              alt="Foodmax"
-              className="h-44 w-auto md:h-48 object-contain"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
+          <div className="pt-10 border-t border-gray-100 mt-10"></div>
         </div>
       </section>
     </div>
