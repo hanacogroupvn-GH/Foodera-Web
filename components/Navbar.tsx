@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download } from 'lucide-react';
 import { PRODUCTS, NEWS } from '../constants';
 import { Product, NewsItem } from '../types';
+import Logo from '../Logo.png';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,28 +51,14 @@ const Navbar: React.FC = () => {
     navigate(path);
   };
 
-  const BrandLogo = ({ isWhite = false }) => (
-    <div className="flex flex-col">
-      <div className="flex items-end relative">
-        <div className="flex items-center">
-          <span className={`text-3xl font-[900] tracking-tight leading-none ${isWhite ? 'text-white' : 'text-foodmax-forest'}`}>
-            F
-            <span className="relative inline-flex flex-col items-center">
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-0.5">
-                <div className="w-2.5 h-4 bg-[#8cc63f] rounded-[100%_100%_0_0] rotate-[-25deg] origin-bottom shadow-sm"></div>
-                <div className="w-2 h-3.5 bg-[#8cc63f] rounded-[100%_100%_0_0] rotate-[25deg] origin-bottom -translate-x-1 shadow-sm opacity-90"></div>
-              </span>
-              o
-            </span>
-            od
-          </span>
-          <span className={`text-3xl font-[900] tracking-tight leading-none ${isWhite ? 'text-foodmax-lime' : 'text-foodmax-lime'}`}>
-            max
-          </span>
-        </div>
-      </div>
-      <span className={`text-[9px] font-bold tracking-[0.2em] mt-0.5 whitespace-nowrap uppercase ${isWhite ? 'text-white/40' : 'text-gray-400'}`}>Good Food - Global Trust</span>
-    </div>
+  const BrandLogo = () => (
+    <img
+      src={Logo}
+      alt="Foodmax"
+      className="h-44 w-auto md:h-48 object-contain"
+      loading="lazy"
+      decoding="async"
+    />
   );
 
   return (

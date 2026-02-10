@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Logo from '../Logo.png';
 import { Target, ShieldCheck, Globe, Zap, Layers, Navigation, Landmark, Users } from 'lucide-react';
 
 const AboutUs: React.FC = () => {
@@ -294,9 +295,14 @@ const AboutUs: React.FC = () => {
           <p className="text-xl text-gray-500 mb-12 font-medium leading-relaxed">
             Our vision is defined by long-term cooperation. We grow with our partners, investing in supply chain resilience that ensures stable commodities for decades to come, not just chasing immediate transactions.
           </p>
-          <div className="pt-12 border-t border-gray-100 mt-12">
-            <p className="text-2xl font-black text-gray-900 tracking-tight">Foodmax</p>
-            <p className="text-xs font-black text-foodmax-forest uppercase tracking-[0.3em] mt-2">Good Food. Global Trust.</p>
+          <div className="pt-12 border-t border-gray-100 mt-12 flex flex-col items-center">
+            <img
+              src={Logo}
+              alt="Foodmax"
+              className="h-44 w-auto md:h-48 object-contain"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
       </section>

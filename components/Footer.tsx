@@ -2,29 +2,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Instagram, Shield } from 'lucide-react';
+import Logo from '../Logo.png';
 
 const Footer: React.FC = () => {
-  const BrandLogo = ({ isLight = false }) => (
-    <div className="flex flex-col mb-6">
-      <div className="flex items-end relative">
-        <div className="flex items-center">
-          <span className="text-2xl font-[900] tracking-tight leading-none" style={{ color: isLight ? '#ffffff' : '#006838' }}>
-            F
-            <span className="relative inline-flex flex-col items-center">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-                <div className="w-2 h-3.5 bg-[#8cc63f] rounded-[100%_100%_0_0] rotate-[-25deg] origin-bottom shadow-sm"></div>
-                <div className="w-1.5 h-3 bg-[#8cc63f] rounded-[100%_100%_0_0] rotate-[25deg] origin-bottom -translate-x-1 shadow-sm opacity-90"></div>
-              </span>
-              o
-            </span>
-            od
-          </span>
-          <span className="text-2xl font-[900] tracking-tight leading-none" style={{ color: '#8cc63f' }}>
-            max
-          </span>
-        </div>
-      </div>
-      <span className="text-[10px] font-bold text-foodmax-lime tracking-[0.1em] mt-1 uppercase">GOOD FOOD - GLOBAL TRUST</span>
+  const BrandLogo = () => (
+    <div className="bg-white rounded-2xl px-4 py-2 shadow-sm mb-6 inline-flex">
+      <img
+        src={Logo}
+        alt="Foodmax"
+        className="h-44 w-auto md:h-48 object-contain"
+        loading="lazy"
+        decoding="async"
+      />
     </div>
   );
 
@@ -34,7 +23,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div>
             <Link to="/">
-              <BrandLogo isLight />
+              <BrandLogo />
             </Link>
             <p className="text-sm leading-relaxed mb-8 text-white/60">
               Foodmax is a premier Vietnamese exporter delivering high-grade agricultural products. We bridge the gap between local farming excellence and global market demands.
