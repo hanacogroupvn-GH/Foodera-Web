@@ -180,10 +180,6 @@ const AboutUs: React.FC = () => {
                 key={index}
                 className="group relative bg-white rounded-[2rem] overflow-hidden border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500"
               >
-                <div className="aspect-[4/5] overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700">
-                  <img src={member.image} alt={member.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-foodmax-forest/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
                 <div className="p-7">
                   <h4 className="text-2xl font-black text-gray-900 mb-1 group-hover:text-foodmax-forest transition-colors">{member.name}</h4>
                   <p className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] mb-3">{member.title}</p>
@@ -247,17 +243,17 @@ const AboutUs: React.FC = () => {
       </section>
 
       {/* 6. CLOSING */}
-      <section className="py-24 border-t border-gray-100">
+      <section className="py-24 bg-foodmax-forest text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-8">Looking Forward</h2>
-          <h3 className="text-3xl md:text-5xl font-black text-gray-900 mb-8 tracking-tight">
+          <h2 className="text-[10px] font-black text-white/70 uppercase tracking-[0.4em] mb-8">Looking Forward</h2>
+          <h3 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">
             Sharing Vietnam’s Essence With The World
           </h3>
-          <p className="text-lg text-gray-500 mb-10 font-medium leading-relaxed">
+          <p className="text-lg text-white/80 mb-10 font-medium leading-relaxed">
             As we continue to grow, Foodmax remains guided by three core principles — quality without compromise, service with
             integrity, and partnerships that last.
           </p>
-          <div className="pt-10 border-t border-gray-100 mt-10"></div>
+          <div className="pt-10 border-t border-white/15 mt-10"></div>
         </div>
       </section>
     </div>
