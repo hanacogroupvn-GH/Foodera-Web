@@ -81,14 +81,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     init();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user ?? null;
+      if (!mounted) return;
+
+      setIsLoading(true);
       setUser(nextUser);
 
-      const admin = await fetchIsAdmin(nextUser?.id ?? null);
-      setIsAdmin(admin);
+      if (!nextUser?.id) {
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
 
-      setIsLoading(false);
+      // Do not await Supabase calls directly inside this callback to avoid auth deadlocks.
+      setTimeout(() => {
+        if (!mounted) return;
+        void fetchIsAdmin(nextUser.id).then((admin) => {
+          if (!mounted) return;
+          setIsAdmin(admin);
+          setIsLoading(false);
+        });
+      }, 0);
     });
 
     return () => {
