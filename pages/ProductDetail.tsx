@@ -86,6 +86,7 @@ const ProductDetail: React.FC = () => {
   const isCashew = product.subCategory.toLowerCase().includes('cashew') || product.id.includes('cashew');
   const isRice = product.category === 'Rice';
   const isCoffee = product.category === 'Coffee';
+  const hasProductPdf = Boolean(product.pdfUrl?.trim());
 
   // ✅ SUBMIT TO SUPABASE (NEW)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -298,6 +299,24 @@ const ProductDetail: React.FC = () => {
                   </li>
                 </ul>
               </div>
+              {hasProductPdf && (
+                <div className="md:col-span-2 bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-4 flex items-center gap-2">
+                    <FileText size={16} className="text-foodmax-forest" /> Product PDF
+                  </h3>
+                  <p className="text-sm text-gray-500 font-medium mb-6">
+                    Access the technical datasheet, specifications, or certifications for this product.
+                  </p>
+                  <a
+                    href={product.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                  >
+                    Open Product PDF <ArrowRight size={16} />
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -23,6 +23,8 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+const SAMPLE_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+
 const mapProductFromRow = (row: any): Product => ({
   id: row.id,
   name: row.name,
@@ -31,6 +33,7 @@ const mapProductFromRow = (row: any): Product => ({
   description: row.description,
   shortDescription: row.short_description,
   image: row.image,
+  pdfUrl: row.pdf_url && row.pdf_url !== SAMPLE_PDF_URL ? row.pdf_url : undefined,
   gallery: row.gallery ?? undefined,
   specifications: row.specifications ?? {},
   filters: row.filters ?? {}
@@ -44,6 +47,7 @@ const mapProductToRow = (p: Product) => ({
   description: p.description,
   short_description: p.shortDescription,
   image: p.image,
+  pdf_url: p.pdfUrl?.trim() ? p.pdfUrl.trim() : null,
   gallery: p.gallery ?? null,
   specifications: p.specifications ?? {},
   filters: p.filters ?? {}

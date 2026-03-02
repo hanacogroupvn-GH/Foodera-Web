@@ -21,21 +21,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [adminCheckError, setAdminCheckError] = useState<string | null>(null);
 
-  const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
-    });
-    try {
-      return await Promise.race([promise, timeout]);
-    } finally {
-      if (timer) clearTimeout(timer);
-    }
-  };
-
   const fetchIsAdmin = async (_uid: string | undefined | null): Promise<boolean> => {
     setAdminCheckError(null);
-    return true;
+    if (!_uid) return false;
+
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', _uid)
+        .maybeSingle();
+
+      if (error) {
+        setAdminCheckError(error.message);
+        return false;
+      }
+
+      return !!data;
+    } catch (e: any) {
+      setAdminCheckError(e?.message || 'Failed to verify admin access');
+      return false;
+    }
   };
 
   useEffect(() => {

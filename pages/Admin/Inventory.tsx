@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Product, CategoryType } from '../../types';
-import { 
+import {
   Package, 
   Search, 
   Plus, 
@@ -22,8 +22,21 @@ import {
   PlusCircle,
   Hash,
   Tag,
+  FileText,
   LogOut
 } from 'lucide-react';
+
+const isValidPdfUrl = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.pathname.toLowerCase().endsWith('.pdf');
+  } catch {
+    return false;
+  }
+};
 
 const AdminInventory: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useData();
@@ -45,10 +58,12 @@ const AdminInventory: React.FC = () => {
     description: '',
     shortDescription: '',
     image: '',
+    pdfUrl: '',
     gallery: [],
     specifications: {},
     filters: {}
   });
+  const hasInvalidPdfUrl = Boolean(formData.pdfUrl?.trim()) && !isValidPdfUrl(formData.pdfUrl || '');
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -61,6 +76,7 @@ const AdminInventory: React.FC = () => {
       setEditingProduct(product);
       setFormData({
         ...product,
+        pdfUrl: product.pdfUrl || '',
         gallery: product.gallery || [],
         specifications: { ...product.specifications }
       });
@@ -74,6 +90,7 @@ const AdminInventory: React.FC = () => {
         description: '',
         shortDescription: '',
         image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1200',
+        pdfUrl: '',
         gallery: [],
         specifications: { 'Broken': '5.0% Max', 'Moisture': '14.0% Max' },
         filters: { type: 'Standard' }
@@ -143,6 +160,12 @@ const AdminInventory: React.FC = () => {
     const collision = products.find(p => p.id === formData.id);
     if (collision && (!editingProduct || editingProduct.id !== formData.id)) {
       alert(`The ID "${formData.id}" is already assigned to "${collision.name}". Please use a unique identifier.`);
+      setIsSaving(false);
+      return;
+    }
+
+    if (hasInvalidPdfUrl) {
+      alert('Product PDF URL must be a valid URL and end with .pdf');
       setIsSaving(false);
       return;
     }
@@ -366,6 +389,36 @@ const AdminInventory: React.FC = () => {
                       required
                     />
                     <p className="text-[10px] text-gray-400 italic">This is the main image displayed in the catalog.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Product PDF Section */}
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Product PDF / Technical Datasheet (Optional)</label>
+                <div className="flex items-start gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                  <div className="p-2 bg-foodmax-forest text-white rounded-lg">
+                    <FileText size={16} />
+                  </div>
+                  <div className="flex-grow space-y-2">
+                    <input
+                      type="url"
+                      value={formData.pdfUrl || ''}
+                      onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
+                      placeholder="https://example.com/spec-sheet.pdf"
+                      className={`w-full px-4 py-3 bg-white rounded-xl border-2 outline-none text-sm font-medium ${
+                        hasInvalidPdfUrl ? 'border-red-300 focus:border-red-400' : 'border-transparent focus:border-foodmax-forest/20'
+                      }`}
+                    />
+                    {hasInvalidPdfUrl ? (
+                      <p className="text-[10px] text-red-500 italic">
+                        Please enter a valid PDF link (must end with .pdf).
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-gray-400 italic">
+                        Link a spec/certificate PDF to display on the Product Detail page.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

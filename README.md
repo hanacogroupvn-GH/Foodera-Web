@@ -46,3 +46,11 @@ npm run dev
 ```
 
 > Deploy (Netlify): add the same env vars in Netlify Site settings.
+
+### Product PDF Upload Notes
+
+- Existing projects should run:
+  - `supabase/migrations/20260302_add_products_pdf_url.sql`
+  - `supabase/migrations/20260302_enable_product_pdf_storage.sql`
+- Optional env var:
+  - `VITE_SUPABASE_PDF_BUCKET=product-pdfs` (defaults to `product-pdfs` if omitted)

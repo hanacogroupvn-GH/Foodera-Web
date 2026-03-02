@@ -11,6 +11,7 @@ export interface Product {
   description: string;
   shortDescription: string;
   image: string;
+  pdfUrl?: string;
   gallery?: string[];
   specifications: Record<string, string>;
   filters: {

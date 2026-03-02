@@ -8,6 +8,7 @@ create table if not exists public.products (
   description text not null,
   short_description text not null,
   image text not null,
+  pdf_url text,
   gallery jsonb,
   specifications jsonb not null default '{}'::jsonb,
   filters jsonb not null default '{}'::jsonb,
