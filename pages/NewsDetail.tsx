@@ -81,7 +81,6 @@ const extractInlineImageMarker = (
 
 const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
-  let hasInlineImage = false;
 
   paragraphs.forEach((raw, index) => {
     const text = raw.trim();
@@ -94,16 +93,12 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
         blocks.push({ type: 'paragraph', text: parsedMarker.before });
       }
 
-      // Render only first inline image marker to avoid accidental duplicates.
-      if (!hasInlineImage) {
-        blocks.push({
-          type: 'image',
-          src: parsedMarker.image.src,
-          alt: parsedMarker.image.alt,
-          caption: parsedMarker.image.caption
-        });
-        hasInlineImage = true;
-      }
+      blocks.push({
+        type: 'image',
+        src: parsedMarker.image.src,
+        alt: parsedMarker.image.alt,
+        caption: parsedMarker.image.caption
+      });
 
       if (parsedMarker.after) {
         blocks.push({ type: 'paragraph', text: parsedMarker.after });
@@ -273,11 +268,13 @@ const NewsDetail: React.FC = () => {
 
   const blocks = useMemo(() => createContentBlocks(paragraphs, article?.title || 'Foodmax article image'), [article?.title, paragraphs]);
   const displayBlocks = useMemo(() => {
-    let shownInlineImage = false;
+    const imageSignatures = new Set<string>();
     return blocks.filter((block) => {
       if (block.type !== 'image') return true;
-      if (shownInlineImage) return false;
-      shownInlineImage = true;
+
+      const signature = `${block.src}__${block.alt || ''}__${block.caption || ''}`;
+      if (imageSignatures.has(signature)) return false;
+      imageSignatures.add(signature);
       return true;
     });
   }, [blocks]);
