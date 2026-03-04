@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Product, NewsItem } from '../types';
 import { supabase } from '../lib/supabaseClient';
+import { NEWS as fallbackNewsData } from '../constants';
 
 interface DataContextType {
   products: Product[];
@@ -53,15 +54,105 @@ const mapProductToRow = (p: Product) => ({
   filters: p.filters ?? {}
 });
 
-const mapNewsFromRow = (row: any): NewsItem => ({
-  id: row.id,
-  title: row.title,
-  date: row.date,
-  category: row.category,
-  excerpt: row.excerpt,
-  content: row.content ?? [],
-  image: row.image
-});
+const CONTENT_KEY_PRIORITY = [
+  'intro',
+  'lead',
+  'summary',
+  'overview',
+  'title',
+  'heading',
+  'subtitle',
+  'text',
+  'body',
+  'content',
+  'description',
+  'section',
+  'sections',
+  'conclusion',
+  'outro'
+];
+
+const pushTextParts = (value: string, output: string[]) => {
+  value
+    .split(/\r?\n+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((part) => {
+      if (output[output.length - 1] !== part) {
+        output.push(part);
+      }
+    });
+};
+
+const collectTextParts = (raw: unknown, output: string[]) => {
+  if (typeof raw === 'string') {
+    pushTextParts(raw, output);
+    return;
+  }
+
+  if (typeof raw === 'number' || typeof raw === 'boolean') {
+    pushTextParts(String(raw), output);
+    return;
+  }
+
+  if (Array.isArray(raw)) {
+    raw.forEach((item) => collectTextParts(item, output));
+    return;
+  }
+
+  if (raw && typeof raw === 'object') {
+    const record = raw as Record<string, unknown>;
+    const keys = Object.keys(record);
+    const orderedKeys = [
+      ...CONTENT_KEY_PRIORITY.filter((key) => Object.prototype.hasOwnProperty.call(record, key)),
+      ...keys.filter((key) => !CONTENT_KEY_PRIORITY.includes(key))
+    ];
+
+    orderedKeys.forEach((key) => {
+      collectTextParts(record[key], output);
+    });
+  }
+};
+
+const normalizeNewsContent = (raw: unknown): string[] => {
+  if (raw == null) {
+    return [];
+  }
+
+  let source: unknown = raw;
+  if (typeof raw === 'string') {
+    const value = raw.trim();
+    if (!value) return [];
+
+    try {
+      source = JSON.parse(value);
+    } catch {
+      source = value;
+    }
+  }
+
+  const output: string[] = [];
+  collectTextParts(source, output);
+  return output;
+};
+
+const fallbackNewsById = new Map(fallbackNewsData.map((item) => [item.id, item]));
+
+const mapNewsFromRow = (row: any): NewsItem => {
+  const rowId = row?.id != null ? String(row.id) : '';
+  const fallback = fallbackNewsById.get(rowId);
+  const normalized = normalizeNewsContent(row.content);
+
+  return {
+    id: rowId || fallback?.id || '',
+    title: row.title ?? fallback?.title ?? '',
+    date: row.date ?? fallback?.date ?? '',
+    category: (row.category ?? fallback?.category ?? 'Market Insights') as NewsItem['category'],
+    excerpt: row.excerpt ?? fallback?.excerpt ?? '',
+    content: normalized.length > 0 ? normalized : normalizeNewsContent(fallback?.content ?? []),
+    image: row.image ?? fallback?.image ?? ''
+  };
+};
 
 const mapNewsToRow = (n: NewsItem) => ({
   id: n.id,
@@ -69,7 +160,7 @@ const mapNewsToRow = (n: NewsItem) => ({
   date: n.date,
   category: n.category,
   excerpt: n.excerpt,
-  content: n.content ?? [],
+  content: normalizeNewsContent(n.content),
   image: n.image
 });
 
