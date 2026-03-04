@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { Product, NewsItem } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { NEWS as fallbackNewsData } from '../constants';
+import { getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 
 interface DataContextType {
   products: Product[];
@@ -149,15 +150,22 @@ const normalizeNewsContent = (raw: unknown): string[] => {
 };
 
 const fallbackNewsById = new Map(fallbackNewsData.map((item) => [item.id, item]));
+const fallbackNewsBySlug = new Map(
+  fallbackNewsData.map((item) => [normalizeNewsSlug(item.slug), item])
+);
 
 const mapNewsFromRow = (row: any): NewsItem => {
   const rowId = row?.id != null ? String(row.id) : '';
-  const fallback = fallbackNewsById.get(rowId);
+  const rowSlug = row?.slug != null ? normalizeNewsSlug(String(row.slug)) : '';
+  const fallback = fallbackNewsById.get(rowId) || (rowSlug ? fallbackNewsBySlug.get(rowSlug) : undefined);
   const normalized = normalizeNewsContent(row.content);
+  const title = row.title ?? fallback?.title ?? '';
+  const id = rowId || fallback?.id || '';
 
   return {
-    id: rowId || fallback?.id || '',
-    title: row.title ?? fallback?.title ?? '',
+    id,
+    slug: getNewsSlug({ id, title, slug: rowSlug || fallback?.slug }),
+    title,
     date: row.date ?? fallback?.date ?? '',
     category: (row.category ?? fallback?.category ?? 'Market Insights') as NewsItem['category'],
     excerpt: row.excerpt ?? fallback?.excerpt ?? '',
@@ -168,6 +176,7 @@ const mapNewsFromRow = (row: any): NewsItem => {
 
 const mapNewsToRow = (n: NewsItem) => ({
   id: n.id,
+  slug: getNewsSlug(n),
   title: n.title,
   date: n.date,
   category: n.category,

@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight
 import { PRODUCTS, NEWS } from '../constants';
 import { Product, NewsItem } from '../types';
 import Logo from '../Logo.png';
+import { getNewsPath } from '../lib/newsSeo';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -434,7 +435,7 @@ const Navbar: React.FC = () => {
                       {filteredNews.map(n => (
                         <button 
                           key={n.id} 
-                          onClick={() => handleSearchNavigation(`/news/${n.id}`)}
+                          onClick={() => handleSearchNavigation(getNewsPath(n))}
                           className="w-full text-left group border-b border-gray-100 pb-6 hover:translate-x-1 transition-transform"
                         >
                           <span className="text-[9px] font-black text-foodmax-lime uppercase tracking-widest mb-1 block">{n.date}</span>

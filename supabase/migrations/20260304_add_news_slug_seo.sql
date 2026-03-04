@@ -1,41 +1,7 @@
--- Foodmax Supabase schema (products + news + admin_users)
-
 create extension if not exists unaccent with schema extensions;
 
-create table if not exists public.products (
-  id text primary key,
-  name text not null,
-  category text not null,
-  sub_category text not null,
-  description text not null,
-  short_description text not null,
-  image text not null,
-  pdf_url text,
-  gallery jsonb,
-  specifications jsonb not null default '{}'::jsonb,
-  filters jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.news (
-  id text primary key,
-  slug text not null unique,
-  title text not null,
-  date text not null,
-  category text not null,
-  excerpt text not null,
-  content jsonb not null default '[]'::jsonb,
-  image text not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
--- Admin allowlist
-create table if not exists public.admin_users (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now()
-);
+alter table if exists public.news
+add column if not exists slug text;
 
 create or replace function public.slugify(input text)
 returns text
@@ -95,26 +61,33 @@ begin
 end;
 $$;
 
--- updated_at trigger
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
+do $$
+declare
+  rec record;
+  base_slug text;
 begin
-  new.updated_at = now();
-  return new;
+  for rec in
+    select id, title, slug
+    from public.news
+    order by created_at nulls first, id
+  loop
+    base_slug := public.slugify(coalesce(rec.slug, rec.title, rec.id, 'news-item'));
+    if base_slug = '' then
+      base_slug := 'news-item';
+    end if;
+
+    update public.news
+    set slug = public.news_generate_unique_slug(base_slug, rec.id)
+    where id = rec.id;
+  end loop;
 end;
 $$;
 
-drop trigger if exists trg_products_updated_at on public.products;
-create trigger trg_products_updated_at
-before update on public.products
-for each row execute function public.set_updated_at();
+alter table if exists public.news
+alter column slug set not null;
 
-drop trigger if exists trg_news_updated_at on public.news;
-create trigger trg_news_updated_at
-before update on public.news
-for each row execute function public.set_updated_at();
+create unique index if not exists idx_news_slug
+on public.news (slug);
 
 drop trigger if exists trg_news_set_slug on public.news;
 create trigger trg_news_set_slug

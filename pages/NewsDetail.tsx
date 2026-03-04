@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -235,11 +236,47 @@ const appendJsonLd = (payload: Record<string, unknown>) => {
   document.head.appendChild(tag);
 };
 
+const decodeRouteSegment = (value?: string): string => {
+  if (!value) return '';
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
 const NewsDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug: rawSlug, legacyId: rawLegacyId, legacySlug: rawLegacySlug } = useParams<{
+    slug?: string;
+    legacyId?: string;
+    legacySlug?: string;
+  }>();
   const navigate = useNavigate();
   const { news } = useData();
-  const article = news.find((n) => n.id === id);
+  const primarySegment = useMemo(() => decodeRouteSegment(rawSlug), [rawSlug]);
+  const legacyId = useMemo(() => decodeRouteSegment(rawLegacyId), [rawLegacyId]);
+  const routeSlugSource = useMemo(
+    () => decodeRouteSegment(rawLegacySlug || rawSlug),
+    [rawLegacySlug, rawSlug]
+  );
+  const routeSlug = useMemo(() => normalizeNewsSlug(routeSlugSource), [routeSlugSource]);
+  const article = useMemo(() => {
+    if (legacyId) {
+      const byLegacyId = news.find((item) => item.id === legacyId);
+      if (byLegacyId) return byLegacyId;
+    }
+
+    if (routeSlug) {
+      const bySlug = news.find((item) => getNewsSlug(item) === routeSlug);
+      if (bySlug) return bySlug;
+    }
+
+    if (primarySegment) {
+      return news.find((item) => item.id === primarySegment);
+    }
+
+    return undefined;
+  }, [legacyId, news, primarySegment, routeSlug]);
   const [isImageBroken, setIsImageBroken] = useState(false);
 
   const paragraphs = useMemo(() => {
@@ -281,11 +318,21 @@ const NewsDetail: React.FC = () => {
   const headingBlocks = useMemo(() => displayBlocks.filter((block) => block.type === 'heading'), [displayBlocks]);
   const readingMinutes = useMemo(() => estimateReadTime(paragraphs), [paragraphs]);
   const publishedIso = article ? toIsoDate(article.date) : null;
-  const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '';
+  const canonicalPath = article ? getNewsPath(article) : '';
+  const canonicalUrl = typeof window !== 'undefined' && canonicalPath ? `${window.location.origin}${canonicalPath}` : '';
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [legacyId, rawLegacySlug, rawSlug, routeSlug]);
+
+  useEffect(() => {
+    if (!article || !canonicalPath) return;
+    const expectedSlug = getNewsSlug(article);
+    const isCanonical = !legacyId && routeSlug === expectedSlug;
+    if (!isCanonical && window.location.pathname !== canonicalPath) {
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [article, canonicalPath, legacyId, navigate, routeSlug]);
 
   useEffect(() => {
     setIsImageBroken(false);
@@ -351,7 +398,7 @@ const NewsDetail: React.FC = () => {
   const handleShare = async () => {
     if (!article) return;
 
-    const url = window.location.href;
+    const url = canonicalUrl || window.location.href;
     if (navigator.share) {
       try {
         await navigator.share({ title: article.title, text: article.excerpt, url });
@@ -532,10 +579,10 @@ const NewsDetail: React.FC = () => {
           <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">Related Insights</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {news
-              .filter((n) => n.id !== id)
+              .filter((n) => n.id !== article.id)
               .slice(0, 3)
               .map((related) => (
-                <Link key={related.id} to={`/news/${related.id}`} className="group block">
+                <Link key={related.id} to={getNewsPath(related)} className="group block">
                   <article className="h-full rounded-2xl border border-gray-100 bg-white p-3 shadow-sm group-hover:shadow-xl transition-all">
                     <div className="aspect-[16/9] rounded-xl overflow-hidden mb-5 border border-gray-100">
                       <img

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Filter, Calendar, ArrowUpDown } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { NewsCategory } from '../types';
+import { getNewsPath } from '../lib/newsSeo';
 
 const News: React.FC = () => {
   const { news } = useData();
@@ -97,7 +98,7 @@ const News: React.FC = () => {
               {filteredNews.map((item) => (
                 <Link 
                   key={item.id} 
-                  to={`/news/${item.id}`}
+                  to={getNewsPath(item)}
                   className="group block"
                 >
                   <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-gray-100 mb-8 border border-gray-100 shadow-sm group-hover:shadow-xl transition-all duration-500">

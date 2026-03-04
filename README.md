@@ -52,5 +52,14 @@ npm run dev
 - Existing projects should run:
   - `supabase/migrations/20260302_add_products_pdf_url.sql`
   - `supabase/migrations/20260302_enable_product_pdf_storage.sql`
+  - `supabase/migrations/20260304_add_news_slug_seo.sql`
 - Optional env var:
   - `VITE_SUPABASE_PDF_BUCKET=product-pdfs` (defaults to `product-pdfs` if omitted)
+
+### News SEO URL Notes
+
+- News articles now use canonical URLs in the form:
+  - `/news/:slug`
+- Existing `/news/:id` and `/news/:id/:slug` links are still supported and auto-redirect to canonical URLs.
+- The `public.news.slug` column is auto-populated and kept unique via trigger functions.
+- In Admin CMS, you can type a custom slug per article. Leave it empty to auto-generate from title.

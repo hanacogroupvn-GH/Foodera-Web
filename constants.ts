@@ -249,6 +249,7 @@ export const PRODUCTS: Product[] = [
 export const NEWS: NewsItem[] = [
   {
     id: 'coffee-cupping-technique-2024',
+    slug: 'coffee-cupping-technique-2024',
     title: 'Coffee Cupping Technique: How Flavor, Quality and Consistency Are Evaluated',
     date: 'March 10, 2024',
     category: 'Company Updates',
@@ -277,6 +278,7 @@ export const NEWS: NewsItem[] = [
   },
   {
     id: 'vietnam-rice-growing-regions-2025',
+    slug: 'vietnam-rice-growing-regions-2025',
     title: "Vietnam's Rice-Growing Regions: The Foundation of Reliable Global Supply",
     date: 'Feb 15, 2024',
     category: 'Market Insights',
@@ -301,6 +303,7 @@ export const NEWS: NewsItem[] = [
   },
   {
     id: 'market-update-q1-2024',
+    slug: 'market-update-q1-2024',
     title: 'Southeast Asian Rice Market: Q1 2024 Export Trends',
     date: 'Jan 15, 2024',
     category: 'Market Insights',

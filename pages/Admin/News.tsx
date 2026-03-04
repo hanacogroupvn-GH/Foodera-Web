@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { NewsItem, NewsCategory } from '../../types';
+import { buildUniqueNewsSlug, getNewsPath, normalizeNewsSlug } from '../../lib/newsSeo';
 import { 
   FileText, 
   Search, 
@@ -31,9 +32,12 @@ const AdminNews: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [hasCustomSlug, setHasCustomSlug] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<NewsItem>>({
+    slug: '',
     title: '',
     category: 'Market Insights',
     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -49,16 +53,20 @@ const AdminNews: React.FC = () => {
     n.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     n.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const slugPreview = normalizeNewsSlug((formData.slug || formData.title || '').trim()) || 'news-item';
 
   const openModal = (item?: NewsItem) => {
+    setSaveError(null);
     if (item) {
       setEditingItem(item);
       setFormData(item);
       setContentString(item.content.join('\n\n'));
+      setHasCustomSlug(!!item.slug?.trim());
     } else {
       setEditingItem(null);
       const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       setFormData({
+        slug: '',
         title: '',
         category: 'Market Insights',
         date: today,
@@ -67,6 +75,7 @@ const AdminNews: React.FC = () => {
         image: 'https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200'
       });
       setContentString('');
+      setHasCustomSlug(false);
     }
     setIsModalOpen(true);
   };
@@ -74,32 +83,49 @@ const AdminNews: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
+    setSaveError(null);
+    setHasCustomSlug(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSaveError(null);
 
     // Convert string to paragraphs
     const paragraphs = contentString.split('\n').filter(p => p.trim() !== '');
 
-    setTimeout(() => {
-      const payload = {
-        ...formData,
-        content: paragraphs
-      } as NewsItem;
+    setTimeout(async () => {
+      let isSuccess = false;
+      try {
+        const title = (formData.title || '').trim();
+        const slugPool = news.map((item) => item.slug);
+        const requestedSlug = (formData.slug || '').trim();
+        const finalSlug = buildUniqueNewsSlug(requestedSlug || title, slugPool, editingItem?.slug);
 
-      if (editingItem) {
-        updateNews(payload);
-      } else {
-        const newItem: NewsItem = {
-          ...payload,
-          id: `news-${Date.now()}`
-        };
-        addNews(newItem);
+        const payload = {
+          id: editingItem?.id || `news-${Date.now()}`,
+          slug: finalSlug,
+          title,
+          category: (formData.category || 'Market Insights') as NewsCategory,
+          date: (formData.date || '').trim(),
+          excerpt: (formData.excerpt || '').trim(),
+          image: (formData.image || '').trim(),
+          content: paragraphs
+        } as NewsItem;
+
+        if (editingItem) {
+          await updateNews(payload);
+        } else {
+          await addNews(payload);
+        }
+        isSuccess = true;
+      } catch (err: any) {
+        setSaveError(err?.message || 'Unable to save this article. Please check Supabase schema/policies.');
+      } finally {
+        setIsSaving(false);
+        if (isSuccess) closeModal();
       }
-      setIsSaving(false);
-      closeModal();
     }, 600);
   };
 
@@ -201,7 +227,7 @@ const AdminNews: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-sm font-black text-gray-900 leading-tight line-clamp-1">{item.title}</p>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">ID: {item.id.toUpperCase()}</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Slug: {item.slug}</p>
                         </div>
                       </div>
                     </td>
@@ -219,7 +245,7 @@ const AdminNews: React.FC = () => {
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-3">
                         <Link 
-                          to={`/news/${item.id}`} 
+                          to={getNewsPath(item)}
                           target="_blank"
                           className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-900 hover:text-white transition-all shadow-sm"
                         >
@@ -301,11 +327,36 @@ const AdminNews: React.FC = () => {
                 <input 
                   type="text" 
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onChange={(e) => {
+                    const nextTitle = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      title: nextTitle,
+                      slug: hasCustomSlug ? (prev.slug || '') : normalizeNewsSlug(nextTitle)
+                    }));
+                  }}
                   className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-lg font-black"
                   placeholder="e.g. Q4 Rice Export Stability Analysis..."
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">SEO Slug (Optional)</label>
+                <input
+                  type="text"
+                  value={formData.slug || ''}
+                  onChange={(e) => {
+                    const rawSlug = e.target.value;
+                    setHasCustomSlug(rawSlug.trim().length > 0);
+                    setFormData((prev) => ({ ...prev, slug: rawSlug }));
+                  }}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                  placeholder="incoterms-explained-a-practical-guide"
+                />
+                <p className="text-[10px] text-gray-500 font-semibold">
+                  Canonical URL: <span className="text-foodmax-forest">/news/{slugPreview}</span>
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -360,7 +411,13 @@ const AdminNews: React.FC = () => {
               </div>
             </form>
 
-            <div className="p-8 border-t border-gray-100 bg-gray-50 flex items-center gap-4">
+            <div className="p-8 border-t border-gray-100 bg-gray-50">
+              {saveError && (
+                <div className="mb-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-semibold">
+                  Save failed: {saveError}
+                </div>
+              )}
+              <div className="flex items-center gap-4">
               <button 
                 onClick={closeModal}
                 className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
@@ -378,6 +435,7 @@ const AdminNews: React.FC = () => {
                   <><Save size={18} /> {editingItem ? 'Update Publication' : 'Publish to Portal'}</>
                 )}
               </button>
+              </div>
             </div>
           </div>
         </div>

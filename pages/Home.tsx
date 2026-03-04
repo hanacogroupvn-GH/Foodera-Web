@@ -7,6 +7,7 @@ import Counter from '../components/Counter';
 import { useData } from '../context/DataContext';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Truck, Factory, Zap, Package, Scale, Globe, BadgeCheck, Anchor, CreditCard, CheckCircle, ArrowRight } from 'lucide-react';
+import { getNewsPath } from '../lib/newsSeo';
 
 const Home: React.FC = () => {
   const { products, news } = useData();
@@ -183,7 +184,7 @@ const Home: React.FC = () => {
                 <div className="p-8">
                   <h3 className="text-xl font-black text-gray-900 mb-4 group-hover:text-foodmax-forest transition-colors leading-tight">{item.title}</h3>
                   <p className="text-sm text-gray-500 mb-6 line-clamp-2 leading-relaxed">{item.excerpt}</p>
-                  <Link to={`/news/${item.id}`} className="inline-flex items-center gap-2 text-sm font-black text-foodmax-forest hover:text-foodmax-lime transition-colors">Read Article</Link>
+                  <Link to={getNewsPath(item)} className="inline-flex items-center gap-2 text-sm font-black text-foodmax-forest hover:text-foodmax-lime transition-colors">Read Article</Link>
                 </div>
               </div>
             ))}
