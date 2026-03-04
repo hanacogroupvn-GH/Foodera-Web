@@ -5,6 +5,7 @@ import { useData } from '../context/DataContext';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
+  | { type: 'image'; src: string; alt: string; caption?: string }
   | { type: 'paragraph'; text: string };
 
 const stripSectionPrefix = (value: string) => {
@@ -21,12 +22,94 @@ const slugify = (value: string, fallbackIndex: number) => {
   return slug || `section-${fallbackIndex + 1}`;
 };
 
-const createContentBlocks = (paragraphs: string[]): ContentBlock[] => {
+const toSafeImageUrl = (value: string): string | null => {
+  try {
+    const nextUrl = new URL(value.trim());
+    if (nextUrl.protocol === 'http:' || nextUrl.protocol === 'https:') {
+      return nextUrl.toString();
+    }
+  } catch {
+    // Ignore invalid URL and render as normal paragraph.
+  }
+
+  return null;
+};
+
+const IMAGE_MARKER_REGEX = /\[\[IMAGE:([\s\S]*?)\]\]/i;
+
+const parseImagePayload = (
+  payload: string,
+  defaultImageAlt: string
+): { src: string; alt: string; caption?: string } | null => {
+  const normalizedPayload = payload
+    .replace(/\r?\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^['"`]+|['"`]+$/g, '')
+    .trim();
+  if (!normalizedPayload) return null;
+
+  const segments = normalizedPayload.split('|').map((part) => part.trim());
+  const safeUrl = toSafeImageUrl(segments[0] || '');
+  if (!safeUrl) return null;
+
+  const alt = segments[1] || defaultImageAlt;
+  const caption = segments[2] || undefined;
+  return { src: safeUrl, alt, caption };
+};
+
+const extractInlineImageMarker = (
+  value: string,
+  defaultImageAlt: string
+): { before: string; image: { src: string; alt: string; caption?: string }; after: string } | null => {
+  const match = value.match(IMAGE_MARKER_REGEX);
+  if (!match) return null;
+
+  const markerStart = match.index ?? 0;
+  const markerText = match[0];
+  const before = value.slice(0, markerStart).trim();
+  const after = value.slice(markerStart + markerText.length).trim();
+
+  const parsed = parseImagePayload(match[1] || '', defaultImageAlt);
+  if (!parsed) return null;
+
+  return {
+    before,
+    image: parsed,
+    after
+  };
+};
+
+const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
+  let hasInlineImage = false;
 
   paragraphs.forEach((raw, index) => {
     const text = raw.trim();
     if (!text) return;
+
+    // Marker syntax: [[IMAGE:https://...|Alt text|Optional caption]]
+    const parsedMarker = extractInlineImageMarker(text, defaultImageAlt);
+    if (parsedMarker) {
+      if (parsedMarker.before) {
+        blocks.push({ type: 'paragraph', text: parsedMarker.before });
+      }
+
+      // Render only first inline image marker to avoid accidental duplicates.
+      if (!hasInlineImage) {
+        blocks.push({
+          type: 'image',
+          src: parsedMarker.image.src,
+          alt: parsedMarker.image.alt,
+          caption: parsedMarker.image.caption
+        });
+        hasInlineImage = true;
+      }
+
+      if (parsedMarker.after) {
+        blocks.push({ type: 'paragraph', text: parsedMarker.after });
+      }
+      return;
+    }
 
     const numberedLabelWithBodyMatch = text.match(/^(\d{1,2})\s*[\.\)\-]?\s*([A-Za-z][A-Za-z0-9\s&/-]{2,60})\s*:\s+(.+)$/);
     if (numberedLabelWithBodyMatch) {
@@ -188,8 +271,17 @@ const NewsDetail: React.FC = () => {
     return content;
   }, [article]);
 
-  const blocks = useMemo(() => createContentBlocks(paragraphs), [paragraphs]);
-  const headingBlocks = useMemo(() => blocks.filter((block) => block.type === 'heading'), [blocks]);
+  const blocks = useMemo(() => createContentBlocks(paragraphs, article?.title || 'Foodmax article image'), [article?.title, paragraphs]);
+  const displayBlocks = useMemo(() => {
+    let shownInlineImage = false;
+    return blocks.filter((block) => {
+      if (block.type !== 'image') return true;
+      if (shownInlineImage) return false;
+      shownInlineImage = true;
+      return true;
+    });
+  }, [blocks]);
+  const headingBlocks = useMemo(() => displayBlocks.filter((block) => block.type === 'heading'), [displayBlocks]);
   const readingMinutes = useMemo(() => estimateReadTime(paragraphs), [paragraphs]);
   const publishedIso = article ? toIsoDate(article.date) : null;
   const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '';
@@ -373,11 +465,26 @@ const NewsDetail: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-12">
             <section className="min-w-0">
               <div className="space-y-7" itemProp="articleBody">
-                {blocks.map((block, idx) =>
+                {displayBlocks.map((block, idx) =>
                   block.type === 'heading' ? (
                     <h2 key={`${block.id}-${idx}`} id={block.id} className="text-2xl md:text-3xl font-black text-gray-900 pt-4">
                       {block.text}
                     </h2>
+                  ) : block.type === 'image' ? (
+                    <figure key={`image-${idx}`} className="my-12 w-full max-w-3xl mx-auto rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-md">
+                      <img
+                        src={block.src}
+                        alt={block.alt}
+                        className="w-full h-auto object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      {block.caption && (
+                        <figcaption className="px-4 py-3 text-xs font-medium text-gray-500 border-t border-gray-100 text-center">
+                          {block.caption}
+                        </figcaption>
+                      )}
+                    </figure>
                   ) : (
                     <p key={`paragraph-${idx}`} className="text-lg md:text-[1.32rem] text-gray-700 leading-relaxed font-medium">
                       {block.text}

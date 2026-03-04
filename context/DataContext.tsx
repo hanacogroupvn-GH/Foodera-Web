@@ -73,7 +73,19 @@ const CONTENT_KEY_PRIORITY = [
 ];
 
 const pushTextParts = (value: string, output: string[]) => {
-  value
+  const trimmed = value.trim();
+  if (!trimmed) return;
+
+  // Keep IMAGE marker in one piece even when source text contains line breaks.
+  if (/\[\[IMAGE:[\s\S]*?\]\]/i.test(trimmed)) {
+    const compact = trimmed.replace(/\r?\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    if (output[output.length - 1] !== compact) {
+      output.push(compact);
+    }
+    return;
+  }
+
+  trimmed
     .split(/\r?\n+/)
     .map((part) => part.trim())
     .filter(Boolean)
