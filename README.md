@@ -63,3 +63,17 @@ npm run dev
 - Existing `/news/:id` and `/news/:id/:slug` links are still supported and auto-redirect to canonical URLs.
 - The `public.news.slug` column is auto-populated and kept unique via trigger functions.
 - In Admin CMS, you can type a custom slug per article. Leave it empty to auto-generate from title.
+
+### CSV Import from Google Sheets (CMS)
+
+- In `Admin > Inventory` and `Admin > Insights`, you can now:
+  - paste a Google Sheet link and click `Import Link`
+  - or upload a local `.csv` file
+- Google Sheet links like `.../edit#gid=0` are converted automatically to CSV export URLs.
+- Product CSV supports columns such as:
+  - `id`, `name`, `category`, `subCategory`, `shortDescription`, `description`, `image`, `pdfUrl`, `gallery`
+  - `specifications` (JSON or `key:value;key2:value2`) or prefixed columns `spec_*`
+  - `filters` (JSON or `key:value`) or prefixed columns `filter_*`
+- Insight CSV supports columns such as:
+  - `id`, `title`, `slug`, `category`, `date`, `excerpt`, `content`, `image`
+  - optional segmented content columns: `content_1`, `content_2`, ...

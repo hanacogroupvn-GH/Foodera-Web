@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Product, CategoryType } from '../../types';
+import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/csvImport';
 import {
   Package, 
   Search, 
@@ -23,7 +24,9 @@ import {
   Hash,
   Tag,
   FileText,
-  LogOut
+  LogOut,
+  Upload,
+  Link as LinkIcon
 } from 'lucide-react';
 
 const isValidPdfUrl = (value: string): boolean => {
@@ -48,6 +51,12 @@ const AdminInventory: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
+  const [csvSheetUrl, setCsvSheetUrl] = useState('');
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
+  const [csvImportStatus, setCsvImportStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
+    type: null,
+    message: ''
+  });
 
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -189,6 +198,85 @@ const AdminInventory: React.FC = () => {
     }
   };
 
+  const importProductsFromCsvText = async (csvText: string, sourceLabel: string) => {
+    const parsed = parseCsv(csvText);
+    if (!parsed.rows.length) {
+      throw new Error('CSV has no data rows to import.');
+    }
+
+    const mapped = mapCsvRowsToProducts(parsed.rows);
+    if (!mapped.items.length) {
+      throw new Error(mapped.errors[0] || 'No valid product rows found.');
+    }
+
+    const existingById = new Map(products.map((item) => [item.id, item]));
+    let createdCount = 0;
+    let updatedCount = 0;
+
+    for (const item of mapped.items) {
+      if (existingById.has(item.id)) {
+        await updateProduct(item);
+        updatedCount += 1;
+      } else {
+        await addProduct(item);
+        createdCount += 1;
+      }
+      existingById.set(item.id, item);
+    }
+
+    if (mapped.errors.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('Product CSV skipped rows:', mapped.errors);
+    }
+
+    const skippedPart = mapped.errors.length > 0 ? `, skipped ${mapped.errors.length} invalid row(s)` : '';
+    setCsvImportStatus({
+      type: 'success',
+      message: `${sourceLabel}: imported ${mapped.items.length} product(s) (${createdCount} new, ${updatedCount} updated${skippedPart}).`
+    });
+  };
+
+  const handleImportFromSheet = async () => {
+    const rawUrl = csvSheetUrl.trim();
+    if (!rawUrl) {
+      setCsvImportStatus({ type: 'error', message: 'Please enter a Google Sheet link first.' });
+      return;
+    }
+
+    setIsImportingCsv(true);
+    setCsvImportStatus({ type: null, message: '' });
+    try {
+      const csvUrl = googleSheetToCsvUrl(rawUrl);
+      const response = await fetch(csvUrl);
+      if (!response.ok) {
+        throw new Error(`Unable to download CSV (HTTP ${response.status}). Check sharing/publish settings on Google Sheet.`);
+      }
+      const csvText = await response.text();
+      await importProductsFromCsvText(csvText, 'Google Sheet');
+    } catch (err: any) {
+      setCsvImportStatus({ type: 'error', message: err?.message || 'CSV import failed.' });
+    } finally {
+      setIsImportingCsv(false);
+    }
+  };
+
+  const handleCsvFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setIsImportingCsv(true);
+    setCsvImportStatus({ type: null, message: '' });
+    try {
+      const csvText = await file.text();
+      await importProductsFromCsvText(csvText, file.name || 'CSV file');
+    } catch (err: any) {
+      setCsvImportStatus({ type: 'error', message: err?.message || 'CSV import failed.' });
+    } finally {
+      setIsImportingCsv(false);
+    }
+  };
+
   const handleExit = () => {
     logout();
     navigate('/');
@@ -243,6 +331,58 @@ const AdminInventory: React.FC = () => {
             >
               <Plus size={20} /> Add New Commodity
             </button>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+              <div className="flex-grow space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
+                  Import CSV from Google Sheet
+                </label>
+                <div className="relative">
+                  <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                  <input
+                    type="url"
+                    value={csvSheetUrl}
+                    onChange={(e) => setCsvSheetUrl(e.target.value)}
+                    placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleImportFromSheet}
+                disabled={isImportingCsv}
+                className="px-6 py-3 bg-foodmax-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+              >
+                {isImportingCsv ? 'Importing...' : 'Import Link'}
+              </button>
+              <label className="px-6 py-3 border border-gray-200 rounded-xl text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 transition-all">
+                <Upload size={14} /> Upload CSV
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleCsvFileUpload}
+                  disabled={isImportingCsv}
+                  className="hidden"
+                />
+              </label>
+            </div>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Supported product columns: id, name, category, subCategory, shortDescription, description, image, pdfUrl, gallery,
+              specifications/spec_* and filters/filter_*.
+            </p>
+            {csvImportStatus.type && (
+              <div
+                className={`px-4 py-3 rounded-xl text-sm font-semibold ${
+                  csvImportStatus.type === 'success'
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-red-50 border border-red-200 text-red-700'
+                }`}
+              >
+                {csvImportStatus.message}
+              </div>
+            )}
           </div>
 
           {/* Search & Filters */}
