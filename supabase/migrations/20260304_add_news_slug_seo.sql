@@ -29,7 +29,7 @@ begin
     select 1
     from public.news n
     where n.slug = candidate
-      and (current_id is null or n.id <> current_id)
+      and (current_id is null or n.id::text <> current_id)
   ) loop
     candidate := normalized_base || '-' || suffix;
     suffix := suffix + 1;
@@ -51,12 +51,12 @@ begin
     return new;
   end if;
 
-  candidate_slug := public.slugify(coalesce(new.slug, new.title, new.id, 'news-item'));
+  candidate_slug := public.slugify(coalesce(new.slug, new.title, new.id::text, 'news-item'));
   if candidate_slug = '' then
     candidate_slug := 'news-item';
   end if;
 
-  new.slug := public.news_generate_unique_slug(candidate_slug, case when tg_op = 'UPDATE' then new.id else null end);
+  new.slug := public.news_generate_unique_slug(candidate_slug, case when tg_op = 'UPDATE' then new.id::text else null end);
   return new;
 end;
 $$;
@@ -71,14 +71,14 @@ begin
     from public.news
     order by created_at nulls first, id
   loop
-    base_slug := public.slugify(coalesce(rec.slug, rec.title, rec.id, 'news-item'));
+    base_slug := public.slugify(coalesce(rec.slug, rec.title, rec.id::text, 'news-item'));
     if base_slug = '' then
       base_slug := 'news-item';
     end if;
 
     update public.news
-    set slug = public.news_generate_unique_slug(base_slug, rec.id)
-    where id = rec.id;
+    set slug = public.news_generate_unique_slug(base_slug, rec.id::text)
+    where id::text = rec.id::text;
   end loop;
 end;
 $$;

@@ -24,6 +24,13 @@ import {
 } from 'lucide-react';
 
 const AdminNews: React.FC = () => {
+  const createNewsId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `news-${Date.now()}`;
+  };
+
   const { news, addNews, updateNews, deleteNews } = useData();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -104,7 +111,7 @@ const AdminNews: React.FC = () => {
         const finalSlug = buildUniqueNewsSlug(requestedSlug || title, slugPool, editingItem?.slug);
 
         const payload = {
-          id: editingItem?.id || `news-${Date.now()}`,
+          id: editingItem?.id || createNewsId(),
           slug: finalSlug,
           title,
           category: (formData.category || 'Market Insights') as NewsCategory,
