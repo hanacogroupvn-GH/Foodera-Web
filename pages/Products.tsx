@@ -41,7 +41,7 @@ const Products: React.FC = () => {
   const subs = {
     'Rice': ['Long Grain White Rice', 'Premium & Fragrant Rice', 'Short & Medium Grain Rice'],
     'Coffee': ['Specialty Coffee', 'Robusta Coffee', 'Arabica Coffee'],
-    'Agriculture': ['Spices', 'Cashew Kernels']
+    'Agriculture': ['Spices', 'Cashew Kernels', 'IQF Frozen Fruit']
   };
 
   const processingMethods = {

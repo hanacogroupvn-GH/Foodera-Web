@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -41,6 +41,41 @@ const isValidPdfUrl = (value: string): boolean => {
   }
 };
 
+const INVENTORY_DRAFT_KEY = 'foodmax_admin_inventory_draft_v1';
+
+type InventoryDraft = {
+  editingProductId: string | null;
+  formData: Partial<Product>;
+  newGalleryUrl: string;
+};
+
+const readInventoryDraft = (): InventoryDraft | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(INVENTORY_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as InventoryDraft;
+    if (!parsed || typeof parsed !== 'object' || !parsed.formData) return null;
+    return {
+      editingProductId: typeof parsed.editingProductId === 'string' ? parsed.editingProductId : null,
+      formData: parsed.formData,
+      newGalleryUrl: typeof parsed.newGalleryUrl === 'string' ? parsed.newGalleryUrl : ''
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writeInventoryDraft = (draft: InventoryDraft) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(INVENTORY_DRAFT_KEY, JSON.stringify(draft));
+};
+
+const clearInventoryDraft = () => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(INVENTORY_DRAFT_KEY);
+};
+
 const AdminInventory: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useData();
   const { logout } = useAuth();
@@ -73,6 +108,35 @@ const AdminInventory: React.FC = () => {
     filters: {}
   });
   const hasInvalidPdfUrl = Boolean(formData.pdfUrl?.trim()) && !isValidPdfUrl(formData.pdfUrl || '');
+
+  useEffect(() => {
+    const draft = readInventoryDraft();
+    if (!draft) return;
+
+    if (draft.editingProductId) {
+      const existingProduct = products.find((item) => item.id === draft.editingProductId);
+      setEditingProduct(existingProduct || ({ id: draft.editingProductId } as Product));
+    } else {
+      setEditingProduct(null);
+    }
+
+    setFormData(draft.formData);
+    setNewGalleryUrl(draft.newGalleryUrl);
+    setIsModalOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      clearInventoryDraft();
+      return;
+    }
+
+    writeInventoryDraft({
+      editingProductId: editingProduct?.id || null,
+      formData,
+      newGalleryUrl
+    });
+  }, [isModalOpen, editingProduct?.id, formData, newGalleryUrl]);
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -112,6 +176,7 @@ const AdminInventory: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
+    clearInventoryDraft();
   };
 
   const handleAddGalleryImage = () => {

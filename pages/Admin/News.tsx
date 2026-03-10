@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +25,43 @@ import {
   Upload,
   Link as LinkIcon
 } from 'lucide-react';
+
+const NEWS_DRAFT_KEY = 'foodmax_admin_news_draft_v1';
+
+type NewsDraft = {
+  editingItemId: string | null;
+  formData: Partial<NewsItem>;
+  contentString: string;
+  hasCustomSlug: boolean;
+};
+
+const readNewsDraft = (): NewsDraft | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(NEWS_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as NewsDraft;
+    if (!parsed || typeof parsed !== 'object' || !parsed.formData) return null;
+    return {
+      editingItemId: typeof parsed.editingItemId === 'string' ? parsed.editingItemId : null,
+      formData: parsed.formData,
+      contentString: typeof parsed.contentString === 'string' ? parsed.contentString : '',
+      hasCustomSlug: Boolean(parsed.hasCustomSlug)
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writeNewsDraft = (draft: NewsDraft) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(NEWS_DRAFT_KEY, JSON.stringify(draft));
+};
+
+const clearNewsDraft = () => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(NEWS_DRAFT_KEY);
+};
 
 const AdminNews: React.FC = () => {
   const createNewsId = () => {
@@ -65,6 +102,37 @@ const AdminNews: React.FC = () => {
   // Derived state for the multi-line content textarea
   const [contentString, setContentString] = useState('');
 
+  useEffect(() => {
+    const draft = readNewsDraft();
+    if (!draft) return;
+
+    if (draft.editingItemId) {
+      const existingItem = news.find((item) => item.id === draft.editingItemId);
+      setEditingItem(existingItem || ({ id: draft.editingItemId } as NewsItem));
+    } else {
+      setEditingItem(null);
+    }
+
+    setFormData(draft.formData);
+    setContentString(draft.contentString);
+    setHasCustomSlug(draft.hasCustomSlug);
+    setIsModalOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      clearNewsDraft();
+      return;
+    }
+
+    writeNewsDraft({
+      editingItemId: editingItem?.id || null,
+      formData,
+      contentString,
+      hasCustomSlug
+    });
+  }, [isModalOpen, editingItem?.id, formData, contentString, hasCustomSlug]);
+
   const filteredNews = news.filter(n => 
     n.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     n.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -101,6 +169,7 @@ const AdminNews: React.FC = () => {
     setEditingItem(null);
     setSaveError(null);
     setHasCustomSlug(false);
+    clearNewsDraft();
   };
 
   const handleSave = async (e: React.FormEvent) => {
