@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Instagram, Shield } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Youtube, Shield } from 'lucide-react';
 import Logo from '../Logo.png';
 
 const Footer: React.FC = () => {
@@ -30,8 +30,8 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex space-x-4">
               <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Facebook size={20} /></a>
-              <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Linkedin size={20} /></a>
-              <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Instagram size={20} /></a>
+              <a href="https://www.linkedin.com/in/hobinhnghia/" target="_blank" rel="noreferrer" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Linkedin size={20} /></a>
+              <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Youtube size={20} /></a>
             </div>
           </div>
 
