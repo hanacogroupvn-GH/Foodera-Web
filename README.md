@@ -53,8 +53,17 @@ npm run dev
   - `supabase/migrations/20260302_add_products_pdf_url.sql`
   - `supabase/migrations/20260302_enable_product_pdf_storage.sql`
   - `supabase/migrations/20260304_add_news_slug_seo.sql`
+  - `supabase/migrations/20260312_enable_cms_image_storage.sql`
 - Optional env var:
   - `VITE_SUPABASE_PDF_BUCKET=product-pdfs` (defaults to `product-pdfs` if omitted)
+  - `VITE_SUPABASE_IMAGE_BUCKET=cms-images` (defaults to `cms-images` if omitted)
+
+### CMS Image Upload Notes
+
+- In `Admin > Inventory` and `Admin > Insights`, you can now upload a local image file for the primary cover image.
+- Uploaded images are stored in the public Supabase Storage bucket `cms-images`.
+- Supported formats: JPG, PNG, WEBP, GIF, AVIF, SVG, HEIC, HEIF.
+- Maximum file size: 10MB.
 
 ### News SEO URL Notes
 

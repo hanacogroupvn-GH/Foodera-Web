@@ -5,6 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { Product, CategoryType } from '../../types';
 import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/csvImport';
+import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import {
   Package, 
   Search, 
@@ -92,6 +93,8 @@ const AdminInventory: React.FC = () => {
     type: null,
     message: ''
   });
+  const [isUploadingPrimaryImage, setIsUploadingPrimaryImage] = useState(false);
+  const [primaryImageUploadError, setPrimaryImageUploadError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -145,6 +148,7 @@ const AdminInventory: React.FC = () => {
   );
 
   const openModal = (product?: Product) => {
+    setPrimaryImageUploadError(null);
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -176,6 +180,7 @@ const AdminInventory: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
+    setPrimaryImageUploadError(null);
     clearInventoryDraft();
   };
 
@@ -192,6 +197,32 @@ const AdminInventory: React.FC = () => {
     const updatedGallery = [...(formData.gallery || [])];
     updatedGallery.splice(index, 1);
     setFormData({ ...formData, gallery: updatedGallery });
+  };
+
+  const handlePrimaryImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setPrimaryImageUploadError(null);
+    setIsUploadingPrimaryImage(true);
+
+    try {
+      const publicUrl = await uploadCmsImage(file, [
+        'products',
+        (formData.id || editingProduct?.id || formData.name || 'product').trim(),
+        'hero'
+      ]);
+
+      setFormData((prev) => ({
+        ...prev,
+        image: publicUrl
+      }));
+    } catch (err: any) {
+      setPrimaryImageUploadError(err?.message || 'Image upload failed.');
+    } finally {
+      setIsUploadingPrimaryImage(false);
+    }
   };
 
   // Specification Management
@@ -575,7 +606,7 @@ const AdminInventory: React.FC = () => {
 
               {/* Main Image Section */}
               <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Primary Hero Visual (URL)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Primary Hero Visual (URL or upload)</label>
                 <div className="flex gap-6 items-start">
                   <div className="w-40 h-40 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {formData.image ? (
@@ -593,7 +624,30 @@ const AdminInventory: React.FC = () => {
                       className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
                       required
                     />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label
+                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                          isUploadingPrimaryImage
+                            ? 'cursor-not-allowed border-gray-100 bg-gray-100 text-gray-400'
+                            : 'cursor-pointer border-gray-200 bg-white text-foodmax-forest hover:border-foodmax-forest/20 hover:bg-foodmax-forest/5'
+                        }`}
+                      >
+                        {isUploadingPrimaryImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                        {isUploadingPrimaryImage ? 'Uploading image...' : 'Upload from computer'}
+                        <input
+                          type="file"
+                          accept={CMS_IMAGE_INPUT_ACCEPT}
+                          onChange={handlePrimaryImageUpload}
+                          disabled={isUploadingPrimaryImage}
+                          className="hidden"
+                        />
+                      </label>
+                      <span className="text-[10px] text-gray-400 font-medium">JPG, PNG, WEBP, GIF, AVIF. Max 10MB.</span>
+                    </div>
                     <p className="text-[10px] text-gray-400 italic">This is the main image displayed in the catalog.</p>
+                    {primaryImageUploadError && (
+                      <p className="text-[10px] text-red-500 italic">{primaryImageUploadError}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -802,7 +856,7 @@ const AdminInventory: React.FC = () => {
               </button>
               <button 
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || isUploadingPrimaryImage}
                 className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
               >
                 {isSaving ? (

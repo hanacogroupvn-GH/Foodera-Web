@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { NewsItem, NewsCategory } from '../../types';
 import { buildUniqueNewsSlug, getNewsPath, normalizeNewsSlug } from '../../lib/newsSeo';
 import { googleSheetToCsvUrl, mapCsvRowsToNews, parseCsv } from '../../lib/csvImport';
+import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { 
   FileText, 
   Search, 
@@ -87,6 +88,8 @@ const AdminNews: React.FC = () => {
     type: null,
     message: ''
   });
+  const [isUploadingCoverImage, setIsUploadingCoverImage] = useState(false);
+  const [coverImageUploadError, setCoverImageUploadError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<NewsItem>>({
@@ -141,6 +144,7 @@ const AdminNews: React.FC = () => {
 
   const openModal = (item?: NewsItem) => {
     setSaveError(null);
+    setCoverImageUploadError(null);
     if (item) {
       setEditingItem(item);
       setFormData(item);
@@ -168,8 +172,35 @@ const AdminNews: React.FC = () => {
     setIsModalOpen(false);
     setEditingItem(null);
     setSaveError(null);
+    setCoverImageUploadError(null);
     setHasCustomSlug(false);
     clearNewsDraft();
+  };
+
+  const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setCoverImageUploadError(null);
+    setIsUploadingCoverImage(true);
+
+    try {
+      const publicUrl = await uploadCmsImage(file, [
+        'news',
+        normalizeNewsSlug((editingItem?.id || formData.slug || formData.title || 'news-item').trim()) || 'news-item',
+        'cover'
+      ]);
+
+      setFormData((prev) => ({
+        ...prev,
+        image: publicUrl
+      }));
+    } catch (err: any) {
+      setCoverImageUploadError(err?.message || 'Image upload failed.');
+    } finally {
+      setIsUploadingCoverImage(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -515,7 +546,7 @@ const AdminNews: React.FC = () => {
             <form onSubmit={handleSave} className="flex-grow overflow-y-auto p-10 space-y-8">
               {/* Cover Image */}
               <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Featured Cover Image (URL)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Featured Cover Image (URL or upload)</label>
                 <div className="flex gap-6 items-center">
                   <div className="w-48 h-28 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {formData.image ? (
@@ -533,7 +564,30 @@ const AdminNews: React.FC = () => {
                       className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
                       required
                     />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label
+                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                          isUploadingCoverImage
+                            ? 'cursor-not-allowed border-gray-100 bg-gray-100 text-gray-400'
+                            : 'cursor-pointer border-gray-200 bg-white text-foodmax-forest hover:border-foodmax-forest/20 hover:bg-foodmax-forest/5'
+                        }`}
+                      >
+                        {isUploadingCoverImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                        {isUploadingCoverImage ? 'Uploading image...' : 'Upload from computer'}
+                        <input
+                          type="file"
+                          accept={CMS_IMAGE_INPUT_ACCEPT}
+                          onChange={handleCoverImageUpload}
+                          disabled={isUploadingCoverImage}
+                          className="hidden"
+                        />
+                      </label>
+                      <span className="text-[10px] text-gray-400 font-medium">JPG, PNG, WEBP, GIF, AVIF. Max 10MB.</span>
+                    </div>
                     <p className="text-[10px] text-gray-400 italic font-medium">Resolution: 1200x800px recommended for high-DPI displays.</p>
+                    {coverImageUploadError && (
+                      <p className="text-[10px] text-red-500 italic">{coverImageUploadError}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -642,7 +696,7 @@ const AdminNews: React.FC = () => {
               </button>
               <button 
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || isUploadingCoverImage}
                 className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
               >
                 {isSaving ? (
