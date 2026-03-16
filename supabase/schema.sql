@@ -14,6 +14,7 @@ create table if not exists public.products (
   gallery jsonb,
   specifications jsonb not null default '{}'::jsonb,
   filters jsonb not null default '{}'::jsonb,
+  translations jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -27,6 +28,7 @@ create table if not exists public.news (
   excerpt text not null,
   content jsonb not null default '[]'::jsonb,
   image text not null,
+  translations jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

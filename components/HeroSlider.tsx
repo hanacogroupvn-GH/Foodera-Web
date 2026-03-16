@@ -1,32 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-const slides = [
-  {
-    title: "Vietnam's Finest Rice Exports",
-    description: "Premium Jasmine, Long Grain White, and ST25 varieties processed to international standards for global importers.",
-    cta: "View Rice Portfolios",
-    link: "/products/rice",
-    image: "https://images.unsplash.com/photo-1769149797509-d005e2d32940?auto=format&fit=crop&q=80&w=1600"
-  },
-  {
-    title: "Premium Specialty Coffee",
-    description: "Exceptional Robusta and Arabica beans from the Central Highlands, tailored for specialty roasters and industrial buyers.",
-    cta: "Explore Coffee Lines",
-    link: "/products/coffee",
-    image: "https://images.unsplash.com/photo-1769159686935-c516d57023b5?auto=format&fit=crop&q=80&w=1600"
-  },
-  {
-    title: "Premium Vietnamese Cashew Kernels",
-    description: "Export-ready WW180, WW240, WW320, WS, and LBW grades sourced for retail, foodservice, and industrial buyers.",
-    cta: "Explore Cashew Grades",
-    link: "/products/cashew",
-    image: "https://images.unsplash.com/photo-1720720580549-70b4ebfa699a?auto=format&fit=crop&q=80&w=1600"
-  }
-];
+import { useLocale } from '../context/LocaleContext';
 
 const HeroSlider: React.FC = () => {
+  const { locale } = useLocale();
+  const slides = locale === 'zh'
+    ? [
+        {
+          title: '越南优质大米出口',
+          description: '面向全球进口商的优质茉莉香米、长粒白米与 ST25，大规模按国际标准加工。',
+          cta: '查看大米产品线',
+          link: '/products/rice',
+          image: 'https://images.unsplash.com/photo-1769149797509-d005e2d32940?auto=format&fit=crop&q=80&w=1600'
+        },
+        {
+          title: '精品与优质咖啡',
+          description: '来自越南中部高原的罗布斯塔与阿拉比卡，适合精品烘焙商与工业买家。',
+          cta: '探索咖啡产品线',
+          link: '/products/coffee',
+          image: 'https://images.unsplash.com/photo-1769159686935-c516d57023b5?auto=format&fit=crop&q=80&w=1600'
+        },
+        {
+          title: '越南优质腰果仁',
+          description: '适用于零售、餐饮与工业渠道的 WW180、WW240、WW320、WS 与 LBW 出口等级。',
+          cta: '查看腰果等级',
+          link: '/products/cashew',
+          image: 'https://images.unsplash.com/photo-1720720580549-70b4ebfa699a?auto=format&fit=crop&q=80&w=1600'
+        }
+      ]
+    : [
+        {
+          title: "Vietnam's Finest Rice Exports",
+          description: 'Premium Jasmine, Long Grain White, and ST25 varieties processed to international standards for global importers.',
+          cta: 'View Rice Portfolios',
+          link: '/products/rice',
+          image: 'https://images.unsplash.com/photo-1769149797509-d005e2d32940?auto=format&fit=crop&q=80&w=1600'
+        },
+        {
+          title: 'Premium Specialty Coffee',
+          description: 'Exceptional Robusta and Arabica beans from the Central Highlands, tailored for specialty roasters and industrial buyers.',
+          cta: 'Explore Coffee Lines',
+          link: '/products/coffee',
+          image: 'https://images.unsplash.com/photo-1769159686935-c516d57023b5?auto=format&fit=crop&q=80&w=1600'
+        },
+        {
+          title: 'Premium Vietnamese Cashew Kernels',
+          description: 'Export-ready WW180, WW240, WW320, WS, and LBW grades sourced for retail, foodservice, and industrial buyers.',
+          cta: 'Explore Cashew Grades',
+          link: '/products/cashew',
+          image: 'https://images.unsplash.com/photo-1720720580549-70b4ebfa699a?auto=format&fit=crop&q=80&w=1600'
+        }
+      ];
+  const quoteLabel = locale === 'zh' ? '申请报价' : 'Request Quotation';
   const [current, setCurrent] = useState(0);
 
   const nextSlide = () => setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -77,7 +103,7 @@ const HeroSlider: React.FC = () => {
                     to="/contact"
                     className="px-10 py-5 bg-white/10 backdrop-blur-xl border border-white/30 text-white rounded-2xl font-black text-center hover:bg-white/20 transition-all uppercase text-xs tracking-[0.2em]"
                   >
-                    Request Quotation
+                    {quoteLabel}
                   </Link>
                 </div>
               </div>

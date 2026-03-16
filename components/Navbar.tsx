@@ -3,22 +3,37 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download, Sun, Moon } from 'lucide-react';
 import { Product } from '../types';
-import Logo from '../Logo.png';
+import Logo from '../Logo-optimized.png';
 import { getNewsPath } from '../lib/newsSeo';
 import { useData } from '../context/DataContext';
+import { useLocale } from '../context/LocaleContext';
+import { formatDisplayDate, getCategoryLabel, getNewsCategoryLabel, localizeNewsItem, localizeProduct } from '../lib/contentLocalization';
 
-const MEGA_MENU_SECTIONS: Array<{ category: Product['category']; title: string }> = [
-  { category: 'Rice', title: 'Rice Portfolios' },
-  { category: 'Coffee', title: 'Coffee Exports' },
-  { category: 'Cashew', title: 'Cashew Exports' }
+const MEGA_MENU_SECTIONS: Array<{ category: Product['category'] }> = [
+  { category: 'Rice' },
+  { category: 'Coffee' },
+  { category: 'Cashew' }
 ];
 
 const buildSectionSubtitle = (items: Product[]) => {
   return `${items.length} active export SKU${items.length === 1 ? '' : 's'}`;
 };
 
+interface MegaMenuGroup {
+  name: string;
+  path: string;
+  products: Product[];
+}
+
+interface MegaMenuItem {
+  name: string;
+  path: string;
+  sub: string;
+}
+
 const Navbar: React.FC = () => {
   const { products, news } = useData();
+  const { locale, setLocale } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -27,31 +42,119 @@ const Navbar: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  const copy = locale === 'zh'
+    ? {
+        products: '产品',
+        news: '新闻',
+        about: '关于我们',
+        contact: '联系',
+        commercialTool: '商业工具',
+        themeDark: '深色',
+        themeLight: '浅色',
+        searchPlaceholder: '搜索产品、新闻和出口信息...',
+        productGroupsEmpty: '目录中有产品后，这里会自动显示分组。',
+        catalogHighlight: '精选目录',
+        currentCatalogUpdating: '当前目录正在更新',
+        addProductsHint: '在库存后台添加产品后，这张精选卡片会自动更新。',
+        viewProductDetails: '查看产品详情',
+        browseFullCatalog: '浏览完整目录',
+        requestQuote: '申请报价',
+        globalLogistics: '全球物流',
+        shippingToCountries: '覆盖 30+ 个国家',
+        qcProtocol: '质控协议',
+        certified: 'ISO 22000 与 HACCP 认证',
+        exploreFullCatalog: '查看完整出口目录',
+        directTradingDesk: '直接贸易窗口',
+        mainMenu: '主菜单',
+        contactUs: '联系我们',
+        portfolioMatches: '产品匹配',
+        marketInsights: '市场洞察',
+        noProductsMatch: '没有匹配的产品。',
+        noArticlesFound: '没有找到相关文章。',
+        keepTyping: '继续输入以查看结果...',
+        quickBrowse: '快捷浏览',
+        startSearch: '开始搜索',
+        startSearchDesc: '输入产品名称、分类或产品线，浏览当前出口目录与市场内容。',
+        riceExportPortfolios: '大米出口系列',
+        coffeeTradeLines: '咖啡产品线',
+        cashewKernelGrades: '腰果等级',
+        marketAnalysisArchive: '市场分析归档',
+        sectionTitles: {
+          Rice: '大米产品线',
+          Coffee: '咖啡出口',
+          Cashew: '腰果出口'
+        }
+      }
+    : {
+        products: 'Products',
+        news: 'News',
+        about: 'About Us',
+        contact: 'Contact',
+        commercialTool: 'Commercial Tool',
+        themeDark: 'Dark',
+        themeLight: 'Light',
+        searchPlaceholder: 'Search products, news, and export insights...',
+        productGroupsEmpty: 'Product groups will appear here as soon as items are available in the current catalog.',
+        catalogHighlight: 'Catalog Highlight',
+        currentCatalogUpdating: 'Current catalog is updating',
+        addProductsHint: 'Add products in the inventory panel to populate this featured card automatically.',
+        viewProductDetails: 'View Product Details',
+        browseFullCatalog: 'Browse Full Catalog',
+        requestQuote: 'Request Quote',
+        globalLogistics: 'Global Logistics',
+        shippingToCountries: 'Shipping to 30+ Countries',
+        qcProtocol: 'QC Protocol',
+        certified: 'ISO 22000 & HACCP Certified',
+        exploreFullCatalog: 'Explore Full Export Catalog',
+        directTradingDesk: 'Direct Trading Desk',
+        mainMenu: 'Main Menu',
+        contactUs: 'Contact Us',
+        portfolioMatches: 'Portfolio Matches',
+        marketInsights: 'Market Insights',
+        noProductsMatch: 'No products match your query.',
+        noArticlesFound: 'No articles found.',
+        keepTyping: 'Keep typing to see results...',
+        quickBrowse: 'Quick Browse',
+        startSearch: 'Start your search',
+        startSearchDesc: 'Type a product name, category, or product line to browse the current export catalog and market content.',
+        riceExportPortfolios: 'Rice Export Portfolios',
+        coffeeTradeLines: 'Coffee Trade Lines',
+        cashewKernelGrades: 'Cashew Kernel Grades',
+        marketAnalysisArchive: 'Market Analysis Archive',
+        sectionTitles: {
+          Rice: 'Rice Portfolios',
+          Coffee: 'Coffee Exports',
+          Cashew: 'Cashew Exports'
+        }
+      };
+
+  const localizedNews = useMemo(() => news.map((item) => localizeNewsItem(item, locale)), [locale, news]);
+
   const megaMenuSections = useMemo(
     () =>
       MEGA_MENU_SECTIONS.map((section) => {
-        const groupedItems = products.reduce((map, product) => {
+        const groupedItems = new Map<string, MegaMenuGroup>();
+
+        products.forEach((product) => {
           if (product.category !== section.category || !product.subCategory.trim()) {
-            return map;
+            return;
           }
 
           const key = product.subCategory.trim().toLowerCase();
-          const existing = map.get(key);
+          const existing = groupedItems.get(key);
           if (existing) {
             existing.products.push(product);
-            return map;
+            return;
           }
 
-          map.set(key, {
-            name: product.subCategory.trim(),
+          groupedItems.set(key, {
+            name: localizeProduct(product, locale).subCategory.trim(),
             path: `/products/${section.category.toLowerCase()}?sub=${encodeURIComponent(product.subCategory.trim())}`,
             products: [product]
           });
+        });
 
-          return map;
-        }, new Map<string, { name: string; path: string; products: Product[] }>());
-
-        const items = Array.from(groupedItems.values()).map((item) => ({
+        const items: MegaMenuItem[] = Array.from(groupedItems.values()).map((item) => ({
           name: item.name,
           path: item.path,
           sub: buildSectionSubtitle(item.products)
@@ -59,10 +162,11 @@ const Navbar: React.FC = () => {
 
         return {
           ...section,
+          title: copy.sectionTitles[section.category],
           items
         };
       }).filter((section) => section.items.length > 0),
-    [products]
+    [copy.sectionTitles, locale, products]
   );
 
   const featuredProduct = useMemo(() => {
@@ -72,26 +176,38 @@ const Navbar: React.FC = () => {
 
     return products.find((product) => product.pdfUrl?.trim()) ?? products[0];
   }, [products]);
+  const featuredProductDisplay = useMemo(
+    () => (featuredProduct ? localizeProduct(featuredProduct, locale) : null),
+    [featuredProduct, locale]
+  );
 
   const filteredProducts = useMemo(
     () =>
       searchQuery.length > 1
         ? products
             .filter(
-              (product) =>
-                product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product.subCategory.toLowerCase().includes(searchQuery.toLowerCase())
+              (product) => {
+                const localizedProduct = localizeProduct(product, locale);
+                const query = searchQuery.toLowerCase();
+                return (
+                  product.name.toLowerCase().includes(query) ||
+                  product.shortDescription.toLowerCase().includes(query) ||
+                  product.subCategory.toLowerCase().includes(query) ||
+                  localizedProduct.name.toLowerCase().includes(query) ||
+                  localizedProduct.shortDescription.toLowerCase().includes(query) ||
+                  localizedProduct.subCategory.toLowerCase().includes(query)
+                );
+              }
             )
             .slice(0, 5)
         : [],
-    [products, searchQuery]
+    [locale, products, searchQuery]
   );
 
   const filteredNews = useMemo(
     () =>
       searchQuery.length > 1
-        ? news
+        ? localizedNews
             .filter(
               (item) =>
                 item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -99,7 +215,7 @@ const Navbar: React.FC = () => {
             )
             .slice(0, 3)
         : [],
-    [news, searchQuery]
+    [localizedNews, searchQuery]
   );
 
   useEffect(() => {
@@ -164,7 +280,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-6">
               <Link to="/commercial-tool" className="flex items-center gap-2 text-[11px] font-black text-foodmax-forest hover:text-foodmax-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                 <BarChart3 size={14} />
-                Commercial Tool
+                {copy.commercialTool}
               </Link>
               <button
                 onClick={handleThemeToggle}
@@ -173,11 +289,27 @@ const Navbar: React.FC = () => {
                 title="Toggle dark mode"
               >
                 {isDarkMode ? <Sun size={14} className="text-foodmax-lime" /> : <Moon size={14} className="text-foodmax-forest" />}
-                {isDarkMode ? 'Light' : 'Dark'}
+                {isDarkMode ? copy.themeLight : copy.themeDark}
               </button>
               <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <Globe size={12} />
-                EN
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setLocale('en')}
+                    className={`transition-colors ${locale === 'en' ? 'text-foodmax-forest' : 'hover:text-foodmax-forest'}`}
+                  >
+                    EN
+                  </button>
+                  <span>/</span>
+                  <button
+                    type="button"
+                    onClick={() => setLocale('zh')}
+                    className={`transition-colors ${locale === 'zh' ? 'text-foodmax-forest' : 'hover:text-foodmax-forest'}`}
+                  >
+                    中文
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -205,7 +337,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setIsMegaMenuOpen(false)}
                     className={`flex items-center text-xs font-black transition-colors tracking-[0.2em] uppercase py-8 ${isMegaMenuOpen ? 'text-foodmax-forest' : 'text-gray-700 hover:text-foodmax-forest'}`}
                   >
-                    Products <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+                    {copy.products} <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
                   </Link>
 
                   {/* FULL WIDTH MEGA MENU */}
@@ -243,7 +375,7 @@ const Navbar: React.FC = () => {
                           ) : (
                             <div className="col-span-9 flex items-center rounded-[2rem] border border-dashed border-gray-200 bg-gray-50 px-8 py-12">
                               <p className="text-sm font-bold text-gray-500">
-                                Product groups will appear here as soon as items are available in the current catalog.
+                                {copy.productGroupsEmpty}
                               </p>
                             </div>
                           )}
@@ -255,27 +387,27 @@ const Navbar: React.FC = () => {
                               
                               <div className="relative z-10 flex flex-col h-full">
                                 <span className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.3em] mb-4 block">
-                                  Catalog Highlight
+                                  {copy.catalogHighlight}
                                 </span>
-                                {featuredProduct ? (
+                                {featuredProductDisplay ? (
                                   <>
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.28em] mb-3">
-                                      {featuredProduct.category} / {featuredProduct.subCategory}
+                                      {getCategoryLabel(featuredProduct.category, locale)} / {featuredProductDisplay.subCategory}
                                     </p>
                                     <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">
-                                      {featuredProduct.name}
+                                      {featuredProductDisplay.name}
                                     </h4>
                                     <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
-                                      {featuredProduct.shortDescription}
+                                      {featuredProductDisplay.shortDescription}
                                     </p>
                                   </>
                                 ) : (
                                   <>
                                     <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">
-                                      Current catalog is updating
+                                      {copy.currentCatalogUpdating}
                                     </h4>
                                     <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
-                                      Add products in the inventory panel to populate this featured card automatically.
+                                      {copy.addProductsHint}
                                     </p>
                                   </>
                                 )}
@@ -288,7 +420,7 @@ const Navbar: React.FC = () => {
                                       onClick={() => setIsMegaMenuOpen(false)}
                                     >
                                       <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
-                                        View Product Details
+                                        {copy.viewProductDetails}
                                       </span>
                                       <ArrowRight size={14} className="text-foodmax-forest" />
                                     </Link>
@@ -299,7 +431,7 @@ const Navbar: React.FC = () => {
                                       onClick={() => setIsMegaMenuOpen(false)}
                                     >
                                       <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
-                                        Browse Full Catalog
+                                        {copy.browseFullCatalog}
                                       </span>
                                       <ArrowRight size={14} className="text-foodmax-forest" />
                                     </Link>
@@ -309,7 +441,7 @@ const Navbar: React.FC = () => {
                                     className="flex items-center justify-between w-full p-4 bg-foodmax-forest text-white rounded-xl shadow-lg hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
                                     onClick={() => setIsMegaMenuOpen(false)}
                                   >
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Request Quote</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{copy.requestQuote}</span>
                                     <Download size={14} />
                                   </Link>
                                 </div>
@@ -325,19 +457,20 @@ const Navbar: React.FC = () => {
                                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodmax-forest"><Globe size={18} /></div>
                                 <div>
                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Global Logistics</p>
-                                  <p className="text-[11px] font-bold text-gray-900 uppercase">Shipping to 30+ Countries</p>
+                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{copy.globalLogistics}</p>
+                                  <p className="text-[11px] font-bold text-gray-900 uppercase">{copy.shippingToCountries}</p>
                                 </div>
                              </div>
                              <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodmax-forest"><FileText size={18} /></div>
                                 <div>
-                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">QC Protocol</p>
-                                  <p className="text-[11px] font-bold text-gray-900 uppercase">ISO 22000 & HACCP Certified</p>
+                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{copy.qcProtocol}</p>
+                                  <p className="text-[11px] font-bold text-gray-900 uppercase">{copy.certified}</p>
                                 </div>
                              </div>
                           </div>
                           <Link to="/products" className="group flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] hover:text-foodmax-lime transition-colors" onClick={() => setIsMegaMenuOpen(false)}>
-                            Explore Full Export Catalog <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                            {copy.exploreFullCatalog} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                           </Link>
                         </div>
                       </div>
@@ -345,8 +478,8 @@ const Navbar: React.FC = () => {
                   )}
                 </div>
 
-                <Link to="/news" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">News</Link>
-                <Link to="/about" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">About Us</Link>
+                <Link to="/news" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.news}</Link>
+                <Link to="/about" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.about}</Link>
                 
               <div className="flex items-center space-x-6">
                 <button
@@ -364,7 +497,7 @@ const Navbar: React.FC = () => {
                     <Search size={20} />
                   </button>
                   <Link to="/contact" className="px-7 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
-                    Contact
+                    {copy.contact}
                   </Link>
                 </div>
               </div>
@@ -404,17 +537,35 @@ const Navbar: React.FC = () => {
                     <Phone className="text-foodmax-forest" size={20} /> +84 964 791 902
                   </a>
                   <Link to="/commercial-tool" className="flex items-center gap-3 text-lg font-black text-foodmax-forest mt-4" onClick={() => setIsOpen(false)}>
-                    <BarChart3 size={20} /> Commercial Tool
+                    <BarChart3 size={20} /> {copy.commercialTool}
                   </Link>
+                  <div className="flex items-center gap-3 text-sm font-black text-gray-500 mt-4">
+                    <Globe size={18} className="text-foodmax-forest" />
+                    <button
+                      type="button"
+                      onClick={() => setLocale('en')}
+                      className={locale === 'en' ? 'text-foodmax-forest' : ''}
+                    >
+                      EN
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => setLocale('zh')}
+                      className={locale === 'zh' ? 'text-foodmax-forest' : ''}
+                    >
+                      中文
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-6">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">Main Menu</p>
-                  <Link to="/products" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>Products</Link>
-                  <Link to="/news" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>News</Link>
-                  <Link to="/about" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>About Us</Link>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{copy.mainMenu}</p>
+                  <Link to="/products" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.products}</Link>
+                  <Link to="/news" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
+                  <Link to="/about" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.about}</Link>
                   <Link to="/contact" className="block w-full py-5 bg-foodmax-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
-                    Contact Us
+                    {copy.contactUs}
                   </Link>
                 </div>
               </div>
@@ -435,7 +586,7 @@ const Navbar: React.FC = () => {
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products, news, and export insights..."
+                  placeholder={copy.searchPlaceholder}
                   className="w-full text-2xl md:text-3xl font-black text-gray-900 outline-none placeholder:text-gray-200"
                 />
               </div>
@@ -456,28 +607,31 @@ const Navbar: React.FC = () => {
                   <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 flex items-center gap-2">
                       <ShoppingBag size={14} className="text-foodmax-forest" /> 
-                      Portfolio Matches ({filteredProducts.length})
+                      {copy.portfolioMatches} ({filteredProducts.length})
                     </h3>
                     <div className="space-y-4">
-                      {filteredProducts.map(p => (
+                      {filteredProducts.map((product) => {
+                        const localizedProduct = localizeProduct(product, locale);
+                        return (
                         <button 
-                          key={p.id} 
-                          onClick={() => handleSearchNavigation(`/product/${p.id}`)}
+                          key={product.id} 
+                          onClick={() => handleSearchNavigation(`/product/${product.id}`)}
                           className="w-full text-left group flex items-center gap-6 p-4 rounded-2xl border border-gray-50 hover:border-foodmax-lime/30 hover:bg-foodmax-lime/5 transition-all"
                         >
                           <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                            <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+                            <img src={product.image} className="w-full h-full object-cover" alt={localizedProduct.name} />
                           </div>
                           <div className="flex-grow">
-                            <span className="text-[9px] font-black text-foodmax-forest uppercase tracking-widest">{p.subCategory}</span>
-                            <h4 className="text-lg font-black text-gray-900 group-hover:text-foodmax-forest transition-colors">{p.name}</h4>
-                            <p className="text-xs text-gray-500 line-clamp-1">{p.shortDescription}</p>
+                            <span className="text-[9px] font-black text-foodmax-forest uppercase tracking-widest">{localizedProduct.subCategory}</span>
+                            <h4 className="text-lg font-black text-gray-900 group-hover:text-foodmax-forest transition-colors">{localizedProduct.name}</h4>
+                            <p className="text-xs text-gray-500 line-clamp-1">{localizedProduct.shortDescription}</p>
                           </div>
                           <ArrowRight size={20} className="text-gray-300 group-hover:text-foodmax-forest transition-colors" />
                         </button>
-                      ))}
+                        );
+                      })}
                       {filteredProducts.length === 0 && (
-                        <p className="text-sm text-gray-400 italic">No products match your query.</p>
+                        <p className="text-sm text-gray-400 italic">{copy.noProductsMatch}</p>
                       )}
                     </div>
                   </div>
@@ -488,7 +642,7 @@ const Navbar: React.FC = () => {
                   <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 flex items-center gap-2">
                       <FileText size={14} className="text-foodmax-forest" /> 
-                      Market Insights ({filteredNews.length})
+                      {copy.marketInsights} ({filteredNews.length})
                     </h3>
                     <div className="space-y-6">
                       {filteredNews.map(n => (
@@ -497,13 +651,13 @@ const Navbar: React.FC = () => {
                           onClick={() => handleSearchNavigation(getNewsPath(n))}
                           className="w-full text-left group border-b border-gray-100 pb-6 hover:translate-x-1 transition-transform"
                         >
-                          <span className="text-[9px] font-black text-foodmax-lime uppercase tracking-widest mb-1 block">{n.date}</span>
+                          <span className="text-[9px] font-black text-foodmax-lime uppercase tracking-widest mb-1 block">{formatDisplayDate(n.date, locale)}</span>
                           <h4 className="text-xl font-black text-gray-900 group-hover:text-foodmax-forest transition-colors mb-2">{n.title}</h4>
                           <p className="text-sm text-gray-500 line-clamp-2">{n.excerpt}</p>
                         </button>
                       ))}
                       {filteredNews.length === 0 && (
-                        <p className="text-sm text-gray-400 italic">No articles found.</p>
+                        <p className="text-sm text-gray-400 italic">{copy.noArticlesFound}</p>
                       )}
                     </div>
                   </div>
@@ -511,23 +665,23 @@ const Navbar: React.FC = () => {
               </div>
             ) : searchQuery.length === 1 ? (
               <div className="text-center py-20">
-                <p className="text-lg font-medium text-gray-400">Keep typing to see results...</p>
+                <p className="text-lg font-medium text-gray-400">{copy.keepTyping}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12 py-10">
                 <div>
-                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-100 pb-4">Quick Browse</h4>
+                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-100 pb-4">{copy.quickBrowse}</h4>
                   <div className="flex flex-col gap-3">
-                    <button onClick={() => handleSearchNavigation('/products/rice')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Rice Export Portfolios</button>
-                    <button onClick={() => handleSearchNavigation('/products/coffee')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Coffee Trade Lines</button>
-                    <button onClick={() => handleSearchNavigation('/products/cashew')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Cashew Kernel Grades</button>
-                    <button onClick={() => handleSearchNavigation('/news')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Market Analysis Archive</button>
+                    <button onClick={() => handleSearchNavigation('/products/rice')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.riceExportPortfolios}</button>
+                    <button onClick={() => handleSearchNavigation('/products/coffee')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.coffeeTradeLines}</button>
+                    <button onClick={() => handleSearchNavigation('/products/cashew')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.cashewKernelGrades}</button>
+                    <button onClick={() => handleSearchNavigation('/news')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.marketAnalysisArchive}</button>
                   </div>
                 </div>
                 <div className="md:col-span-2">
                    <div className="bg-gray-50 rounded-[2rem] p-10">
-                      <h4 className="text-xl font-black text-gray-900 mb-4">Start your search</h4>
-                      <p className="text-gray-500 font-medium mb-0">Type a product name, category, or product line to browse the current export catalog and market content.</p>
+                      <h4 className="text-xl font-black text-gray-900 mb-4">{copy.startSearch}</h4>
+                      <p className="text-gray-500 font-medium mb-0">{copy.startSearchDesc}</p>
                    </div>
                 </div>
               </div>

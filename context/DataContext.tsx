@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Product, NewsItem } from '../types';
-import { supabase } from '../lib/supabaseClient';
-import { NEWS as fallbackNewsData } from '../constants';
+﻿import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { NewsItem, NewsTranslation, Product, ProductTranslation } from '../types';
+import { hasSupabaseEnv, supabase } from '../lib/supabaseClient';
+import { NEWS as fallbackNewsData, PRODUCTS as fallbackProductData } from '../constants';
 import { getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import { normalizeProductCategory } from '../lib/productCategories';
+import { FALLBACK_NEWS_TRANSLATIONS, FALLBACK_PRODUCT_TRANSLATIONS } from '../lib/fallbackTranslations';
 
 interface DataContextType {
   products: Product[];
@@ -17,8 +18,6 @@ interface DataContextType {
   deleteNews: (id: string) => Promise<void>;
   exportData: () => string;
   importData: (jsonData: string) => Promise<boolean>;
-
-  // ✅ CHỈ KHAI BÁO
   resetToDefaults: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -28,19 +27,209 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const SAMPLE_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
 
-const mapProductFromRow = (row: any): Product => ({
-  id: row.id,
-  name: row.name,
-  category: normalizeProductCategory(row),
-  subCategory: row.sub_category,
-  description: row.description,
-  shortDescription: row.short_description,
-  image: row.image,
-  pdfUrl: row.pdf_url && row.pdf_url !== SAMPLE_PDF_URL ? row.pdf_url : undefined,
-  gallery: row.gallery ?? undefined,
-  specifications: row.specifications ?? {},
-  filters: row.filters ?? {}
+const normalizeStringRecord = (raw: unknown): Record<string, string> | undefined => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return undefined;
+  }
+
+  const entries = Object.entries(raw as Record<string, unknown>)
+    .map(([key, value]) => [key.trim(), String(value ?? '').trim()] as const)
+    .filter(([key, value]) => key && value);
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+const schemaCapabilities = {
+  productsTranslations: true,
+  newsTranslations: true
+};
+
+const isMissingTranslationsColumnError = (message: string, table: 'products' | 'news') =>
+  new RegExp(`could not find the 'translations' column of '${table}' in the schema cache`, 'i').test(message);
+
+const stripTranslationsFromRow = <T extends Record<string, unknown>>(row: T): T => {
+  const { translations: _translations, ...rest } = row;
+  return rest as T;
+};
+
+const stripTranslationsFromPayload = <T extends Record<string, unknown> | Record<string, unknown>[]>(payload: T): T => {
+  if (Array.isArray(payload)) {
+    return payload.map((item) => stripTranslationsFromRow(item)) as T;
+  }
+
+  return stripTranslationsFromRow(payload) as T;
+};
+
+const writeWithTranslationsFallback = async <T extends Record<string, unknown> | Record<string, unknown>[]>({
+  table,
+  payload,
+  execute
+}: {
+  table: 'products' | 'news';
+  payload: T;
+  execute: (nextPayload: T) => Promise<{ error: { message: string } | null }>;
+}) => {
+  const supportKey = table === 'products' ? 'productsTranslations' : 'newsTranslations';
+  const initialPayload = schemaCapabilities[supportKey] ? payload : stripTranslationsFromPayload(payload);
+
+  let result = await execute(initialPayload as T);
+  if (!result.error) {
+    return;
+  }
+
+  if (!isMissingTranslationsColumnError(result.error.message, table)) {
+    throw new Error(result.error.message);
+  }
+
+  if (schemaCapabilities[supportKey]) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `Supabase table "${table}" is missing the "translations" column. Falling back to writes without multilingual fields. Run supabase/migrations/20260316_add_content_translations.sql to persist zh content.`
+    );
+  }
+
+  schemaCapabilities[supportKey] = false;
+  result = await execute(stripTranslationsFromPayload(payload));
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+};
+
+const cloneProductTranslation = (translation: ProductTranslation): ProductTranslation => ({
+  ...translation,
+  specifications: translation.specifications ? { ...translation.specifications } : undefined
 });
+
+const cloneNewsTranslation = (translation: NewsTranslation): NewsTranslation => ({
+  ...translation,
+  content: translation.content ? [...translation.content] : undefined
+});
+
+const cloneProductTranslations = (translations?: Product['translations']): Product['translations'] => {
+  if (!translations) return undefined;
+  return {
+    zh: translations.zh ? cloneProductTranslation(translations.zh) : undefined
+  };
+};
+
+const cloneNewsTranslations = (translations?: NewsItem['translations']): NewsItem['translations'] => {
+  if (!translations) return undefined;
+  return {
+    zh: translations.zh ? cloneNewsTranslation(translations.zh) : undefined
+  };
+};
+
+const cloneProduct = (product: Product): Product => ({
+  ...product,
+  specifications: { ...product.specifications },
+  filters: { ...product.filters },
+  gallery: product.gallery ? [...product.gallery] : undefined,
+  translations: cloneProductTranslations(product.translations)
+});
+
+const cloneNewsItem = (item: NewsItem): NewsItem => ({
+  ...item,
+  content: [...item.content],
+  translations: cloneNewsTranslations(item.translations)
+});
+
+const mergeProductTranslations = (
+  primary?: Product['translations'],
+  fallback?: Product['translations']
+): Product['translations'] => {
+  const primaryZh = primary?.zh;
+  const fallbackZh = fallback?.zh;
+
+  if (!primaryZh && !fallbackZh) {
+    return undefined;
+  }
+
+  const mergedZh: ProductTranslation = {
+    ...(fallbackZh || {}),
+    ...(primaryZh || {}),
+    specifications: primaryZh?.specifications || fallbackZh?.specifications
+  };
+
+  if (!mergedZh.specifications) {
+    delete mergedZh.specifications;
+  }
+
+  return Object.keys(mergedZh).length > 0 ? { zh: mergedZh } : undefined;
+};
+
+const mergeNewsTranslations = (
+  primary?: NewsItem['translations'],
+  fallback?: NewsItem['translations']
+): NewsItem['translations'] => {
+  const primaryZh = primary?.zh;
+  const fallbackZh = fallback?.zh;
+
+  if (!primaryZh && !fallbackZh) {
+    return undefined;
+  }
+
+  const mergedZh: NewsTranslation = {
+    ...(fallbackZh || {}),
+    ...(primaryZh || {}),
+    content: primaryZh?.content || fallbackZh?.content
+  };
+
+  if (!mergedZh.content) {
+    delete mergedZh.content;
+  }
+
+  return Object.keys(mergedZh).length > 0 ? { zh: mergedZh } : undefined;
+};
+
+const normalizeProductTranslations = (raw: unknown): Product['translations'] => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return undefined;
+  }
+
+  const zhRaw = (raw as Record<string, unknown>).zh;
+  if (!zhRaw || typeof zhRaw !== 'object' || Array.isArray(zhRaw)) {
+    return undefined;
+  }
+
+  const zhRecord = zhRaw as Record<string, unknown>;
+  const zh: ProductTranslation = {
+    ...(typeof zhRecord.name === 'string' ? { name: zhRecord.name.trim() } : {}),
+    ...(typeof zhRecord.subCategory === 'string' ? { subCategory: zhRecord.subCategory.trim() } : {}),
+    ...(typeof zhRecord.description === 'string' ? { description: zhRecord.description.trim() } : {}),
+    ...(typeof zhRecord.shortDescription === 'string'
+      ? { shortDescription: zhRecord.shortDescription.trim() }
+      : {}),
+    ...(normalizeStringRecord(zhRecord.specifications)
+      ? { specifications: normalizeStringRecord(zhRecord.specifications) }
+      : {})
+  };
+
+  return Object.keys(zh).length > 0 ? { zh } : undefined;
+};
+
+const fallbackProductsById = new Map(fallbackProductData.map((product) => [product.id, product]));
+
+const mapProductFromRow = (row: any): Product => {
+  const rowId = row?.id != null ? String(row.id) : '';
+  const fallback = fallbackProductsById.get(rowId);
+  const fallbackTranslations =
+    fallback?.translations || (FALLBACK_PRODUCT_TRANSLATIONS[rowId] ? { zh: FALLBACK_PRODUCT_TRANSLATIONS[rowId] } : undefined);
+
+  return {
+    id: row.id,
+    name: row.name,
+    category: normalizeProductCategory(row),
+    subCategory: row.sub_category,
+    description: row.description,
+    shortDescription: row.short_description,
+    image: row.image,
+    pdfUrl: row.pdf_url && row.pdf_url !== SAMPLE_PDF_URL ? row.pdf_url : undefined,
+    gallery: row.gallery ?? undefined,
+    specifications: row.specifications ?? {},
+    filters: row.filters ?? {},
+    translations: mergeProductTranslations(normalizeProductTranslations(row.translations), fallbackTranslations)
+  };
+};
 
 const mapProductToRow = (p: Product) => ({
   id: p.id,
@@ -53,11 +242,29 @@ const mapProductToRow = (p: Product) => ({
   pdf_url: p.pdfUrl?.trim() ? p.pdfUrl.trim() : null,
   gallery: p.gallery ?? null,
   specifications: p.specifications ?? {},
-  filters: p.filters ?? {}
+  filters: p.filters ?? {},
+  translations: p.translations ?? null
 });
 
 const sortProductsById = (items: Product[]): Product[] =>
   [...items].sort((a, b) => a.id.localeCompare(b.id));
+
+const getFallbackProducts = () =>
+  sortProductsById(
+    fallbackProductData.map((product) =>
+      cloneProduct({
+        ...product,
+        translations: product.translations || (FALLBACK_PRODUCT_TRANSLATIONS[product.id] ? { zh: FALLBACK_PRODUCT_TRANSLATIONS[product.id] } : undefined)
+      })
+    )
+  );
+const getFallbackNews = () =>
+  fallbackNewsData.map((item) =>
+    cloneNewsItem({
+      ...item,
+      translations: item.translations || (FALLBACK_NEWS_TRANSLATIONS[item.id] ? { zh: FALLBACK_NEWS_TRANSLATIONS[item.id] } : undefined)
+    })
+  );
 
 const CONTENT_KEY_PRIORITY = [
   'intro',
@@ -153,6 +360,30 @@ const normalizeNewsContent = (raw: unknown): string[] => {
   return output;
 };
 
+const normalizeNewsTranslations = (raw: unknown): NewsItem['translations'] => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return undefined;
+  }
+
+  const zhRaw = (raw as Record<string, unknown>).zh;
+  if (!zhRaw || typeof zhRaw !== 'object' || Array.isArray(zhRaw)) {
+    return undefined;
+  }
+
+  const zhRecord = zhRaw as Record<string, unknown>;
+  const zh: NewsTranslation = {
+    ...(typeof zhRecord.title === 'string' ? { title: zhRecord.title.trim() } : {}),
+    ...(typeof zhRecord.excerpt === 'string' ? { excerpt: zhRecord.excerpt.trim() } : {})
+  };
+
+  const translatedContent = normalizeNewsContent(zhRecord.content);
+  if (translatedContent.length > 0) {
+    zh.content = translatedContent;
+  }
+
+  return Object.keys(zh).length > 0 ? { zh } : undefined;
+};
+
 const fallbackNewsById = new Map(fallbackNewsData.map((item) => [item.id, item]));
 const fallbackNewsBySlug = new Map(
   fallbackNewsData.map((item) => [normalizeNewsSlug(item.slug), item])
@@ -174,7 +405,11 @@ const mapNewsFromRow = (row: any): NewsItem => {
     category: (row.category ?? fallback?.category ?? 'Market Insights') as NewsItem['category'],
     excerpt: row.excerpt ?? fallback?.excerpt ?? '',
     content: normalized.length > 0 ? normalized : normalizeNewsContent(fallback?.content ?? []),
-    image: row.image ?? fallback?.image ?? ''
+    image: row.image ?? fallback?.image ?? '',
+    translations: mergeNewsTranslations(
+      normalizeNewsTranslations(row.translations),
+      fallback?.translations || (FALLBACK_NEWS_TRANSLATIONS[rowId] ? { zh: FALLBACK_NEWS_TRANSLATIONS[rowId] } : undefined)
+    )
   };
 };
 
@@ -186,7 +421,8 @@ const mapNewsToRow = (n: NewsItem) => ({
   category: n.category,
   excerpt: n.excerpt,
   content: normalizeNewsContent(n.content),
-  image: n.image
+  image: n.image,
+  translations: n.translations ?? null
 });
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -197,28 +433,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refresh = async () => {
     setIsLoading(true);
 
-    const [{ data: pData, error: pErr }, { data: nData, error: nErr }] = await Promise.all([
-      supabase.from('products').select('*').order('id', { ascending: true }),
-      supabase.from('news').select('*').order('date', { ascending: false })
-    ]);
-
-    if (pErr) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to load products:', pErr.message);
-    }
-    if (nErr) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to load news:', nErr.message);
+    if (!hasSupabaseEnv) {
+      setProducts(getFallbackProducts());
+      setNews(getFallbackNews());
+      setIsLoading(false);
+      return;
     }
 
-    const nextProducts = (pData ?? []).map(mapProductFromRow);
-    const nextNews = (nData ?? []).map(mapNewsFromRow);
+    try {
+      const [{ data: pData, error: pErr }, { data: nData, error: nErr }] = await Promise.all([
+        supabase.from('products').select('*').order('id', { ascending: true }),
+        supabase.from('news').select('*').order('date', { ascending: false })
+      ]);
 
-    setProducts(nextProducts);
-    setNews(nextNews);
+      if (pErr) {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to load products:', pErr.message);
+      }
+      if (nErr) {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to load news:', nErr.message);
+      }
 
-
-    setIsLoading(false);
+      setProducts(pErr ? getFallbackProducts() : (pData ?? []).map(mapProductFromRow));
+      setNews(nErr ? getFallbackNews() : (nData ?? []).map(mapNewsFromRow));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Falling back to bundled data after refresh failure:', error);
+      setProducts(getFallbackProducts());
+      setNews(getFallbackNews());
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -227,8 +473,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const addProduct = async (p: Product) => {
-    const { error } = await supabase.from('products').insert(mapProductToRow(p));
-    if (error) throw new Error(error.message);
+    await writeWithTranslationsFallback({
+      table: 'products',
+      payload: mapProductToRow(p),
+      execute: async (payload) => await supabase.from('products').insert(payload)
+    });
     setProducts((prev) => sortProductsById([...prev, p]));
   };
 
@@ -237,8 +486,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // If ID changes, upsert the new row first so an intentional replacement does not fail on duplicate IDs.
     if (oldId && oldId !== p.id) {
-      const { error: upsertErr } = await supabase.from('products').upsert(mapProductToRow(p), { onConflict: 'id' });
-      if (upsertErr) throw new Error(upsertErr.message);
+      await writeWithTranslationsFallback({
+        table: 'products',
+        payload: mapProductToRow(p),
+        execute: async (payload) => await supabase.from('products').upsert(payload, { onConflict: 'id' })
+      });
       const { error: delErr } = await supabase.from('products').delete().eq('id', oldId);
       if (delErr) throw new Error(delErr.message);
 
@@ -246,8 +498,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const { error } = await supabase.from('products').upsert(mapProductToRow(p), { onConflict: 'id' });
-    if (error) throw new Error(error.message);
+    await writeWithTranslationsFallback({
+      table: 'products',
+      payload: mapProductToRow(p),
+      execute: async (payload) => await supabase.from('products').upsert(payload, { onConflict: 'id' })
+    });
     setProducts((prev) => {
       const next = prev.some((x) => x.id === targetId)
         ? prev.map((x) => (x.id === targetId ? p : x))
@@ -263,14 +518,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addNews = async (item: NewsItem) => {
-    const { error } = await supabase.from('news').insert(mapNewsToRow(item));
-    if (error) throw new Error(error.message);
+    await writeWithTranslationsFallback({
+      table: 'news',
+      payload: mapNewsToRow(item),
+      execute: async (payload) => await supabase.from('news').insert(payload)
+    });
     setNews((prev) => [item, ...prev]);
   };
 
   const updateNews = async (item: NewsItem) => {
-    const { error } = await supabase.from('news').upsert(mapNewsToRow(item), { onConflict: 'id' });
-    if (error) throw new Error(error.message);
+    await writeWithTranslationsFallback({
+      table: 'news',
+      payload: mapNewsToRow(item),
+      execute: async (payload) => await supabase.from('news').upsert(payload, { onConflict: 'id' })
+    });
     setNews((prev) => prev.map((x) => (x.id === item.id ? item : x)));
   };
 
@@ -289,13 +550,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const n: NewsItem[] = Array.isArray(parsed.news) ? parsed.news : [];
 
       if (p.length) {
-        const { error } = await supabase.from('products').upsert(p.map(mapProductToRow), { onConflict: 'id' });
-        if (error) throw new Error(error.message);
+        await writeWithTranslationsFallback({
+          table: 'products',
+          payload: p.map(mapProductToRow),
+          execute: async (payload) => await supabase.from('products').upsert(payload, { onConflict: 'id' })
+        });
       }
 
       if (n.length) {
-        const { error } = await supabase.from('news').upsert(n.map(mapNewsToRow), { onConflict: 'id' });
-        if (error) throw new Error(error.message);
+        await writeWithTranslationsFallback({
+          table: 'news',
+          payload: n.map(mapNewsToRow),
+          execute: async (payload) => await supabase.from('news').upsert(payload, { onConflict: 'id' })
+        });
       }
 
       await refresh();
@@ -306,10 +573,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetToDefaults = async () => {
-  await supabase.from('products').delete().neq('id', '');
-  await supabase.from('news').delete().neq('id', '');
-  await refresh();
-};
+    if (!hasSupabaseEnv) {
+      setProducts(getFallbackProducts());
+      setNews(getFallbackNews());
+      setIsLoading(false);
+      return;
+    }
+
+    await supabase.from('products').delete().neq('id', '');
+    await supabase.from('news').delete().neq('id', '');
+    await refresh();
+  };
 
 
   const value = useMemo(
@@ -339,3 +613,5 @@ export const useData = () => {
   if (!ctx) throw new Error('useData must be used within DataProvider');
   return ctx;
 };
+
+

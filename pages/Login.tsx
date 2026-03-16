@@ -1,35 +1,62 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, Lock, ArrowRight, AlertCircle, Loader2, Mail } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useLocale } from '../context/LocaleContext';
 
 const Login: React.FC = () => {
+  const { locale } = useLocale();
+  const { login, adminCheckError } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login, adminCheckError } = useAuth();
-  const navigate = useNavigate();
+  const copy =
+    locale === 'zh'
+      ? {
+          title: '管理员登录',
+          subtitle: '使用您的 Supabase 管理员账户登录',
+          email: '邮箱',
+          password: '密码',
+          emailPlaceholder: 'admin@company.com',
+          passwordPlaceholder: '请输入密码',
+          signingIn: '登录中...',
+          signIn: '登录',
+          loginFailed: '登录失败'
+        }
+      : {
+          title: 'Admin Login',
+          subtitle: 'Sign in with your Supabase admin account',
+          email: 'Email',
+          password: 'Password',
+          emailPlaceholder: 'admin@company.com',
+          passwordPlaceholder: 'Password',
+          signingIn: 'Signing in...',
+          signIn: 'Sign in',
+          loginFailed: 'Login failed'
+        };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (isLoading) return;
 
     setErrorMsg(null);
     setIsLoading(true);
 
     try {
-      const res = await login(email.trim(), password);
+      const result = await login(email.trim(), password);
 
-      if (!res?.ok) {
-        setErrorMsg(res?.message || 'Login failed');
+      if (!result?.ok) {
+        setErrorMsg(result?.message || copy.loginFailed);
         return;
       }
 
       navigate('/admin', { replace: true });
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Login failed');
+    } catch (error: any) {
+      setErrorMsg(error?.message || copy.loginFailed);
     } finally {
       setIsLoading(false);
     }
@@ -43,8 +70,8 @@ const Login: React.FC = () => {
             <ShieldCheck className="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-            <p className="text-gray-600 text-sm">Sign in with your Supabase admin account</p>
+            <h1 className="text-2xl font-bold text-gray-900">{copy.title}</h1>
+            <p className="text-gray-600 text-sm">{copy.subtitle}</p>
           </div>
         </div>
 
@@ -57,32 +84,32 @@ const Login: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{copy.email}</label>
             <div className="relative">
               <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 type="email"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none"
-                placeholder="admin@company.com"
+                placeholder={copy.emailPlaceholder}
                 autoComplete="email"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{copy.password}</label>
             <div className="relative">
               <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 type="password"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none"
-                placeholder="••••••••"
+                placeholder={copy.passwordPlaceholder}
                 autoComplete="current-password"
               />
             </div>
@@ -94,7 +121,7 @@ const Login: React.FC = () => {
             className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition"
           >
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? copy.signingIn : copy.signIn}
           </button>
         </form>
       </div>

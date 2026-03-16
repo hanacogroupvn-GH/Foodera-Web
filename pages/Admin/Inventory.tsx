@@ -1,12 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLocale } from '../../context/LocaleContext';
 import { Product, CategoryType } from '../../types';
 import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { PRODUCT_CATEGORIES } from '../../lib/productCategories';
+import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import {
   Package, 
   Search, 
@@ -78,6 +80,15 @@ const clearInventoryDraft = () => {
   window.localStorage.removeItem(INVENTORY_DRAFT_KEY);
 };
 
+const cloneProductTranslations = (product?: Partial<Product>) => ({
+  zh: {
+    ...(product?.translations?.zh || {}),
+    specifications: product?.translations?.zh?.specifications
+      ? { ...product.translations.zh.specifications }
+      : {}
+  }
+});
+
 const buildNextProductId = (requestedId: string, existingIds: string[], excludedId?: string): string => {
   const baseId = requestedId.trim();
   const takenIds = new Set(existingIds.filter((id) => id !== excludedId));
@@ -96,7 +107,59 @@ const buildNextProductId = (requestedId: string, existingIds: string[], excluded
 const AdminInventory: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useData();
   const { logout } = useAuth();
-  const navigate = useNavigate();
+  const { locale, setLocale } = useLocale();
+  const copy =
+    locale === 'zh'
+      ? {
+          exitHome: '返回首页',
+          inventoryTitle: '全球产品库',
+          addCommodity: '新增产品',
+          importFromSheet: '从 Google Sheet 导入 CSV',
+          importLink: '导入链接',
+          importing: '导入中...',
+          uploadCsv: '上传 CSV',
+          searchPlaceholder: '按品名、等级、品类或 ID 搜索...',
+          editCommodity: '编辑产品',
+        createCommodity: '新建产品',
+        translationSection: '中文翻译',
+        translationNote: '用于简体中文目录输出；留空时默认回退到英文。',
+        updatePortfolio: '提交产品更新',
+        initializeCommodity: '创建产品条目',
+        manageDesc: '管理 B2B 出口产品的规格与供货信息。',
+        allCategories: '全部分类',
+        productIntel: '产品情报',
+        category: '分类',
+        status: '状态',
+        actions: '操作',
+        activeExport: '有效出口中',
+        noMatches: '未找到匹配产品',
+        cmsLanguage: 'CMS 语言'
+      }
+      : {
+          exitHome: 'Exit to Home',
+          inventoryTitle: 'Global Inventory',
+          addCommodity: 'Add New Commodity',
+          importFromSheet: 'Import CSV from Google Sheet',
+          importLink: 'Import Link',
+          importing: 'Importing...',
+          uploadCsv: 'Upload CSV',
+          searchPlaceholder: 'Search by variety name, grade, category, or ID...',
+          editCommodity: 'Edit Commodity',
+          createCommodity: 'Register New Commodity',
+          translationSection: 'Chinese Translation',
+          translationNote: 'Optional fields for Simplified Chinese catalog output. Leave blank to fall back to English.',
+          updatePortfolio: 'Commit Portfolio Update',
+          initializeCommodity: 'Initialize Commodity Entry',
+          manageDesc: 'Manage product specifications and stock availability for B2B export.',
+          allCategories: 'All Categories',
+          productIntel: 'Product Intelligence',
+          category: 'Category',
+          status: 'Status',
+          actions: 'Actions',
+          activeExport: 'Active Export',
+          noMatches: 'No matching commodities found',
+          cmsLanguage: 'CMS Language'
+        };
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -166,6 +229,8 @@ const AdminInventory: React.FC = () => {
       p.name.toLowerCase().includes(normalizedSearchTerm) ||
       p.category.toLowerCase().includes(normalizedSearchTerm) ||
       p.subCategory.toLowerCase().includes(normalizedSearchTerm) ||
+      (p.translations?.zh?.name || '').toLowerCase().includes(normalizedSearchTerm) ||
+      (p.translations?.zh?.subCategory || '').toLowerCase().includes(normalizedSearchTerm) ||
       p.id.toLowerCase().includes(normalizedSearchTerm);
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -179,7 +244,8 @@ const AdminInventory: React.FC = () => {
         ...product,
         pdfUrl: product.pdfUrl || '',
         gallery: product.gallery || [],
-        specifications: { ...product.specifications }
+        specifications: { ...product.specifications },
+        translations: cloneProductTranslations(product)
       });
     } else {
       setEditingProduct(null);
@@ -194,7 +260,8 @@ const AdminInventory: React.FC = () => {
         pdfUrl: '',
         gallery: [],
         specifications: { 'Broken': '5.0% Max', 'Moisture': '14.0% Max' },
-        filters: { type: 'Standard' }
+        filters: { type: 'Standard' },
+        translations: { zh: { name: '', subCategory: '', shortDescription: '', description: '', specifications: {} } }
       });
     }
     setNewGalleryUrl('');
@@ -273,6 +340,69 @@ const AdminInventory: React.FC = () => {
     const newSpecs = { ...formData.specifications };
     delete newSpecs[key];
     setFormData({ ...formData, specifications: newSpecs });
+  };
+
+  const updateZhTranslation = (field: 'name' | 'subCategory' | 'shortDescription' | 'description', value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const handleUpdateZhSpec = (oldKey: string, newKey: string, value: string) => {
+    const specs = { ...(formData.translations?.zh?.specifications || {}) };
+    if (oldKey !== newKey) {
+      delete specs[oldKey];
+    }
+    specs[newKey] = value;
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          specifications: specs
+        }
+      }
+    }));
+  };
+
+  const handleAddZhSpec = () => {
+    const nextSpecs = {
+      ...(formData.translations?.zh?.specifications || {}),
+      [`中文属性 ${Object.keys(formData.translations?.zh?.specifications || {}).length + 1}`]: '数值'
+    };
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          specifications: nextSpecs
+        }
+      }
+    }));
+  };
+
+  const handleRemoveZhSpec = (key: string) => {
+    const nextSpecs = { ...(formData.translations?.zh?.specifications || {}) };
+    delete nextSpecs[key];
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          specifications: nextSpecs
+        }
+      }
+    }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -423,7 +553,6 @@ const AdminInventory: React.FC = () => {
 
   const handleExit = () => {
     logout();
-    navigate('/');
   };
 
   return (
@@ -437,10 +566,11 @@ const AdminInventory: React.FC = () => {
 
         {/* Mini Branded Exit Button */}
         <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
-          <button 
+          <Link
+            to="/"
             onClick={handleExit}
             className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
-            title="Exit to Homepage"
+            title={locale === 'zh' ? '返回首页' : 'Exit to Homepage'}
           >
             <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
                <div className="flex items-center relative">
@@ -453,10 +583,10 @@ const AdminInventory: React.FC = () => {
             
             {/* Tooltip Label */}
             <div className="absolute left-full ml-4 py-2 px-3 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl">
-              Exit to Home
+              {copy.exitHome}
               <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
             </div>
-          </button>
+          </Link>
         </div>
       </aside>
 
@@ -466,22 +596,34 @@ const AdminInventory: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight">Global Inventory</h1>
-              <p className="text-gray-500 font-medium">Manage product specifications and stock availability for B2B export.</p>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.inventoryTitle}</h1>
+              <p className="text-gray-500 font-medium">{copy.manageDesc}</p>
             </div>
-            <button 
-              onClick={() => openModal()}
-              className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
-            >
-              <Plus size={20} /> Add New Commodity
-            </button>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                <span>{copy.cmsLanguage}</span>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
+                  EN
+                </button>
+                <span>/</span>
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
+                  中文
+                </button>
+              </div>
+              <button 
+                onClick={() => openModal()}
+                className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+              >
+                <Plus size={20} /> {copy.addCommodity}
+              </button>
+            </div>
           </div>
 
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-end gap-3">
               <div className="flex-grow space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
-                  Import CSV from Google Sheet
+                  {copy.importFromSheet}
                 </label>
                 <div className="relative">
                   <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
@@ -499,10 +641,10 @@ const AdminInventory: React.FC = () => {
                 disabled={isImportingCsv}
                 className="px-6 py-3 bg-foodmax-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
               >
-                {isImportingCsv ? 'Importing...' : 'Import Link'}
+                {isImportingCsv ? copy.importing : copy.importLink}
               </button>
               <label className="px-6 py-3 border border-gray-200 rounded-xl text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 transition-all">
-                <Upload size={14} /> Upload CSV
+                <Upload size={14} /> {copy.uploadCsv}
                 <input
                   type="file"
                   accept=".csv,text/csv"
@@ -535,7 +677,7 @@ const AdminInventory: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
               <input 
                 type="text" 
-                placeholder="Search by variety name, grade, category, or ID..."
+                placeholder={copy.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
@@ -548,10 +690,10 @@ const AdminInventory: React.FC = () => {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-xs font-black text-gray-500 uppercase tracking-widest cursor-pointer"
               >
-                <option value="all">All Categories</option>
+                <option value="all">{copy.allCategories}</option>
                 {PRODUCT_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
-                    {category}
+                    {getCategoryLabel(category as CategoryType, locale)}
                   </option>
                 ))}
               </select>
@@ -563,36 +705,38 @@ const AdminInventory: React.FC = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Product Intelligence</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Category</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Status</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Actions</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.productIntel}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.category}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.status}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredProducts.map(p => (
+                {filteredProducts.map(p => {
+                  const localized = localizeProduct(p, locale);
+                  return (
                   <tr key={p.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-inner">
-                          <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+                          <img src={p.image} className="w-full h-full object-cover" alt={localized.name} />
                         </div>
                         <div>
-                          <p className="text-base font-black text-gray-900 leading-tight">{p.name}</p>
+                          <p className="text-base font-black text-gray-900 leading-tight">{localized.name}</p>
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">ID: {p.id.toUpperCase()}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <span className="px-3 py-1 bg-foodmax-forest/5 text-foodmax-forest text-[10px] font-black uppercase tracking-widest rounded-lg">
-                        {p.category}
+                        {getCategoryLabel(p.category, locale)}
                       </span>
-                      <p className="text-xs text-gray-400 font-bold mt-1">{p.subCategory}</p>
+                      <p className="text-xs text-gray-400 font-bold mt-1">{localized.subCategory}</p>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
                         <CheckCircle size={14} className="text-green-500" />
-                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Active Export</span>
+                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{copy.activeExport}</span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
@@ -612,14 +756,14 @@ const AdminInventory: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
             
             {filteredProducts.length === 0 && (
               <div className="py-20 text-center">
                 <AlertCircle size={48} className="mx-auto text-gray-200 mb-4" />
-                <p className="text-gray-400 font-black uppercase text-xs tracking-widest">No matching commodities found</p>
+                <p className="text-gray-400 font-black uppercase text-xs tracking-widest">{copy.noMatches}</p>
               </div>
             )}
           </div>
@@ -633,7 +777,7 @@ const AdminInventory: React.FC = () => {
             <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodmax-forest text-white">
               <div>
                 <h2 className="text-xl font-black uppercase tracking-tight">
-                  {editingProduct ? 'Edit Commodity' : 'Register New Commodity'}
+                  {editingProduct ? copy.editCommodity : copy.createCommodity}
                 </h2>
                 <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">Export Intelligence Update</p>
               </div>
@@ -850,6 +994,60 @@ const AdminInventory: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
+                  <p className="mt-2 text-[11px] font-medium text-gray-500">
+                    {copy.translationNote}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Name</label>
+                    <input
+                      type="text"
+                      value={formData.translations?.zh?.name || ''}
+                      onChange={(e) => updateZhTranslation('name', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      placeholder="中文产品名称"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Sub-Category</label>
+                    <input
+                      type="text"
+                      value={formData.translations?.zh?.subCategory || ''}
+                      onChange={(e) => updateZhTranslation('subCategory', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      placeholder="中文子分类"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Short Description</label>
+                  <input
+                    type="text"
+                    value={formData.translations?.zh?.shortDescription || ''}
+                    onChange={(e) => updateZhTranslation('shortDescription', e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                    placeholder="中文简短描述"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Technical Description</label>
+                  <textarea
+                    rows={4}
+                    value={formData.translations?.zh?.description || ''}
+                    onChange={(e) => updateZhTranslation('description', e.target.value)}
+                    className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                    placeholder="中文技术说明"
+                  />
+                </div>
+              </div>
+
               {/* DYNAMIC QUALITY SPECS EDITOR */}
               <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
                 <div className="flex items-center justify-between">
@@ -905,6 +1103,61 @@ const AdminInventory: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Hash size={14} className="text-foodmax-forest" /> Chinese Specifications
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Localized labels for zh catalog output</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddZhSpec}
+                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                  >
+                    <PlusCircle size={16} /> Add Chinese Attribute
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(formData.translations?.zh?.specifications || {}).map(([key, value], idx) => (
+                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex-[2]">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleUpdateZhSpec(key, e.target.value, value as string)}
+                          placeholder="标签（如 水分）"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <div className="flex-[3]">
+                        <input
+                          type="text"
+                          value={value as string}
+                          onChange={(e) => handleUpdateZhSpec(key, key, e.target.value)}
+                          placeholder="值（如 14.0% Max）"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveZhSpec(key)}
+                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  {Object.keys(formData.translations?.zh?.specifications || {}).length === 0 && (
+                    <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No Chinese specs defined</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </form>
 
             <div className="p-8 border-t border-gray-100 bg-gray-50 flex items-center gap-4">
@@ -922,7 +1175,7 @@ const AdminInventory: React.FC = () => {
                 {isSaving ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <><Save size={18} /> {editingProduct ? 'Commit Portfolio Update' : 'Initialize Commodity Entry'}</>
+                  <><Save size={18} /> {editingProduct ? copy.updatePortfolio : copy.initializeCommodity}</>
                 )}
               </button>
             </div>

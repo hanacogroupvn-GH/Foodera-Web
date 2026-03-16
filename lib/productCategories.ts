@@ -1,8 +1,11 @@
 import { CategoryType, Product } from '../types';
 
-type ProductCategoryInput = Partial<
-  Pick<Product, 'category' | 'subCategory' | 'id' | 'name' | 'filters'>
-> & {
+type ProductCategoryInput = {
+  category?: string | null;
+  subCategory?: string | null;
+  id?: string | null;
+  name?: string | null;
+  filters?: Product['filters'];
   sub_category?: string | null;
 };
 

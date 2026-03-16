@@ -1,89 +1,175 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+﻿# Foodmax Global Agri Export
 
-# Run and deploy your AI Studio app
+Premium B2B export website for Foodmax, focused on Vietnamese rice, coffee, and cashew portfolios.
 
-This contains everything you need to run your app locally.
+## Local development
 
-View your app in AI Studio: https://ai.studio/apps/drive/16jwJKOeWWbZvyRh2jpULdz06lctc0K5R
+Prerequisites:
+- Node.js 18+
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-
-
-## Supabase setup (Admin + persistent data)
-
-1. Create a Supabase project.
-2. In Supabase Dashboard → **SQL Editor** run these files (in order):
-   - `supabase/schema.sql`
-   - `supabase/policies.sql`
-3. Create an admin user:
-   - Supabase → Authentication → Users → Add user (email/password)
-   - Copy the user UID and run:
-
-```sql
-insert into public.admin_users (user_id) values ('PASTE-UID-HERE');
-```
-
-4. Configure env vars:
-   - Copy `.env.example` → `.env.local`
-   - Fill `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
-
-5. Install & run:
-
+Run locally:
 ```bash
 npm install
 npm run dev
 ```
 
-> Deploy (Netlify): add the same env vars in Netlify Site settings.
+## Environment variables
 
-### Product PDF Upload Notes
+Create `.env.local` from `.env.example`.
 
-- Existing projects should run:
-  - `supabase/migrations/20260302_add_products_pdf_url.sql`
-  - `supabase/migrations/20260302_enable_product_pdf_storage.sql`
-  - `supabase/migrations/20260304_add_news_slug_seo.sql`
-  - `supabase/migrations/20260312_enable_cms_image_storage.sql`
-  - `supabase/migrations/20260316_reclassify_cashew_category.sql`
-- Optional env var:
-  - `VITE_SUPABASE_PDF_BUCKET=product-pdfs` (defaults to `product-pdfs` if omitted)
-  - `VITE_SUPABASE_IMAGE_BUCKET=cms-images` (defaults to `cms-images` if omitted)
+Required for persistent CMS/admin data:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-### CMS Image Upload Notes
+Optional:
+- `VITE_SUPABASE_PDF_BUCKET=product-pdfs`
+- `VITE_SUPABASE_IMAGE_BUCKET=cms-images`
+- `VITE_GEMINI_API_KEY=...` to enable the AI assistant's live market lookup mode
+- `SUPABASE_SERVICE_ROLE_KEY=...` for server-side maintenance scripts
+- `AI_PROVIDER=auto|gemini|ollama|openai` for translation backfill
+- `AI_MODEL=...` generic model override for backfill
+- `GEMINI_MODEL=...` Gemini-only model override
+- `OLLAMA_MODEL=...` Ollama-only model override
+- `OPENAI_MODEL=gpt-5-mini` OpenAI GPT model override
+- `GEMINI_API_KEY=...` for Gemini backfill
+- `OLLAMA_BASE_URL=http://127.0.0.1:11434` for local Ollama or `https://ollama.com` for Ollama cloud
+- `OLLAMA_API_KEY=...` for Ollama cloud
+- `OPENAI_BASE_URL=https://api.openai.com/v1` and `OPENAI_API_KEY=...` for OpenAI Responses API
+- `scripts/backfill.env.example` contains a minimal server-side example for the translation runner
 
-- In `Admin > Inventory` and `Admin > Insights`, you can now upload a local image file for the primary cover image.
-- Uploaded images are stored in the public Supabase Storage bucket `cms-images`.
-- Supported formats: JPG, PNG, WEBP, GIF, AVIF, SVG, HEIC, HEIF.
-- Maximum file size: 10MB.
+## Supabase setup
 
-### News SEO URL Notes
+1. Create a Supabase project.
+2. Run these SQL files in order:
+   - `supabase/schema.sql`
+   - `supabase/policies.sql`
+3. Create an admin user in Supabase Authentication.
+4. Insert that user's UID into `public.admin_users`:
 
-- News articles now use canonical URLs in the form:
-  - `/news/:slug`
-- Existing `/news/:id` and `/news/:id/:slug` links are still supported and auto-redirect to canonical URLs.
-- The `public.news.slug` column is auto-populated and kept unique via trigger functions.
-- In Admin CMS, you can type a custom slug per article. Leave it empty to auto-generate from title.
+```sql
+insert into public.admin_users (user_id) values ('PASTE-UID-HERE');
+```
 
-### CSV Import from Google Sheets (CMS)
+## Storage and migrations
 
-- In `Admin > Inventory` and `Admin > Insights`, you can now:
-  - paste a Google Sheet link and click `Import Link`
-  - or upload a local `.csv` file
-- Google Sheet links like `.../edit#gid=0` are converted automatically to CSV export URLs.
-- Product CSV supports columns such as:
-  - `id`, `name`, `category`, `subCategory`, `shortDescription`, `description`, `image`, `pdfUrl`, `gallery`
-  - `specifications` (JSON or `key:value;key2:value2`) or prefixed columns `spec_*`
-  - `filters` (JSON or `key:value`) or prefixed columns `filter_*`
-- Insight CSV supports columns such as:
-  - `id`, `title`, `slug`, `category`, `date`, `excerpt`, `content`, `image`
-  - optional segmented content columns: `content_1`, `content_2`, ...
+For existing projects, also run:
+- `supabase/migrations/20260302_add_products_pdf_url.sql`
+- `supabase/migrations/20260302_enable_product_pdf_storage.sql`
+- `supabase/migrations/20260304_add_news_slug_seo.sql`
+- `supabase/migrations/20260312_enable_cms_image_storage.sql`
+- `supabase/migrations/20260316_reclassify_cashew_category.sql`
+
+## CMS features
+
+Admin CMS supports:
+- Product CRUD
+- News/insight CRUD
+- PDF links for products
+- Image upload to Supabase Storage
+- CSV import from a Google Sheet link
+- CSV file upload for products and news
+
+### Product CSV fields
+
+Supported columns include:
+- `id`
+- `name`
+- `category`
+- `subCategory`
+- `shortDescription`
+- `description`
+- `image`
+- `pdfUrl`
+- `gallery`
+- `specifications` or `spec_*`
+- `filters` or `filter_*`
+
+### News CSV fields
+
+Supported columns include:
+- `id`
+- `title`
+- `slug`
+- `category`
+- `date`
+- `excerpt`
+- `content` or `content_1`, `content_2`, ...
+- `image`
+
+## Build
+
+```bash
+npm run build
+```
+
+## Chinese translation backfill
+
+To backfill `translations.zh` for existing `products` and `news` automatically, use the server-side script below.
+
+Preview what still needs translation:
+
+```bash
+npm run backfill:zh:dry
+```
+
+Generate a SQL patch for review:
+
+```bash
+npm run backfill:zh:sql
+```
+
+Write translations directly to Supabase:
+
+```bash
+npm run backfill:zh:supabase
+```
+
+Useful options:
+
+```bash
+node scripts/backfill-zh-translations-cli.mjs --provider auto --table products --limit 5 --dry-run
+node scripts/backfill-zh-translations-cli.mjs --provider ollama --model your-model --base-url https://ollama.com --write sql
+node scripts/backfill-zh-translations-cli.mjs --provider openai --model gpt-5-mini --write supabase
+node scripts/backfill-zh-translations-cli.mjs --provider auto --cache-file supabase/generated/zh-cache.json --write sql
+```
+
+## Optimized provider strategy
+
+The backfill runner is optimized to avoid unnecessary paid API calls.
+
+- `AI_PROVIDER=auto` is the recommended default.
+- In `auto` mode, the script tries providers in this order: `ollama -> openai -> gemini`.
+- If Ollama is running locally, it is preferred automatically.
+- A persistent cache is stored at `supabase/generated/backfill_zh_cache.json` by default, so repeated runs do not re-translate identical prompts.
+- If one provider fails, the script can fall through to the next available provider in the plan.
+
+## Free local option with Ollama
+
+If you do not want to pay for Gemini quota, use Ollama locally.
+
+1. Install Ollama on your machine.
+2. Pull an instruction model you trust for bilingual generation.
+3. Set these values in `.env.local`:
+
+```env
+AI_PROVIDER=auto
+OLLAMA_MODEL=your-local-model
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+```
+
+4. Run:
+
+```bash
+npm run backfill:zh:dry
+npm run backfill:zh:sql
+```
+
+Notes:
+- The script only fills missing `translations.zh` fields by default, so manual Chinese edits are preserved.
+- `--overwrite` forces the model to regenerate zh content even when a row already has Chinese data.
+- `--write supabase` should use `SUPABASE_SERVICE_ROLE_KEY`; relying on the anon key may fail because of RLS.
+- `--write sql` writes a generated patch file without touching the database.
+- Local models are free to run after setup, but translation quality depends on the model you choose and your machine resources.
+
+
+

@@ -5,27 +5,91 @@ import { ChevronRight, Filter, Calendar, ArrowUpDown } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { NewsCategory } from '../types';
 import { getNewsPath } from '../lib/newsSeo';
+import AppShellLoader from '../components/AppShellLoader';
+import { useLocale } from '../context/LocaleContext';
+import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
+
+const extractYear = (value: string) => {
+  const parsed = Date.parse(value);
+  if (!Number.isNaN(parsed)) {
+    return String(new Date(parsed).getFullYear());
+  }
+
+  const fallbackMatch = value.match(/\b(20\d{2})\b/);
+  return fallbackMatch?.[1] || null;
+};
 
 const News: React.FC = () => {
-  const { news } = useData();
+  const { news, isLoading } = useData();
+  const { locale } = useLocale();
   const [activeCategory, setActiveCategory] = useState<NewsCategory | 'All'>('All');
   const [activeYear, setActiveYear] = useState<string>('All');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
+  const copy = locale === 'zh'
+    ? {
+        all: '全部',
+        title: '新闻与洞察',
+        subtitle: '关于全球农产品趋势、贸易动态与 Foodmax 企业进展的专业观点。',
+        category: '分类：',
+        year: '年份：',
+        latestFirst: '最新优先',
+        oldestFirst: '最早优先',
+        readFull: '阅读完整文章',
+        noResults: '未找到结果',
+        noResultsDesc: '调整筛选条件以查看更多文章。',
+        clearAllFilters: '清除所有筛选',
+        reports: '全球市场报告',
+        reportsDesc: '订阅我们的月度分析，直接接收越南农业市场洞察。',
+        businessEmail: '商务邮箱',
+        subscribe: '订阅',
+        loader: '正在加载市场洞察...'
+      }
+    : {
+        all: 'All',
+        title: 'News & Insights',
+        subtitle: 'Professional perspectives on global agricultural trends, trade activities, and Foodmax corporate developments.',
+        category: 'Category:',
+        year: 'Year:',
+        latestFirst: 'Latest First',
+        oldestFirst: 'Oldest First',
+        readFull: 'Read Full Insight',
+        noResults: 'No results found',
+        noResultsDesc: 'Adjust your filters to see more articles.',
+        clearAllFilters: 'Clear All Filters',
+        reports: 'Global Market Reports',
+        reportsDesc: 'Subscribe to receive our proprietary monthly analysis on Vietnamese agriculture directly in your inbox.',
+        businessEmail: 'Business Email',
+        subscribe: 'Subscribe',
+        loader: 'Loading market insights...'
+      };
+
+  const localizedNews = useMemo(() => news.map((item) => localizeNewsItem(item, locale)), [locale, news]);
+
   const categories: (NewsCategory | 'All')[] = ['All', 'Market Insights', 'Company Updates', 'Sustainability', 'Events'];
-  const years = ['All', '2024', '2023'];
+  const years = useMemo(() => {
+    const availableYears = Array.from(
+      new Set(localizedNews.map((item) => extractYear(item.date)).filter((year): year is string => Boolean(year)))
+    ).sort((left, right) => Number(right) - Number(left));
+
+    return ['All', ...availableYears];
+  }, [localizedNews]);
 
   const filteredNews = useMemo(() => {
-    return news.filter(item => {
+    return localizedNews.filter(item => {
       const categoryMatch = activeCategory === 'All' || item.category === activeCategory;
-      const yearMatch = activeYear === 'All' || item.date.includes(activeYear);
+      const yearMatch = activeYear === 'All' || extractYear(item.date) === activeYear;
       return categoryMatch && yearMatch;
     }).sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
-  }, [news, activeCategory, activeYear, sortOrder]);
+  }, [activeCategory, activeYear, copy.all, localizedNews, sortOrder]);
+
+  if (isLoading && news.length === 0) {
+    return <AppShellLoader compact label={copy.loader} />;
+  }
 
   return (
     <div className="bg-white min-h-screen animate-in fade-in duration-500">
@@ -33,9 +97,9 @@ const News: React.FC = () => {
       <section className="bg-gray-50 border-b border-gray-100 py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-6 tracking-tight">News & Insights</h1>
+            <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-6 tracking-tight">{copy.title}</h1>
             <p className="text-xl text-gray-500 leading-relaxed font-medium">
-              Professional perspectives on global agricultural trends, trade activities, and Foodmax corporate developments.
+              {copy.subtitle}
             </p>
           </div>
         </div>
@@ -46,7 +110,7 @@ const News: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-4">Category:</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-4">{copy.category}</span>
               {categories.map(cat => (
                 <button
                   key={cat}
@@ -57,7 +121,7 @@ const News: React.FC = () => {
                       : 'bg-white text-gray-500 border-gray-200 hover:border-foodmax-forest hover:text-foodmax-forest'
                   }`}
                 >
-                  {cat}
+                  {cat === 'All' ? copy.all : getNewsCategoryLabel(cat as NewsCategory, locale)}
                 </button>
               ))}
             </div>
@@ -65,14 +129,14 @@ const News: React.FC = () => {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                  <Calendar size={12} /> Year:
+                  <Calendar size={12} /> {copy.year}
                 </span>
                 <select 
                   value={activeYear}
                   onChange={(e) => setActiveYear(e.target.value)}
                   className="text-xs font-bold text-gray-700 bg-transparent outline-none cursor-pointer"
                 >
-                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                  {years.map(y => <option key={y} value={y}>{y === 'All' ? copy.all : y}</option>)}
                 </select>
               </div>
 
@@ -83,7 +147,7 @@ const News: React.FC = () => {
                 className="flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-foodmax-forest transition-colors"
               >
                 <ArrowUpDown size={14} />
-                {sortOrder === 'newest' ? 'Latest First' : 'Oldest First'}
+                {sortOrder === 'newest' ? copy.latestFirst : copy.oldestFirst}
               </button>
             </div>
           </div>
@@ -96,49 +160,51 @@ const News: React.FC = () => {
           {filteredNews.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               {filteredNews.map((item) => (
-                <Link 
-                  key={item.id} 
+                <Link
+                  key={item.id}
                   to={getNewsPath(item)}
-                  className="group block"
+                  className="group block h-full"
                 >
-                  <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-gray-100 mb-8 border border-gray-100 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                    <img 
-                      src={item.image} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                    />
-                  </div>
-                  <div>
+                  <div className="h-full flex flex-col">
+                    <div className="aspect-[16/10] overflow-hidden rounded-2xl bg-gray-100 mb-8 border border-gray-100 shadow-sm group-hover:shadow-xl transition-all duration-500">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    </div>
+                    <div className="flex flex-1 flex-col">
                     <div className="flex items-center gap-3 mb-4">
                       <span className="text-[10px] font-black text-foodmax-forest uppercase tracking-widest px-2 py-1 bg-foodmax-forest/5 rounded">
-                        {item.category}
+                        {getNewsCategoryLabel(item.category, locale)}
                       </span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        {item.date}
+                        {formatDisplayDate(item.date, locale)}
                       </span>
                     </div>
                     <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-foodmax-forest transition-colors leading-tight">
                       {item.title}
                     </h3>
-                    <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-2 font-medium">
+                    <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3 font-medium text-justify [text-align:justify] [text-justify:inter-word] flex-1">
                       {item.excerpt}
                     </p>
                     <span className="inline-flex items-center gap-1 text-xs font-black text-foodmax-forest uppercase tracking-widest group-hover:gap-2 transition-all">
-                      Read Full Insight <ChevronRight size={14} />
+                      {copy.readFull} <ChevronRight size={14} />
                     </span>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
             <div className="py-40 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-              <h3 className="text-2xl font-black text-gray-900 mb-2">No results found</h3>
-              <p className="text-gray-500 mb-8">Adjust your filters to see more articles.</p>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">{copy.noResults}</h3>
+              <p className="text-gray-500 mb-8">{copy.noResultsDesc}</p>
               <button 
                 onClick={() => { setActiveCategory('All'); setActiveYear('All'); }}
                 className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-lg"
               >
-                Clear All Filters
+                {copy.clearAllFilters}
               </button>
             </div>
           )}
@@ -148,16 +214,16 @@ const News: React.FC = () => {
       {/* Subscription Block */}
       <section className="py-24 border-t border-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-black text-gray-900 mb-6">Global Market Reports</h2>
-          <p className="text-gray-500 mb-10 font-medium">Subscribe to receive our proprietary monthly analysis on Vietnamese agriculture directly in your inbox.</p>
+          <h2 className="text-3xl font-black text-gray-900 mb-6">{copy.reports}</h2>
+          <p className="text-gray-500 mb-10 font-medium">{copy.reportsDesc}</p>
           <form className="flex flex-col sm:flex-row gap-4">
             <input 
               type="email" 
-              placeholder="Business Email" 
+              placeholder={copy.businessEmail} 
               className="flex-grow px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/20 focus:border-foodmax-forest transition-all"
             />
             <button className="px-10 py-4 bg-foodmax-forest text-white font-black rounded-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg uppercase text-xs tracking-widest">
-              Subscribe
+              {copy.subscribe}
             </button>
           </form>
         </div>

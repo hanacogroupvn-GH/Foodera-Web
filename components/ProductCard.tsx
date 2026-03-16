@@ -3,12 +3,30 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { Product } from '../types';
+import { useLocale } from '../context/LocaleContext';
+import { getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const { locale } = useLocale();
+  const localizedProduct = localizeProduct(product, locale);
+  const copy = locale === 'zh'
+    ? {
+        specifications: '规格',
+        exportQuality: '出口品质',
+        details: '查看详情',
+        brokenSuffix: '碎米'
+      }
+    : {
+        specifications: 'Specifications',
+        exportQuality: 'Export Quality',
+        details: 'Details',
+        brokenSuffix: 'Broken'
+      };
+
   // Helper to render filter values as professional chips
   const renderAttributeChips = () => {
     return (
@@ -16,9 +34,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {Object.entries(product.filters).map(([key, value]) => {
           if (!value) return null;
           
-          let displayValue = value;
+          const rawValue = String(value);
+          let displayValue = getLocalizedFilterValue(rawValue, locale);
           // Apply specific formatting for key attributes
-          if (key === 'brokenRatio') displayValue = `${value} Broken`;
+          if (key === 'brokenRatio') displayValue = `${rawValue} ${copy.brokenSuffix}`;
           
           return (
             <span 
@@ -41,37 +60,37 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">
         <img 
           src={product.image} 
-          alt={product.name} 
+          alt={localizedProduct.name} 
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute top-4 left-4">
           <span className="px-3 py-1 bg-foodmax-forest text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-lg shadow-lg">
-            {product.subCategory}
+            {localizedProduct.subCategory}
           </span>
         </div>
       </div>
       
       <div className="p-6 flex-grow flex flex-col">
         <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-foodmax-forest transition-colors leading-tight">
-          {product.name}
+          {localizedProduct.name}
         </h3>
         
         <p className="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed font-medium">
-          {product.shortDescription}
+          {localizedProduct.shortDescription}
         </p>
 
         {/* Attribute Chips Section */}
         <div className="mb-6">
-          <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-2">Specifications</p>
+          <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-2">{copy.specifications}</p>
           {renderAttributeChips()}
         </div>
         
         <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            <CheckCircle size={12} className="text-foodmax-lime" /> Export Quality
+            <CheckCircle size={12} className="text-foodmax-lime" /> {copy.exportQuality}
           </span>
           <span className="flex items-center gap-1 text-sm font-black text-foodmax-forest transition-all group-hover:gap-2">
-            Details <ArrowRight size={16} />
+            {copy.details} <ArrowRight size={16} />
           </span>
         </div>
       </div>

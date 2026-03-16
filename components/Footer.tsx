@@ -2,9 +2,45 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Youtube, Shield } from 'lucide-react';
-import Logo from '../Logo.png';
+import Logo from '../Logo-optimized.png';
+import { useLocale } from '../context/LocaleContext';
 
 const Footer: React.FC = () => {
+  const { locale } = useLocale();
+  const copy = locale === 'zh'
+    ? {
+        description: 'Foodmax 是一家领先的越南农产品出口商，连接本地农业优势与全球市场需求。',
+        quickLinks: '快捷链接',
+        legacy: '我们的传承',
+        rice: '大米产品线',
+        coffee: '咖啡产品线',
+        cashew: '腰果产品线',
+        compliance: '合规体系',
+        quality: '质量标准',
+        logistics: '全球物流',
+        packaging: '包装规格',
+        terms: '贸易条款',
+        headOffice: '总部办公室',
+        rights: 'Foodmax Agriculture Export Co., Ltd. 保留所有权利。',
+        staffPortal: '员工入口'
+      }
+    : {
+        description: 'Foodmax is a premier Vietnamese exporter delivering high-grade agricultural products. We bridge the gap between local farming excellence and global market demands.',
+        quickLinks: 'Quick Links',
+        legacy: 'Our Legacy',
+        rice: 'Rice Portfolios',
+        coffee: 'Coffee Portfolios',
+        cashew: 'Cashew Portfolios',
+        compliance: 'Compliance',
+        quality: 'Quality Standards',
+        logistics: 'Global Logistics',
+        packaging: 'Packaging Specs',
+        terms: 'Terms of Trade',
+        headOffice: 'Head Office',
+        rights: 'Foodmax Agriculture Export Co., Ltd. All Rights Reserved.',
+        staffPortal: 'Staff Portal Access'
+      };
+
   const BrandLogo = () => (
     <div className="mb-6 inline-flex -mt-24">
       <img
@@ -26,7 +62,7 @@ const Footer: React.FC = () => {
               <BrandLogo />
             </Link>
             <p className="text-sm leading-relaxed mb-8 text-foodmax-forest/80">
-              Foodmax is a premier Vietnamese exporter delivering high-grade agricultural products. We bridge the gap between local farming excellence and global market demands.
+              {copy.description}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Facebook size={20} /></a>
@@ -36,27 +72,27 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">Quick Links</h4>
+            <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">{copy.quickLinks}</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/about" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Our Legacy</Link></li>
-              <li><Link to="/products/rice" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Rice Portfolios</Link></li>
-              <li><Link to="/products/coffee" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Coffee Portfolios</Link></li>
-              <li><Link to="/products/cashew" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Cashew Portfolios</Link></li>
+              <li><Link to="/about" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.legacy}</Link></li>
+              <li><Link to="/products/rice" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.rice}</Link></li>
+              <li><Link to="/products/coffee" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.coffee}</Link></li>
+              <li><Link to="/products/cashew" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.cashew}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">Compliance</h4>
+            <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">{copy.compliance}</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/operations#quality" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Quality Standards</Link></li>
-              <li><Link to="/operations#logistics" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Global Logistics</Link></li>
-              <li><Link to="/operations#packaging" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Packaging Specs</Link></li>
-              <li><Link to="/operations#terms" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Terms of Trade</Link></li>
+              <li><Link to="/operations#quality" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.quality}</Link></li>
+              <li><Link to="/operations#logistics" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.logistics}</Link></li>
+              <li><Link to="/operations#packaging" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.packaging}</Link></li>
+              <li><Link to="/operations#terms" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.terms}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">Head Office</h4>
+            <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">{copy.headOffice}</h4>
             <ul className="space-y-5 text-sm font-medium">
               <li className="flex items-start gap-3">
                 <MapPin size={20} className="text-foodmax-forest flex-shrink-0" />
@@ -75,10 +111,10 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[10px] font-bold text-foodmax-forest/60 uppercase tracking-widest">&copy; {new Date().getFullYear()} Foodmax Agriculture Export Co., Ltd. All Rights Reserved.</p>
+          <p className="text-[10px] font-bold text-foodmax-forest/60 uppercase tracking-widest">&copy; {new Date().getFullYear()} {copy.rights}</p>
           <div className="flex items-center gap-6">
             <Link to="/login" className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest/60 hover:text-foodmax-lime transition-colors uppercase tracking-widest">
-              <Shield size={12} /> Staff Portal Access
+              <Shield size={12} /> {copy.staffPortal}
             </Link>
           </div>
         </div>

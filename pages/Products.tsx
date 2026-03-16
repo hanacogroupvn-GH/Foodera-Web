@@ -4,13 +4,17 @@ import { useLocation, useParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import SectionHeading from '../components/SectionHeading';
 import ProductCard from '../components/ProductCard';
+import AppShellLoader from '../components/AppShellLoader';
 import { Filter, X, ChevronDown, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PRODUCT_CATEGORIES } from '../lib/productCategories';
+import { useLocale } from '../context/LocaleContext';
+import { getCategoryLabel, getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
 
 const ITEMS_PER_PAGE = 9;
 
 const Products: React.FC = () => {
-  const { products } = useData();
+  const { products, isLoading } = useData();
+  const { locale } = useLocale();
   const { category } = useParams<{ category?: string }>();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -21,6 +25,50 @@ const Products: React.FC = () => {
   const [filterProcessing, setFilterProcessing] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const copy = locale === 'zh'
+    ? {
+        loader: '正在加载产品目录...',
+        all: '全部',
+        titleAll: '我们的出口产品目录',
+        titlePortfolioSuffix: '产品系列',
+        subtitle: '面向国际市场的高品质农产品，严格按照全球食品安全标准处理。',
+        mainCategory: '主分类',
+        productLines: '产品线',
+        allVarieties: '全部品类',
+        processingMethod: '加工方式',
+        allProcesses: '全部工艺',
+        showing: '当前显示',
+        verifiedItems: '个已验证出口产品',
+        page: '页',
+        of: '/',
+        prev: '上一页',
+        next: '下一页',
+        emptyTitle: '当前分组暂无产品',
+        emptyDesc: '我们正在更新符合这些条件的出口库存。',
+        clearAllFilters: '清除所有筛选'
+      }
+    : {
+        loader: 'Loading product portfolios...',
+        all: 'All',
+        titleAll: 'Our Export Portfolios',
+        titlePortfolioSuffix: 'Portfolio',
+        subtitle: 'Premium agricultural commodities processed to the highest global food safety standards.',
+        mainCategory: 'Main Category',
+        productLines: 'Product Lines',
+        allVarieties: 'All Varieties',
+        processingMethod: 'Processing Method',
+        allProcesses: 'All Processes',
+        showing: 'Showing',
+        verifiedItems: 'verified export items',
+        page: 'Page',
+        of: 'of',
+        prev: 'Prev',
+        next: 'Next',
+        emptyTitle: 'Segment Empty',
+        emptyDesc: 'We are currently updating our available export stock for these specific criteria.',
+        clearAllFilters: 'Clear All Filters'
+      };
 
   useEffect(() => {
     setFilterCategory(category || 'all');
@@ -46,14 +94,16 @@ const Products: React.FC = () => {
   }, [filterCategory, filterSub, filterProcessing]);
 
   const categories = useMemo(
-    () => ['All', ...PRODUCT_CATEGORIES.filter((cat) => products.some((product) => product.category === cat))],
-    [products]
+    () => [copy.all, ...PRODUCT_CATEGORIES.filter((cat) => products.some((product) => product.category === cat))],
+    [copy.all, products]
   );
 
   const subs = useMemo(
     () =>
       PRODUCT_CATEGORIES.reduce((output, cat) => {
-        const lines = Array.from(new Set(products.filter((product) => product.category === cat).map((product) => product.subCategory)))
+        const lines: string[] = Array.from(
+          new Set<string>(products.filter((product) => product.category === cat).map((product) => product.subCategory))
+        )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b));
 
@@ -75,7 +125,10 @@ const Products: React.FC = () => {
   };
 
   // Capitalize category for display in the heading
-  const displayCategory = filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1);
+  const displayCategory = (() => {
+    const matched = PRODUCT_CATEGORIES.find((item) => item.toLowerCase() === filterCategory);
+    return matched ? getCategoryLabel(matched, locale) : filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1);
+  })();
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -90,13 +143,17 @@ const Products: React.FC = () => {
     }
   }, [currentPage, totalPages]);
 
+  if (isLoading && products.length === 0) {
+    return <AppShellLoader compact label={copy.loader} />;
+  }
+
   return (
     <div className="bg-white min-h-screen">
       <div className="bg-gray-50 py-20 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading 
-            title={filterCategory === 'all' ? 'Our Export Portfolios' : `${displayCategory} Portfolio`}
-            subtitle="Premium agricultural commodities processed to the highest global food safety standards."
+            title={filterCategory === 'all' ? copy.titleAll : `${displayCategory} ${copy.titlePortfolioSuffix}`}
+            subtitle={copy.subtitle}
             centered={false}
           />
         </div>
@@ -113,7 +170,7 @@ const Products: React.FC = () => {
 
               <div className={`${showFilters ? 'block' : 'hidden'} lg:block space-y-12`}>
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4">Main Category</h4>
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4">{copy.mainCategory}</h4>
                   <div className="flex flex-wrap lg:flex-col gap-2">
                     {categories.map(cat => (
                       <button
@@ -123,7 +180,7 @@ const Products: React.FC = () => {
                           filterCategory === cat.toLowerCase() ? 'bg-foodmax-forest text-white shadow-lg' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                         }`}
                       >
-                        {cat}
+                        {cat === copy.all ? copy.all : getCategoryLabel(cat as any, locale)}
                       </button>
                     ))}
                   </div>
@@ -131,13 +188,13 @@ const Products: React.FC = () => {
 
                 {(filterCategory !== 'all') && (
                    <div>
-                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4">Product Lines</h4>
+                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4">{copy.productLines}</h4>
                       <div className="flex flex-col gap-1">
                         <button 
                           onClick={() => setFilterSub('all')}
                           className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterSub === 'all' ? 'text-foodmax-forest font-black bg-foodmax-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
                         >
-                          All Varieties
+                          {copy.allVarieties}
                         </button>
                         <div className="space-y-1">
                           {activeSubCategories.map(line => (
@@ -148,7 +205,17 @@ const Products: React.FC = () => {
                                 filterSub === line.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
                               }`}
                             >
-                              {line}
+                              {localizeProduct({
+                                id: '__preview__',
+                                name: '',
+                                category: activeCategory || 'Rice',
+                                subCategory: line,
+                                description: '',
+                                shortDescription: '',
+                                image: '',
+                                specifications: {},
+                                filters: {}
+                              }, locale).subCategory}
                             </button>
                           ))}
                         </div>
@@ -159,14 +226,14 @@ const Products: React.FC = () => {
                 {(filterCategory === 'rice' || filterCategory === 'coffee') && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4 flex items-center gap-2">
-                      <Settings2 size={12} className="text-foodmax-lime" /> Processing Method
+                      <Settings2 size={12} className="text-foodmax-lime" /> {copy.processingMethod}
                     </h4>
                     <div className="flex flex-col gap-1">
                        <button 
                           onClick={() => setFilterProcessing('all')}
                           className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterProcessing === 'all' ? 'text-foodmax-forest font-black bg-foodmax-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
                         >
-                          All Processes
+                          {copy.allProcesses}
                         </button>
                         {processingMethods[filterCategory as keyof typeof processingMethods].map(method => (
                           <button
@@ -176,7 +243,7 @@ const Products: React.FC = () => {
                               filterProcessing === method.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
                             }`}
                           >
-                            {method}
+                            {getLocalizedFilterValue(method, locale)}
                           </button>
                         ))}
                     </div>
@@ -189,8 +256,8 @@ const Products: React.FC = () => {
           <main className="lg:w-3/4">
             <div className="flex justify-between items-center mb-10 pb-6 border-b border-gray-100">
               <p className="text-sm font-medium text-gray-500">
-                Showing <span className="font-black text-gray-900">{visibleStart}-{visibleEnd}</span> of{' '}
-                <span className="font-black text-gray-900">{filteredProducts.length}</span> verified export items
+                {copy.showing} <span className="font-black text-gray-900">{visibleStart}-{visibleEnd}</span> {copy.of}{' '}
+                <span className="font-black text-gray-900">{filteredProducts.length}</span> {copy.verifiedItems}
               </p>
             </div>
 
@@ -205,7 +272,7 @@ const Products: React.FC = () => {
                 {totalPages > 1 && (
                   <div className="mt-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-t border-gray-100 pt-8">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
-                      Page {safeCurrentPage} of {totalPages}
+                      {copy.page} {safeCurrentPage} {copy.of} {totalPages}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
@@ -214,7 +281,7 @@ const Products: React.FC = () => {
                         className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ChevronLeft size={14} />
-                        Prev
+                        {copy.prev}
                       </button>
                       {pageNumbers.map((page) => (
                         <button
@@ -234,7 +301,7 @@ const Products: React.FC = () => {
                         disabled={safeCurrentPage === totalPages}
                         className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        Next
+                        {copy.next}
                         <ChevronRight size={14} />
                       </button>
                     </div>
@@ -244,13 +311,13 @@ const Products: React.FC = () => {
             ) : (
               <div className="py-32 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200 animate-in fade-in duration-500">
                 <X size={48} className="mx-auto mb-6 text-gray-300" />
-                <h3 className="text-2xl font-black text-gray-900 mb-2">Segment Empty</h3>
-                <p className="text-gray-500 mb-10">We are currently updating our available export stock for these specific criteria.</p>
+                <h3 className="text-2xl font-black text-gray-900 mb-2">{copy.emptyTitle}</h3>
+                <p className="text-gray-500 mb-10">{copy.emptyDesc}</p>
                 <button 
                   onClick={() => { setFilterCategory('all'); setFilterSub('all'); setFilterProcessing('all'); }}
                   className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-colors shadow-lg"
                 >
-                  Clear All Filters
+                  {copy.clearAllFilters}
                 </button>
               </div>
             )}

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient';
+import { hasSupabaseEnv, supabase } from '../lib/supabaseClient';
 
 interface AuthContextType {
   user: User | null;
@@ -15,21 +15,36 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const clearLocalAuthArtifacts = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  sessionStorage.clear();
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminCheckError, setAdminCheckError] = useState<string | null>(null);
 
-  const fetchIsAdmin = async (_uid: string | undefined | null): Promise<boolean> => {
+  const fetchIsAdmin = async (uid: string | undefined | null): Promise<boolean> => {
     setAdminCheckError(null);
-    if (!_uid) return false;
+
+    if (!hasSupabaseEnv) {
+      setAdminCheckError('Supabase environment variables are missing.');
+      return false;
+    }
+
+    if (!uid) return false;
 
     try {
       const { data, error } = await supabase
         .from('admin_users')
         .select('user_id')
-        .eq('user_id', _uid)
+        .eq('user_id', uid)
         .maybeSingle();
 
       if (error) {
@@ -37,9 +52,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      return !!data;
-    } catch (e: any) {
-      setAdminCheckError(e?.message || 'Failed to verify admin access');
+      return Boolean(data);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to verify admin access';
+      setAdminCheckError(message);
       return false;
     }
   };
@@ -47,22 +63,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    // ✅ STEP 1: dọn local storage khi thoát/reload
-    const handleBeforeUnload = () => {
-      try {
-        supabase.removeAllChannels();
-        supabase.auth.signOut({ scope: 'local' });
-      } catch {}
-
-      // dọn storage Supabase
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      });
-      sessionStorage.clear();
-    };
-
-
     const init = async () => {
+      if (!hasSupabaseEnv) {
+        if (mounted) {
+          setUser(null);
+          setIsAdmin(false);
+          setAdminCheckError('Supabase environment variables are missing.');
+          setIsLoading(false);
+        }
+        return;
+      }
+
       try {
         const { data } = await supabase.auth.getSession();
         if (!mounted) return;
@@ -75,13 +86,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setIsAdmin(admin);
       } finally {
-        if (mounted) setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    init();
+    void init();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (!hasSupabaseEnv) {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user ?? null;
       if (!mounted) return;
 
@@ -94,7 +113,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Do not await Supabase calls directly inside this callback to avoid auth deadlocks.
       setTimeout(() => {
         if (!mounted) return;
         void fetchIsAdmin(nextUser.id).then((admin) => {
@@ -107,27 +125,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      subscription.subscription.unsubscribe();
     };
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (!hasSupabaseEnv) {
+      return {
+        ok: false,
+        message: 'Admin login is unavailable because Supabase environment variables are missing.'
+      };
+    }
+
     try {
-      console.debug('[auth] signInWithPassword start');
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      console.debug('[auth] signInWithPassword done');
       if (error) return { ok: false, message: error.message };
 
       const uid = data.user?.id ?? null;
       if (!uid) return { ok: false, message: 'Login failed' };
 
-      console.debug('[auth] fetchIsAdmin start', uid);
       const admin = await fetchIsAdmin(uid);
-      console.debug('[auth] fetchIsAdmin done', admin);
-
       if (!admin) {
         await supabase.removeAllChannels();
         await supabase.auth.signOut({ scope: 'local' });
+        clearLocalAuthArtifacts();
         setUser(null);
         setIsAdmin(false);
         return { ok: false, message: 'This account is not an admin.' };
@@ -136,25 +157,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(data.user);
       setIsAdmin(true);
       setIsLoading(false);
-
       return { ok: true };
-    } catch (e: any) {
-      return { ok: false, message: e?.message || 'Login failed' };
+    } catch (error: unknown) {
+      return { ok: false, message: error instanceof Error ? error.message : 'Login failed' };
     }
   };
 
   const logout = async () => {
     try {
-      await supabase.removeAllChannels();
-      await supabase.auth.signOut({ scope: 'local' });
+      if (hasSupabaseEnv) {
+        await supabase.removeAllChannels();
+        await supabase.auth.signOut({ scope: 'local' });
+      }
     } finally {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      });
-      sessionStorage.clear();
-
+      clearLocalAuthArtifacts();
       setUser(null);
       setIsAdmin(false);
+      setAdminCheckError(null);
       setIsLoading(false);
     }
   };
@@ -167,13 +186,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = useMemo(
     () => ({
       user,
-      isAuthenticated: !!user,
+      isAuthenticated: Boolean(user),
       isAdmin,
       isLoading,
       adminCheckError,
       login,
       logout,
-      refreshAdmin,
+      refreshAdmin
     }),
     [user, isAdmin, isLoading, adminCheckError]
   );
@@ -182,7 +201,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
 };

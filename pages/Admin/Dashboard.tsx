@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLocale } from '../../context/LocaleContext';
+import { localizeProduct } from '../../lib/contentLocalization';
 import { 
   LayoutDashboard, 
   Package, 
@@ -26,13 +28,58 @@ import {
 const AdminDashboard: React.FC = () => {
   const { products, news, exportData, importData, resetToDefaults, isLoading } = useData();
   const { logout } = useAuth();
+  const { locale, setLocale } = useLocale();
   const navigate = useNavigate();
   
   const [importStatus, setImportStatus] = useState<{message: string, type: 'success' | 'error' | null}>({message: '', type: null});
+  const copy =
+    locale === 'zh'
+      ? {
+          staffPortal: '员工后台',
+          dashboard: '总览',
+          inventory: '产品库',
+          insights: '资讯',
+          operationsPortal: '运营后台',
+          exitHome: '返回首页',
+          pageTitle: '后台概览',
+          pageDesc: '当前运行于本地存储模式，以获得更高稳定性。',
+          newExport: '新增产品',
+          stats: ['出口库存', '市场报告', '全球区域', '系统模式'],
+          localOffline: '本地离线',
+          dataManagement: '数据管理',
+          exportJson: '导出 JSON',
+          importJson: '导入 JSON',
+          importSuccess: '数据导入成功！',
+          importError: '数据格式无效。',
+          resetDefaults: '恢复默认数据',
+          verifiedInventory: '已验证库存',
+          globalCatalog: '全球目录'
+        }
+      : {
+          staffPortal: 'Staff Portal',
+          dashboard: 'Dashboard',
+          inventory: 'Inventory',
+          insights: 'Insights',
+          operationsPortal: 'Operations Portal',
+          exitHome: 'Exit to Home',
+          pageTitle: 'Staff Overview',
+          pageDesc: 'Running in Local Storage mode for maximum reliability.',
+          newExport: 'New Export',
+          stats: ['Export Inventory', 'Market Reports', 'Global Regions', 'System Mode'],
+          localOffline: 'Local Offline',
+          dataManagement: 'Data Management',
+          exportJson: 'Export JSON',
+          importJson: 'Import JSON',
+          importSuccess: 'Data imported successfully!',
+          importError: 'Invalid data format.',
+          resetDefaults: 'Reset to Defaults',
+          verifiedInventory: 'Verified Inventory',
+          globalCatalog: 'Global Catalog',
+          cmsLanguage: 'CMS Language'
+        };
 
   const handleLogout = () => {
     logout();
-    navigate('/');
   };
 
   const handleExport = () => {
@@ -54,9 +101,9 @@ const AdminDashboard: React.FC = () => {
       const content = event.target?.result as string;
       const success = await importData(content);
       if (success) {
-        setImportStatus({ message: 'Data imported successfully!', type: 'success' });
+        setImportStatus({ message: copy.importSuccess, type: 'success' });
       } else {
-        setImportStatus({ message: 'Invalid data format.', type: 'error' });
+        setImportStatus({ message: copy.importError, type: 'error' });
       }
       setTimeout(() => setImportStatus({ message: '', type: null }), 3000);
     };
@@ -64,10 +111,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   const stats = [
-    { label: 'Export Inventory', val: products.length, icon: Package, color: 'bg-blue-500' },
-    { label: 'Market Reports', val: news.length, icon: FileText, color: 'bg-purple-500' },
-    { label: 'Global Regions', val: '32', icon: Globe, color: 'bg-foodmax-forest' },
-    { label: 'System Mode', val: 'Local Offline', icon: Database, color: 'bg-orange-500' }
+    { label: copy.stats[0], val: products.length, icon: Package, color: 'bg-blue-500' },
+    { label: copy.stats[1], val: news.length, icon: FileText, color: 'bg-purple-500' },
+    { label: copy.stats[2], val: '32', icon: Globe, color: 'bg-foodmax-forest' },
+    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: 'bg-orange-500' }
   ];
 
   return (
@@ -79,24 +126,25 @@ const AdminDashboard: React.FC = () => {
             <span className="text-xl font-[900]">Food</span>
             <span className="text-xl font-[900] text-foodmax-lime">max</span>
           </div>
-          <span className="text-[8px] font-bold text-white/40 tracking-[0.2em] uppercase">Staff Portal</span>
+          <span className="text-[8px] font-bold text-white/40 tracking-[0.2em] uppercase">{copy.staffPortal}</span>
         </div>
 
         <nav className="space-y-2 flex-grow">
           <Link to="/admin" className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl font-bold text-sm">
-            <LayoutDashboard size={18} /> Dashboard
+            <LayoutDashboard size={18} /> {copy.dashboard}
           </Link>
           <Link to="/admin/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
-            <Package size={18} /> Inventory
+            <Package size={18} /> {copy.inventory}
           </Link>
           <Link to="/admin/news" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
-            <FileText size={18} /> Insights
+            <FileText size={18} /> {copy.insights}
           </Link>
         </nav>
 
         {/* Branded Logout / Exit Section */}
         <div className="mt-auto pt-8 border-t border-white/10">
-          <button 
+          <Link
+            to="/"
             onClick={handleLogout}
             className="w-full flex items-center gap-4 p-4 rounded-[1.5rem] bg-white/5 hover:bg-white/10 transition-all group relative overflow-hidden"
           >
@@ -114,13 +162,13 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="text-left">
-               <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Operations Portal</p>
+               <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{copy.operationsPortal}</p>
                <div className="flex items-center gap-1">
-                 <p className="text-xs font-black text-white group-hover:text-foodmax-lime transition-colors">Exit to Home</p>
+                 <p className="text-xs font-black text-white group-hover:text-foodmax-lime transition-colors">{copy.exitHome}</p>
                  <ExternalLink size={10} className="text-white/20 group-hover:text-foodmax-lime transition-colors" />
                </div>
             </div>
-          </button>
+          </Link>
         </div>
       </aside>
 
@@ -128,12 +176,22 @@ const AdminDashboard: React.FC = () => {
       <main className="flex-grow p-8 md:p-12 overflow-y-auto">
         <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Staff Overview</h1>
-            <p className="text-gray-500 text-sm font-medium">Running in Local Storage mode for maximum reliability.</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.pageTitle}</h1>
+            <p className="text-gray-500 text-sm font-medium">{copy.pageDesc}</p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+             <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                <span>{copy.cmsLanguage}</span>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
+                  EN
+                </button>
+                <span>/</span>
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
+                  中文
+                </button>
+             </div>
              <button onClick={() => navigate('/admin/inventory')} className="px-6 py-3 bg-foodmax-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
-                <Plus size={16} /> New Export
+                <Plus size={16} /> {copy.newExport}
              </button>
           </div>
         </div>
@@ -156,7 +214,7 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-foodmax-forest/5 text-foodmax-forest rounded-xl"><Database size={20} /></div>
-                <h3 className="text-lg font-black tracking-tight">Data Management</h3>
+                <h3 className="text-lg font-black tracking-tight">{copy.dataManagement}</h3>
               </div>
               
               <div className="space-y-4">
@@ -164,11 +222,11 @@ const AdminDashboard: React.FC = () => {
                   onClick={handleExport}
                   className="w-full py-4 bg-gray-50 text-gray-900 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-100 transition-all"
                 >
-                  <Download size={14} /> Export JSON
+                  <Download size={14} /> {copy.exportJson}
                 </button>
                 
                 <label className="w-full py-4 bg-gray-50 text-gray-900 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-100 transition-all cursor-pointer">
-                  <Upload size={14} /> Import JSON
+                  <Upload size={14} /> {copy.importJson}
                   <input type="file" accept=".json" onChange={handleImport} className="hidden" />
                 </label>
 
@@ -185,7 +243,7 @@ const AdminDashboard: React.FC = () => {
                    onClick={resetToDefaults}
                    className="w-full py-2 text-[10px] font-black text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                  >
-                   <Trash2 size={12} /> Reset to Defaults
+                   <Trash2 size={12} /> {copy.resetDefaults}
                  </button>
               </div>
             </div>
@@ -193,18 +251,18 @@ const AdminDashboard: React.FC = () => {
 
           <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">Verified Inventory</h3>
-              <Link to="/admin/inventory" className="text-xs font-black text-foodmax-forest hover:text-foodmax-lime flex items-center gap-1 uppercase tracking-widest">Global Catalog <ArrowRight size={14} /></Link>
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{copy.verifiedInventory}</h3>
+              <Link to="/admin/inventory" className="text-xs font-black text-foodmax-forest hover:text-foodmax-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
             </div>
             <div className="space-y-4">
               {products.slice(0, 6).map(p => (
                 <div key={p.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-2xl border border-transparent hover:border-gray-100 transition-all group">
                   <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={p.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={p.name} />
+                    <img src={p.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={localizeProduct(p, locale).name} />
                   </div>
                   <div className="flex-grow">
-                    <p className="text-sm font-black text-gray-900">{p.name}</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.category} / {p.subCategory}</p>
+                    <p className="text-sm font-black text-gray-900">{localizeProduct(p, locale).name}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.category} / {localizeProduct(p, locale).subCategory}</p>
                   </div>
                 </div>
               ))}

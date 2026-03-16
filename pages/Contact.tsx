@@ -1,13 +1,68 @@
 import React, { useMemo, useState } from 'react';
 import { Mail, Phone, Send } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useLocale } from '../context/LocaleContext';
 
 const Contact: React.FC = () => {
+  const { locale } = useLocale();
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const defaultSubject = 'Rice Export Inquiry';
+  const defaultSubject = locale === 'zh' ? '大米出口咨询' : 'Rice Export Inquiry';
+  const copy = locale === 'zh'
+    ? {
+        required: '请填写所有必填字段。',
+        failed: '发送失败，请稍后重试。',
+        heroTitle: '联系我们',
+        heroDesc: '与我们的 B2B 出口专员沟通您的进口需求。',
+        emailChannels: '邮箱渠道',
+        exportInquiries: '全球出口咨询：',
+        emailNote: '我们的国际贸易团队 24/7 监控这些邮箱，便于快速响应。',
+        phoneWhatsapp: '电话与 WhatsApp',
+        hotline: '出口热线：',
+        available24: '支持 24/7 电话和 WhatsApp 信息',
+        inquiryTitle: '直接出口咨询',
+        inquiryReceived: '我们已收到您的咨询，会尽快与您联系。',
+        companyName: '公司名称',
+        fullName: '姓名',
+        email: '邮箱地址',
+        phone: '电话 / WhatsApp',
+        subject: '主题',
+        message: '消息内容',
+        sending: '发送中...',
+        send: '发送消息',
+        adminNote: '该咨询将存储到 Supabase，并可在后台查看。',
+        subjects: ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'],
+        headquarters: '全球总部',
+        directions: '获取路线'
+      }
+    : {
+        required: 'Please fill in all required fields.',
+        failed: 'Failed to send. Please try again.',
+        heroTitle: 'Connect With Us',
+        heroDesc: 'Discuss your import requirements with our dedicated B2B export specialists.',
+        emailChannels: 'Email Channels',
+        exportInquiries: 'Global Export Inquiries:',
+        emailNote: 'Both addresses monitored 24/7 by our international trade desk for immediate response.',
+        phoneWhatsapp: 'Direct Phone & WhatsApp',
+        hotline: 'Export Hotline:',
+        available24: 'Available for calls and WhatsApp messages 24/7',
+        inquiryTitle: 'Direct Export Inquiry',
+        inquiryReceived: "Inquiry received. We'll be in touch shortly.",
+        companyName: 'Company Name',
+        fullName: 'Full Name',
+        email: 'Email Address',
+        phone: 'Phone / WhatsApp',
+        subject: 'Subject',
+        message: 'Message Detail',
+        sending: 'SENDING...',
+        send: 'SEND MESSAGE',
+        adminNote: 'This inquiry will be stored in Supabase and visible to Admin.',
+        subjects: ['Rice Export Inquiry', 'Coffee Export Inquiry', 'Logistics & Shipping', 'Private Label Partnership', 'Other Corporate Inquiry'],
+        headquarters: 'Global Headquarters',
+        directions: 'Get Directions'
+      };
 
   const [form, setForm] = useState({
     companyName: '',
@@ -17,6 +72,34 @@ const Contact: React.FC = () => {
     subject: defaultSubject,
     message: '',
   });
+
+  React.useEffect(() => {
+    setForm((prev) => {
+      const enIndex = copy.subjects.indexOf(prev.subject);
+      if (enIndex >= 0) {
+        return prev;
+      }
+
+      const englishSubjects = [
+        'Rice Export Inquiry',
+        'Coffee Export Inquiry',
+        'Logistics & Shipping',
+        'Private Label Partnership',
+        'Other Corporate Inquiry'
+      ];
+      const chineseSubjects = ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'];
+
+      const sourceIndex =
+        englishSubjects.indexOf(prev.subject) >= 0
+          ? englishSubjects.indexOf(prev.subject)
+          : chineseSubjects.indexOf(prev.subject);
+
+      return {
+        ...prev,
+        subject: copy.subjects[sourceIndex >= 0 ? sourceIndex : 0] || defaultSubject
+      };
+    });
+  }, [copy.subjects, defaultSubject]);
 
   const isValid = useMemo(() => {
     // basic validation to avoid empty inserts
@@ -35,7 +118,7 @@ const Contact: React.FC = () => {
     setSent(false);
 
     if (!isValid) {
-      setErrorMsg('Please fill in all required fields.');
+      setErrorMsg(copy.required);
       return;
     }
 
@@ -69,7 +152,7 @@ const Contact: React.FC = () => {
         message: '',
       });
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Failed to send. Please try again.');
+      setErrorMsg(err?.message || copy.failed);
     } finally {
       setLoading(false);
     }
@@ -79,9 +162,9 @@ const Contact: React.FC = () => {
     <div className="bg-white min-h-screen">
       <div className="bg-foodmax-forest py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl md:text-6xl font-black text-white mb-6">Connect With Us</h1>
+          <h1 className="text-5xl md:text-6xl font-black text-white mb-6">{copy.heroTitle}</h1>
           <p className="text-xl text-green-100 max-w-2xl mx-auto">
-            Discuss your import requirements with our dedicated B2B export specialists.
+            {copy.heroDesc}
           </p>
         </div>
       </div>
@@ -94,8 +177,8 @@ const Contact: React.FC = () => {
               <div className="w-12 h-12 bg-green-50 text-foodmax-forest rounded-xl flex items-center justify-center mb-6">
                 <Mail size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Email Channels</h3>
-              <p className="text-sm text-gray-500 mb-4">Global Export Inquiries:</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{copy.emailChannels}</h3>
+              <p className="text-sm text-gray-500 mb-4">{copy.exportInquiries}</p>
               <div className="space-y-2">
                 <a
                   href="mailto:export@foodmax.vn"
@@ -111,7 +194,7 @@ const Contact: React.FC = () => {
                 </a>
               </div>
               <p className="text-xs text-gray-400 mt-6 leading-relaxed">
-                Both addresses monitored 24/7 by our international trade desk for immediate response.
+                {copy.emailNote}
               </p>
             </div>
 
@@ -119,16 +202,16 @@ const Contact: React.FC = () => {
               <div className="w-12 h-12 bg-green-50 text-foodmax-forest rounded-xl flex items-center justify-center mb-6">
                 <Phone size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Direct Phone & WhatsApp</h3>
-              <p className="text-sm text-gray-500 mb-4">Export Hotline:</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{copy.phoneWhatsapp}</h3>
+              <p className="text-sm text-gray-500 mb-4">{copy.hotline}</p>
               <p className="text-lg font-bold text-foodmax-forest">+84 964 791 902</p>
-              <p className="text-xs text-gray-400 mt-2">Available for calls and WhatsApp messages 24/7</p>
+              <p className="text-xs text-gray-400 mt-2">{copy.available24}</p>
             </div>
           </div>
 
           {/* Form */}
           <div className="lg:col-span-2 bg-white p-10 rounded-2xl shadow-2xl border border-gray-50">
-            <h2 className="text-3xl font-black text-gray-900 mb-6">Direct Export Inquiry</h2>
+            <h2 className="text-3xl font-black text-gray-900 mb-6">{copy.inquiryTitle}</h2>
 
             {/* Status */}
             {(errorMsg || sent) && (
@@ -137,7 +220,7 @@ const Contact: React.FC = () => {
                   errorMsg ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'
                 }`}
               >
-                {errorMsg ? errorMsg : "Inquiry received. We'll be in touch shortly."}
+                {errorMsg ? errorMsg : copy.inquiryReceived}
               </div>
             )}
 
@@ -145,7 +228,7 @@ const Contact: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                    Company Name
+                    {copy.companyName}
                   </label>
                   <input
                     type="text"
@@ -157,7 +240,7 @@ const Contact: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                    Full Name
+                    {copy.fullName}
                   </label>
                   <input
                     type="text"
@@ -172,7 +255,7 @@ const Contact: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                    Email Address
+                    {copy.email}
                   </label>
                   <input
                     type="email"
@@ -184,7 +267,7 @@ const Contact: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                    Phone / WhatsApp
+                    {copy.phone}
                   </label>
                   <input
                     type="text"
@@ -196,23 +279,21 @@ const Contact: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Subject</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{copy.subject}</label>
                 <select
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
                 >
-                  <option>Rice Export Inquiry</option>
-                  <option>Coffee Export Inquiry</option>
-                  <option>Logistics & Shipping</option>
-                  <option>Private Label Partnership</option>
-                  <option>Other Corporate Inquiry</option>
+                  {copy.subjects.map((subject) => (
+                    <option key={subject}>{subject}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                  Message Detail
+                  {copy.message}
                 </label>
                 <textarea
                   rows={5}
@@ -230,15 +311,15 @@ const Contact: React.FC = () => {
                   loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-foodmax-forest hover:bg-foodmax-forest/90'
                 }`}
               >
-                {loading ? 'SENDING...' : (
+                {loading ? copy.sending : (
                   <>
-                    <Send size={18} /> SEND MESSAGE
+                    <Send size={18} /> {copy.send}
                   </>
                 )}
               </button>
 
               <p className="text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold mt-4">
-                This inquiry will be stored in Supabase and visible to Admin.
+                {copy.adminNote}
               </p>
             </form>
           </div>
@@ -262,7 +343,7 @@ const Contact: React.FC = () => {
             <div className="bg-white/95 backdrop-blur-md px-6 py-5 rounded-3xl shadow-2xl border border-gray-100 max-w-xs group-hover:translate-y-[-4px] transition-transform duration-500">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 rounded-full bg-foodmax-lime animate-pulse"></div>
-                <h4 className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em]">Global Headquarters</h4>
+                <h4 className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em]">{copy.headquarters}</h4>
               </div>
               <p className="text-[11px] font-bold text-gray-700 leading-relaxed mb-4">
                 17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam
@@ -275,7 +356,7 @@ const Contact: React.FC = () => {
                   rel="noopener noreferrer"
                   className="pointer-events-auto text-[9px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4"
                 >
-                  Get Directions
+                  {copy.directions}
                 </a>
               </div>
             </div>

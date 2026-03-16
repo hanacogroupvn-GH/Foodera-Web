@@ -3,6 +3,23 @@ export type CategoryType = 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture';
 
 export type NewsCategory = 'Market Insights' | 'Company Updates' | 'Sustainability' | 'Events';
 
+export type SupportedLocale = 'en' | 'zh';
+export type ContentLocale = Exclude<SupportedLocale, 'en'>;
+
+export interface ProductTranslation {
+  name?: string;
+  subCategory?: string;
+  description?: string;
+  shortDescription?: string;
+  specifications?: Record<string, string>;
+}
+
+export interface NewsTranslation {
+  title?: string;
+  excerpt?: string;
+  content?: string[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -22,6 +39,7 @@ export interface Product {
     grade?: string;
     screenSize?: string;
   };
+  translations?: Partial<Record<ContentLocale, ProductTranslation>>;
 }
 
 export interface NewsItem {
@@ -33,4 +51,5 @@ export interface NewsItem {
   excerpt: string;
   content: string[];
   image: string;
+  translations?: Partial<Record<ContentLocale, NewsTranslation>>;
 }

@@ -1,12 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLocale } from '../../context/LocaleContext';
 import { NewsItem, NewsCategory } from '../../types';
 import { buildUniqueNewsSlug, getNewsPath, normalizeNewsSlug } from '../../lib/newsSeo';
 import { googleSheetToCsvUrl, mapCsvRowsToNews, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
+import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../../lib/contentLocalization';
 import { 
   FileText, 
   Search, 
@@ -33,6 +35,7 @@ type NewsDraft = {
   editingItemId: string | null;
   formData: Partial<NewsItem>;
   contentString: string;
+  zhContentString: string;
   hasCustomSlug: boolean;
 };
 
@@ -47,6 +50,7 @@ const readNewsDraft = (): NewsDraft | null => {
       editingItemId: typeof parsed.editingItemId === 'string' ? parsed.editingItemId : null,
       formData: parsed.formData,
       contentString: typeof parsed.contentString === 'string' ? parsed.contentString : '',
+      zhContentString: typeof parsed.zhContentString === 'string' ? parsed.zhContentString : '',
       hasCustomSlug: Boolean(parsed.hasCustomSlug)
     };
   } catch {
@@ -74,7 +78,57 @@ const AdminNews: React.FC = () => {
 
   const { news, addNews, updateNews, deleteNews } = useData();
   const { logout } = useAuth();
-  const navigate = useNavigate();
+  const { locale, setLocale } = useLocale();
+  const copy =
+    locale === 'zh'
+      ? {
+          exitHome: '返回首页',
+          portalTitle: '资讯与新闻中心',
+          createPost: '新建文章',
+          importFromSheet: '从 Google Sheet 导入 CSV',
+          importLink: '导入链接',
+          importing: '导入中...',
+          uploadCsv: '上传 CSV',
+          searchPlaceholder: '按标题或分类搜索文章...',
+          editInsight: '编辑资讯文章',
+          composeInsight: '撰写新资讯',
+          translationSection: '中文翻译',
+          translationNote: '用于多语言发布的简体中文字段。',
+          discardDraft: '放弃草稿',
+          updatePublication: '更新发布',
+          publishPortal: '发布到站点',
+          manageDesc: '管理企业资讯与全球市场分析内容。',
+          articleIntel: '文章情报',
+          category: '分类',
+          publishDate: '发布日期',
+          actions: '操作',
+          noMatches: '未找到匹配资讯',
+          cmsLanguage: 'CMS 语言'
+        }
+      : {
+          exitHome: 'Exit to Home',
+          portalTitle: 'Insights & News Portal',
+          createPost: 'Create New Post',
+          importFromSheet: 'Import CSV from Google Sheet',
+          importLink: 'Import Link',
+          importing: 'Importing...',
+          uploadCsv: 'Upload CSV',
+          searchPlaceholder: 'Search articles by title or category...',
+          editInsight: 'Edit Insight Post',
+          composeInsight: 'Compose New Insight',
+          translationSection: 'Chinese Translation',
+          translationNote: 'Optional Simplified Chinese fields for multilingual publishing.',
+          discardDraft: 'Discard Draft',
+          updatePublication: 'Update Publication',
+          publishPortal: 'Publish to Portal',
+          manageDesc: 'Manage corporate communications and global market analysis reports.',
+          articleIntel: 'Article Intelligence',
+          category: 'Category',
+          publishDate: 'Publish Date',
+          actions: 'Actions',
+          noMatches: 'No matching insights found',
+          cmsLanguage: 'CMS Language'
+        };
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,6 +158,7 @@ const AdminNews: React.FC = () => {
 
   // Derived state for the multi-line content textarea
   const [contentString, setContentString] = useState('');
+  const [zhContentString, setZhContentString] = useState('');
 
   useEffect(() => {
     const draft = readNewsDraft();
@@ -118,6 +173,7 @@ const AdminNews: React.FC = () => {
 
     setFormData(draft.formData);
     setContentString(draft.contentString);
+    setZhContentString(draft.zhContentString);
     setHasCustomSlug(draft.hasCustomSlug);
     setIsModalOpen(true);
   }, []);
@@ -132,13 +188,16 @@ const AdminNews: React.FC = () => {
       editingItemId: editingItem?.id || null,
       formData,
       contentString,
+      zhContentString,
       hasCustomSlug
     });
-  }, [isModalOpen, editingItem?.id, formData, contentString, hasCustomSlug]);
+  }, [isModalOpen, editingItem?.id, formData, contentString, zhContentString, hasCustomSlug]);
 
   const filteredNews = news.filter(n => 
     n.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    n.category.toLowerCase().includes(searchTerm.toLowerCase())
+    n.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (n.translations?.zh?.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (n.translations?.zh?.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
   const slugPreview = normalizeNewsSlug((formData.slug || formData.title || '').trim()) || 'news-item';
 
@@ -147,8 +206,16 @@ const AdminNews: React.FC = () => {
     setCoverImageUploadError(null);
     if (item) {
       setEditingItem(item);
-      setFormData(item);
+      setFormData({
+        ...item,
+        translations: {
+          zh: {
+            ...(item.translations?.zh || {})
+          }
+        }
+      });
       setContentString(item.content.join('\n\n'));
+      setZhContentString(item.translations?.zh?.content?.join('\n\n') || '');
       setHasCustomSlug(!!item.slug?.trim());
     } else {
       setEditingItem(null);
@@ -160,9 +227,11 @@ const AdminNews: React.FC = () => {
         date: today,
         excerpt: '',
         content: [],
-        image: 'https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200'
+        image: 'https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200',
+        translations: { zh: { title: '', excerpt: '', content: [] } }
       });
       setContentString('');
+      setZhContentString('');
       setHasCustomSlug(false);
     }
     setIsModalOpen(true);
@@ -174,6 +243,7 @@ const AdminNews: React.FC = () => {
     setSaveError(null);
     setCoverImageUploadError(null);
     setHasCustomSlug(false);
+    setZhContentString('');
     clearNewsDraft();
   };
 
@@ -210,6 +280,7 @@ const AdminNews: React.FC = () => {
 
     // Convert string to paragraphs
     const paragraphs = contentString.split('\n').filter(p => p.trim() !== '');
+    const zhParagraphs = zhContentString.split('\n').filter(p => p.trim() !== '');
 
     setTimeout(async () => {
       let isSuccess = false;
@@ -227,7 +298,19 @@ const AdminNews: React.FC = () => {
           date: (formData.date || '').trim(),
           excerpt: (formData.excerpt || '').trim(),
           image: (formData.image || '').trim(),
-          content: paragraphs
+          content: paragraphs,
+          translations:
+            (formData.translations?.zh?.title || '').trim() ||
+            (formData.translations?.zh?.excerpt || '').trim() ||
+            zhParagraphs.length > 0
+              ? {
+                  zh: {
+                    title: (formData.translations?.zh?.title || '').trim(),
+                    excerpt: (formData.translations?.zh?.excerpt || '').trim(),
+                    content: zhParagraphs
+                  }
+                }
+              : undefined
         } as NewsItem;
 
         if (editingItem) {
@@ -333,7 +416,6 @@ const AdminNews: React.FC = () => {
 
   const handleExit = () => {
     logout();
-    navigate('/');
   };
 
   const categories: NewsCategory[] = ['Market Insights', 'Company Updates', 'Sustainability', 'Events'];
@@ -349,10 +431,11 @@ const AdminNews: React.FC = () => {
 
         {/* Mini Branded Exit Button */}
         <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
-          <button 
+          <Link
+            to="/"
             onClick={handleExit}
             className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
-            title="Exit to Homepage"
+            title={locale === 'zh' ? '返回首页' : 'Exit to Homepage'}
           >
             <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
                <div className="flex items-center relative">
@@ -365,10 +448,10 @@ const AdminNews: React.FC = () => {
             
             {/* Tooltip Label */}
             <div className="absolute left-full ml-4 py-2 px-3 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl">
-              Exit to Home
+              {copy.exitHome}
               <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
             </div>
-          </button>
+          </Link>
         </div>
       </aside>
 
@@ -377,22 +460,34 @@ const AdminNews: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight">Insights & News Portal</h1>
-              <p className="text-gray-500 font-medium">Manage corporate communications and global market analysis reports.</p>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.portalTitle}</h1>
+              <p className="text-gray-500 font-medium">{copy.manageDesc}</p>
             </div>
-            <button 
-              onClick={() => openModal()}
-              className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
-            >
-              <Plus size={20} /> Create New Post
-            </button>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                <span>{copy.cmsLanguage}</span>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
+                  EN
+                </button>
+                <span>/</span>
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
+                  中文
+                </button>
+              </div>
+              <button 
+                onClick={() => openModal()}
+                className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+              >
+                <Plus size={20} /> {copy.createPost}
+              </button>
+            </div>
           </div>
 
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-end gap-3">
               <div className="flex-grow space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
-                  Import CSV from Google Sheet
+                  {copy.importFromSheet}
                 </label>
                 <div className="relative">
                   <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
@@ -410,10 +505,10 @@ const AdminNews: React.FC = () => {
                 disabled={isImportingCsv}
                 className="px-6 py-3 bg-foodmax-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
               >
-                {isImportingCsv ? 'Importing...' : 'Import Link'}
+                {isImportingCsv ? copy.importing : copy.importLink}
               </button>
               <label className="px-6 py-3 border border-gray-200 rounded-xl text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 transition-all">
-                <Upload size={14} /> Upload CSV
+                <Upload size={14} /> {copy.uploadCsv}
                 <input
                   type="file"
                   accept=".csv,text/csv"
@@ -445,7 +540,7 @@ const AdminNews: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
               <input 
                 type="text" 
-                placeholder="Search articles by title or category..."
+                placeholder={copy.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
@@ -458,35 +553,37 @@ const AdminNews: React.FC = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Article Intelligence</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Category</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Publish Date</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Actions</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.articleIntel}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.category}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.publishDate}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredNews.map(item => (
+                {filteredNews.map(item => {
+                  const localized = localizeNewsItem(item, locale);
+                  return (
                   <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                          <img src={item.image} className="w-full h-full object-cover" alt={item.title} />
+                          <img src={item.image} className="w-full h-full object-cover" alt={localized.title} />
                         </div>
                         <div>
-                          <p className="text-sm font-black text-gray-900 leading-tight line-clamp-1">{item.title}</p>
+                          <p className="text-sm font-black text-gray-900 leading-tight line-clamp-1">{localized.title}</p>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Slug: {item.slug}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <span className="px-3 py-1 bg-foodmax-forest/5 text-foodmax-forest text-[9px] font-black uppercase tracking-widest rounded-lg">
-                        {item.category}
+                        {getNewsCategoryLabel(item.category, locale)}
                       </span>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2 text-gray-500">
                         <Calendar size={14} className="text-foodmax-lime" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{item.date}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{formatDisplayDate(item.date, locale)}</span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
@@ -513,14 +610,14 @@ const AdminNews: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
             
             {filteredNews.length === 0 && (
               <div className="py-20 text-center">
                 <AlertCircle size={48} className="mx-auto text-gray-200 mb-4" />
-                <p className="text-gray-400 font-black uppercase text-xs tracking-widest">No matching insights found</p>
+                <p className="text-gray-400 font-black uppercase text-xs tracking-widest">{copy.noMatches}</p>
               </div>
             )}
           </div>
@@ -534,7 +631,7 @@ const AdminNews: React.FC = () => {
             <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodmax-forest text-white">
               <div>
                 <h2 className="text-xl font-black uppercase tracking-tight">
-                  {editingItem ? 'Edit Insight Post' : 'Compose New Insight'}
+                  {editingItem ? copy.editInsight : copy.composeInsight}
                 </h2>
                 <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">Market Analysis & Communication Hub</p>
               </div>
@@ -665,6 +762,59 @@ const AdminNews: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
+                  <p className="mt-2 text-[11px] font-medium text-gray-500">
+                    {copy.translationNote}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Headline</label>
+                  <input
+                    type="text"
+                    value={formData.translations?.zh?.title || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        translations: {
+                          ...prev.translations,
+                          zh: {
+                            ...prev.translations?.zh,
+                            title: e.target.value
+                          }
+                        }
+                      }))
+                    }
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                    placeholder="中文标题"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Excerpt</label>
+                  <textarea
+                    rows={2}
+                    value={formData.translations?.zh?.excerpt || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        translations: {
+                          ...prev.translations,
+                          zh: {
+                            ...prev.translations?.zh,
+                            excerpt: e.target.value
+                          }
+                        }
+                      }))
+                    }
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                    placeholder="中文摘要"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Full Article Content</label>
@@ -677,6 +827,20 @@ const AdminNews: React.FC = () => {
                   className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
                   placeholder="Draft your professional analysis here..."
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Article Content</label>
+                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">Use new lines to create Chinese paragraphs</span>
+                </div>
+                <textarea
+                  rows={8}
+                  value={zhContentString}
+                  onChange={(e) => setZhContentString(e.target.value)}
+                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
+                  placeholder="中文正文内容..."
                 />
               </div>
             </form>
@@ -692,7 +856,7 @@ const AdminNews: React.FC = () => {
                 onClick={closeModal}
                 className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
               >
-                Discard Draft
+                {copy.discardDraft}
               </button>
               <button 
                 onClick={handleSave}
@@ -702,7 +866,7 @@ const AdminNews: React.FC = () => {
                 {isSaving ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <><Save size={18} /> {editingItem ? 'Update Publication' : 'Publish to Portal'}</>
+                  <><Save size={18} /> {editingItem ? copy.updatePublication : copy.publishPortal}</>
                 )}
               </button>
               </div>

@@ -3,6 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
+import AppShellLoader from '../components/AppShellLoader';
+import { useLocale } from '../context/LocaleContext';
+import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -107,7 +110,9 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
       return;
     }
 
-    const numberedLabelWithBodyMatch = text.match(/^(\d{1,2})\s*[\.\)\-]?\s*([A-Za-z][A-Za-z0-9\s&/-]{2,60})\s*:\s+(.+)$/);
+    const numberedLabelWithBodyMatch = text.match(
+      /^(\d{1,2})\s*[\.\)\-]?\s*([\p{L}\p{N}\s&/.-]{2,60})\s*[:：]\s+(.+)$/u
+    );
     if (numberedLabelWithBodyMatch) {
       const label = `${numberedLabelWithBodyMatch[1]} ${numberedLabelWithBodyMatch[2].trim()}`;
       blocks.push({
@@ -119,9 +124,22 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
       return;
     }
 
-    const numberedStandaloneHeadingMatch = text.match(/^(\d{1,2})\s*[\.\)\-]?\s*([A-Za-z][A-Za-z0-9\s&/-]{2,60})$/);
+    const numberedStandaloneHeadingMatch = text.match(
+      /^(\d{1,2})\s*[\.\)\-]?\s*([\p{L}\p{N}\s&/.-]{2,60})$/u
+    );
     if (numberedStandaloneHeadingMatch) {
       const headingText = `${numberedStandaloneHeadingMatch[1]} ${numberedStandaloneHeadingMatch[2].trim()}`;
+      blocks.push({
+        type: 'heading',
+        text: headingText,
+        id: slugify(headingText, index)
+      });
+      return;
+    }
+
+    const localizedSectionMatch = text.match(/^第\s*\d+\s*(部分|章|节)\s*[:：\-]?\s*(.*)$/u);
+    if (localizedSectionMatch) {
+      const headingText = localizedSectionMatch[2]?.trim() || text.trim();
       blocks.push({
         type: 'heading',
         text: headingText,
@@ -141,7 +159,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
       return;
     }
 
-    const conclusionMatch = text.match(/^(conclusion|key takeaways|outlook)\s*[:\-]?\s*(.*)$/i);
+    const conclusionMatch = text.match(/^(conclusion|key takeaways|outlook|结论|关键要点|展望)\s*[:：\-]?\s*(.*)$/iu);
     if (conclusionMatch) {
       const headingText = conclusionMatch[1];
       const remainder = conclusionMatch[2]?.trim();
@@ -156,7 +174,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
       return;
     }
 
-    const shortLabelMatch = text.match(/^([A-Za-z][A-Za-z0-9\s&/-]{2,40})\s*:\s+(.+)$/);
+    const shortLabelMatch = text.match(/^([\p{L}\p{N}\s&/.-]{2,40})\s*[:：]\s+(.+)$/u);
     if (shortLabelMatch) {
       blocks.push({
         type: 'heading',
@@ -252,7 +270,8 @@ const NewsDetail: React.FC = () => {
     legacySlug?: string;
   }>();
   const navigate = useNavigate();
-  const { news } = useData();
+  const { news, isLoading } = useData();
+  const { locale } = useLocale();
   const primarySegment = useMemo(() => decodeRouteSegment(rawSlug), [rawSlug]);
   const legacyId = useMemo(() => decodeRouteSegment(rawLegacyId), [rawLegacyId]);
   const routeSlugSource = useMemo(
@@ -278,22 +297,49 @@ const NewsDetail: React.FC = () => {
     return undefined;
   }, [legacyId, news, primarySegment, routeSlug]);
   const [isImageBroken, setIsImageBroken] = useState(false);
+  const localizedArticle = useMemo(() => (article ? localizeNewsItem(article, locale) : undefined), [article, locale]);
+  const localizedNews = useMemo(() => news.map((item) => localizeNewsItem(item, locale)), [locale, news]);
+  const copy = locale === 'zh'
+    ? {
+        loader: '正在加载文章...',
+        notFound: '未找到文章',
+        returnArchive: '返回新闻归档',
+        backToInsights: '返回洞察列表',
+        minRead: '分钟阅读',
+        marketIntel: 'Foodmax 市场情报',
+        onThisPage: '本页目录',
+        continuousBrief: '这篇文章以单篇连续简报形式呈现。',
+        discussInsight: '咨询这篇洞察',
+        relatedInsights: '相关文章'
+      }
+    : {
+        loader: 'Loading article...',
+        notFound: 'Insight Not Found',
+        returnArchive: 'Return to Archive',
+        backToInsights: 'Back to Insights',
+        minRead: 'Min Read',
+        marketIntel: 'Foodmax Market Intelligence',
+        onThisPage: 'On This Page',
+        continuousBrief: 'This article is presented as a single continuous brief.',
+        discussInsight: 'Discuss this insight',
+        relatedInsights: 'Related Insights'
+      };
 
   const paragraphs = useMemo(() => {
-    if (!article) return [];
+    if (!localizedArticle) return [];
 
-    const content = Array.isArray(article.content)
-      ? article.content
+    const content = Array.isArray(localizedArticle.content)
+      ? localizedArticle.content
           .map((paragraph) => (typeof paragraph === 'string' ? paragraph.trim() : ''))
           .filter(Boolean)
       : [];
 
-    if (!content.length && article.excerpt?.trim()) {
-      return [article.excerpt.trim()];
+    if (!content.length && localizedArticle.excerpt?.trim()) {
+      return [localizedArticle.excerpt.trim()];
     }
 
-    if (article.excerpt?.trim()) {
-      const excerpt = article.excerpt.trim();
+    if (localizedArticle.excerpt?.trim()) {
+      const excerpt = localizedArticle.excerpt.trim();
       const firstParagraph = content[0]?.trim().toLowerCase();
       if (firstParagraph !== excerpt.toLowerCase()) {
         return [excerpt, ...content];
@@ -301,9 +347,12 @@ const NewsDetail: React.FC = () => {
     }
 
     return content;
-  }, [article]);
+  }, [localizedArticle]);
 
-  const blocks = useMemo(() => createContentBlocks(paragraphs, article?.title || 'Foodmax article image'), [article?.title, paragraphs]);
+  const blocks = useMemo(
+    () => createContentBlocks(paragraphs, localizedArticle?.title || article?.title || 'Foodmax article image'),
+    [article?.title, localizedArticle?.title, paragraphs]
+  );
   const displayBlocks = useMemo(() => {
     const imageSignatures = new Set<string>();
     return blocks.filter((block) => {
@@ -342,8 +391,9 @@ const NewsDetail: React.FC = () => {
     if (!article) return;
 
     const previousTitle = document.title;
-    const title = `${article.title} | Foodmax News`;
-    const description = (article.excerpt || paragraphs[0] || '').trim().slice(0, 160);
+    const seoTitle = localizedArticle?.title || article.title;
+    const title = `${seoTitle} | ${locale === 'zh' ? 'Foodmax 资讯' : 'Foodmax News'}`;
+    const description = (localizedArticle?.excerpt || paragraphs[0] || '').trim().slice(0, 160);
 
     document.title = title;
     clearManagedSeoTags();
@@ -372,7 +422,7 @@ const NewsDetail: React.FC = () => {
     appendJsonLd({
       '@context': 'https://schema.org',
       '@type': 'NewsArticle',
-      headline: article.title,
+      headline: seoTitle,
       description,
       image: article.image ? [article.image] : undefined,
       datePublished: publishedIso || undefined,
@@ -393,7 +443,7 @@ const NewsDetail: React.FC = () => {
       clearManagedSeoTags();
       document.title = previousTitle;
     };
-  }, [article, canonicalUrl, paragraphs, publishedIso]);
+  }, [article, canonicalUrl, locale, localizedArticle, paragraphs, publishedIso]);
 
   const handleShare = async () => {
     if (!article) return;
@@ -401,7 +451,11 @@ const NewsDetail: React.FC = () => {
     const url = canonicalUrl || window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: article.title, text: article.excerpt, url });
+        await navigator.share({
+          title: localizedArticle?.title || article.title,
+          text: localizedArticle?.excerpt || article.excerpt,
+          url
+        });
         return;
       } catch {
         // Fall back to clipboard.
@@ -415,12 +469,16 @@ const NewsDetail: React.FC = () => {
     }
   };
 
+  if (isLoading && news.length === 0) {
+    return <AppShellLoader compact label={copy.loader} />;
+  }
+
   if (!article) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <h1 className="text-4xl font-black text-gray-900 mb-4">Insight Not Found</h1>
+        <h1 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h1>
         <button onClick={() => navigate('/news')} className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-bold">
-          Return to Archive
+          {copy.returnArchive}
         </button>
       </div>
     );
@@ -432,20 +490,20 @@ const NewsDetail: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
           <Link to="/news" className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest">
             <ArrowLeft size={14} />
-            Back to Insights
+            {copy.backToInsights}
           </Link>
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
               className="p-2 text-gray-400 hover:text-foodmax-forest transition-colors rounded-lg hover:bg-gray-50"
-              aria-label="Share article"
+              aria-label={locale === 'zh' ? '分享文章' : 'Share article'}
             >
               <Share2 size={18} />
             </button>
             <button
               className="p-2 text-gray-400 hover:text-foodmax-forest transition-colors rounded-lg hover:bg-gray-50"
               onClick={() => window.print()}
-              aria-label="Print article"
+              aria-label={locale === 'zh' ? '打印文章' : 'Print article'}
             >
               <Printer size={18} />
             </button>
@@ -458,11 +516,11 @@ const NewsDetail: React.FC = () => {
           <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="px-3 py-1 bg-foodmax-forest/10 text-foodmax-forest text-[10px] font-black uppercase tracking-widest rounded-full">
-                {article.category}
+                {getNewsCategoryLabel(article.category, locale)}
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400">
                 <Clock size={14} />
-                {readingMinutes} Min Read
+                {readingMinutes} {copy.minRead}
               </span>
               <span className="text-xs font-bold text-gray-300">&bull;</span>
               <time
@@ -471,17 +529,20 @@ const NewsDetail: React.FC = () => {
                 itemProp="datePublished"
               >
                 <CalendarDays size={14} />
-                {article.date}
+                {formatDisplayDate(article.date, locale)}
               </time>
             </div>
 
             <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-6 leading-[1.08] tracking-tight" itemProp="headline">
-              {article.title}
+              {localizedArticle?.title || article.title}
             </h1>
 
-            {article.excerpt?.trim() && (
-              <p className="text-lg md:text-2xl text-gray-600 leading-relaxed mb-10 font-medium max-w-3xl" itemProp="description">
-                {article.excerpt}
+            {localizedArticle?.excerpt?.trim() && (
+              <p
+                className="text-lg md:text-2xl text-gray-600 leading-relaxed mb-10 font-medium max-w-3xl text-justify [text-align:justify] [text-justify:inter-word]"
+                itemProp="description"
+              >
+                {localizedArticle?.excerpt}
               </p>
             )}
           </div>
@@ -490,7 +551,7 @@ const NewsDetail: React.FC = () => {
             {!isImageBroken && article.image ? (
               <img
                 src={article.image}
-                alt={article.title}
+                alt={localizedArticle?.title || article.title}
                 className="w-full h-[260px] md:h-[460px] object-cover"
                 itemProp="image"
                 loading="eager"
@@ -498,11 +559,11 @@ const NewsDetail: React.FC = () => {
               />
             ) : (
               <div className="w-full h-[260px] md:h-[460px] bg-gradient-to-br from-foodmax-forest to-foodmax-lime p-8 flex items-end">
-                <p className="text-white text-2xl md:text-4xl font-black leading-tight max-w-3xl">{article.title}</p>
+                <p className="text-white text-2xl md:text-4xl font-black leading-tight max-w-3xl">{localizedArticle?.title || article.title}</p>
               </div>
             )}
             <figcaption className="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-              Foodmax Market Intelligence
+              {copy.marketIntel}
             </figcaption>
           </figure>
 
@@ -530,7 +591,10 @@ const NewsDetail: React.FC = () => {
                       )}
                     </figure>
                   ) : (
-                    <p key={`paragraph-${idx}`} className="text-lg md:text-[1.32rem] text-gray-700 leading-relaxed font-medium">
+                    <p
+                      key={`paragraph-${idx}`}
+                      className="text-lg md:text-[1.32rem] text-gray-700 leading-relaxed font-medium text-justify [text-align:justify] [text-justify:inter-word]"
+                    >
                       {block.text}
                     </p>
                   )
@@ -539,7 +603,7 @@ const NewsDetail: React.FC = () => {
             </section>
 
             <aside className="lg:sticky lg:top-24 h-fit bg-gray-50 rounded-2xl border border-gray-100 p-6">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">On This Page</h2>
+              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">{copy.onThisPage}</h2>
               <div className="space-y-3">
                 {headingBlocks.length > 0 ? (
                   headingBlocks.slice(0, 7).map((heading) => (
@@ -553,7 +617,7 @@ const NewsDetail: React.FC = () => {
                     </a>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 font-medium">This article is presented as a single continuous brief.</p>
+                  <p className="text-sm text-gray-500 font-medium">{copy.continuousBrief}</p>
                 )}
               </div>
 
@@ -562,7 +626,7 @@ const NewsDetail: React.FC = () => {
                   to="/contact"
                   className="w-full inline-flex items-center justify-center px-4 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg"
                 >
-                  Discuss this insight
+                  {copy.discussInsight}
                 </Link>
               </div>
             </aside>
@@ -576,9 +640,9 @@ const NewsDetail: React.FC = () => {
 
       <section className="bg-gray-50 py-20 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">Related Insights</h2>
+          <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">{copy.relatedInsights}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {news
+            {localizedNews
               .filter((n) => n.id !== article.id)
               .slice(0, 3)
               .map((related) => (

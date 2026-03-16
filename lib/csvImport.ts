@@ -300,6 +300,14 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
       ...extractPrefixedObject(row, ['spec', 'specification', 'specifications'])
     };
     const filters = parseProductFilters(row);
+    const zhSpecifications = parseLooseObject(csvField(row, ['zh specifications', 'zh_specifications', 'zh specs']));
+    const zhTranslation = {
+      ...(csvField(row, ['zh name', 'zh_name', 'cn name']) ? { name: csvField(row, ['zh name', 'zh_name', 'cn name']) } : {}),
+      ...(csvField(row, ['zh sub category', 'zh_sub_category', 'zh_subcategory']) ? { subCategory: csvField(row, ['zh sub category', 'zh_sub_category', 'zh_subcategory']) } : {}),
+      ...(csvField(row, ['zh short description', 'zh_short_description']) ? { shortDescription: csvField(row, ['zh short description', 'zh_short_description']) } : {}),
+      ...(csvField(row, ['zh description', 'zh long description']) ? { description: csvField(row, ['zh description', 'zh long description']) } : {}),
+      ...(Object.keys(zhSpecifications).length > 0 ? { specifications: zhSpecifications } : {})
+    };
     const category = normalizeProductCategory({
       category: csvField(row, ['category', 'global category']),
       subCategory: subCategoryRaw,
@@ -320,7 +328,8 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
       pdfUrl: pdfUrl || undefined,
       gallery: gallery.length ? gallery : undefined,
       specifications,
-      filters
+      filters,
+      translations: Object.keys(zhTranslation).length > 0 ? { zh: zhTranslation } : undefined
     });
   });
 
@@ -367,10 +376,21 @@ export const mapCsvRowsToNews = (rows: CsvRow[], options: MapNewsOptions = {}): 
     const category = categoryRaw ? parseNewsCategory(categoryRaw) : NEWS_CATEGORIES[0];
     const excerpt = csvField(row, ['excerpt', 'summary', 'short summary']);
     const mainContent = parseContentParagraphs(csvField(row, ['content', 'full article content', 'article']));
+    const zhMainContent = parseContentParagraphs(csvField(row, ['zh content', 'zh_content', 'cn content']));
     const extraSections = extractNumberedContentColumns(row).flatMap(parseContentParagraphs);
+    const zhExtraSections = Object.entries(row)
+      .filter(([column, raw]) => /^zh[_\s.-]*content[\s_.:-]/i.test(column.trim()) && raw.trim())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .flatMap(([, raw]) => parseContentParagraphs(raw));
     const content = Array.from(new Set([...mainContent, ...extraSections]));
+    const zhContent = Array.from(new Set([...zhMainContent, ...zhExtraSections]));
     const date = csvField(row, ['date', 'release date', 'publish date']) || today;
     const image = csvField(row, ['image', 'image url', 'cover image']) || DEFAULT_NEWS_IMAGE;
+    const zhTranslation = {
+      ...(csvField(row, ['zh title', 'zh_title', 'cn title']) ? { title: csvField(row, ['zh title', 'zh_title', 'cn title']) } : {}),
+      ...(csvField(row, ['zh excerpt', 'zh_excerpt', 'cn excerpt']) ? { excerpt: csvField(row, ['zh excerpt', 'zh_excerpt', 'cn excerpt']) } : {}),
+      ...(zhContent.length > 0 ? { content: zhContent } : {})
+    };
 
     byId.set(id, {
       id,
@@ -380,7 +400,8 @@ export const mapCsvRowsToNews = (rows: CsvRow[], options: MapNewsOptions = {}): 
       date,
       excerpt: excerpt || content[0] || title,
       content: content.length ? content : [excerpt || title],
-      image
+      image,
+      translations: Object.keys(zhTranslation).length > 0 ? { zh: zhTranslation } : undefined
     });
   });
 
