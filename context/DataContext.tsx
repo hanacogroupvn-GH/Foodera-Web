@@ -3,6 +3,7 @@ import { Product, NewsItem } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { NEWS as fallbackNewsData } from '../constants';
 import { getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
+import { normalizeProductCategory } from '../lib/productCategories';
 
 interface DataContextType {
   products: Product[];
@@ -30,7 +31,7 @@ const SAMPLE_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resource
 const mapProductFromRow = (row: any): Product => ({
   id: row.id,
   name: row.name,
-  category: row.category,
+  category: normalizeProductCategory(row),
   subCategory: row.sub_category,
   description: row.description,
   shortDescription: row.short_description,
@@ -44,7 +45,7 @@ const mapProductFromRow = (row: any): Product => ({
 const mapProductToRow = (p: Product) => ({
   id: p.id,
   name: p.name,
-  category: p.category,
+  category: normalizeProductCategory(p),
   sub_category: p.subCategory,
   description: p.description,
   short_description: p.shortDescription,
@@ -54,6 +55,9 @@ const mapProductToRow = (p: Product) => ({
   specifications: p.specifications ?? {},
   filters: p.filters ?? {}
 });
+
+const sortProductsById = (items: Product[]): Product[] =>
+  [...items].sort((a, b) => a.id.localeCompare(b.id));
 
 const CONTENT_KEY_PRIORITY = [
   'intro',
@@ -225,26 +229,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addProduct = async (p: Product) => {
     const { error } = await supabase.from('products').insert(mapProductToRow(p));
     if (error) throw new Error(error.message);
-    setProducts((prev) => [...prev, p]);
+    setProducts((prev) => sortProductsById([...prev, p]));
   };
 
   const updateProduct = async (p: Product, oldId?: string) => {
     const targetId = oldId || p.id;
 
-    // If ID changes, delete old then insert new
+    // If ID changes, upsert the new row first so an intentional replacement does not fail on duplicate IDs.
     if (oldId && oldId !== p.id) {
+      const { error: upsertErr } = await supabase.from('products').upsert(mapProductToRow(p), { onConflict: 'id' });
+      if (upsertErr) throw new Error(upsertErr.message);
       const { error: delErr } = await supabase.from('products').delete().eq('id', oldId);
       if (delErr) throw new Error(delErr.message);
-      const { error: insErr } = await supabase.from('products').insert(mapProductToRow(p));
-      if (insErr) throw new Error(insErr.message);
 
-      setProducts((prev) => prev.map((x) => (x.id === oldId ? p : x)));
+      setProducts((prev) => sortProductsById([...prev.filter((x) => x.id !== oldId && x.id !== p.id), p]));
       return;
     }
 
     const { error } = await supabase.from('products').upsert(mapProductToRow(p), { onConflict: 'id' });
     if (error) throw new Error(error.message);
-    setProducts((prev) => prev.map((x) => (x.id === targetId ? p : x)));
+    setProducts((prev) => {
+      const next = prev.some((x) => x.id === targetId)
+        ? prev.map((x) => (x.id === targetId ? p : x))
+        : [...prev, p];
+      return sortProductsById(next);
+    });
   };
 
   const deleteProduct = async (id: string) => {

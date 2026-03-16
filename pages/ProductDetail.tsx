@@ -83,7 +83,7 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const isCashew = product.subCategory.toLowerCase().includes('cashew') || product.id.includes('cashew');
+  const isCashew = product.category === 'Cashew' || product.subCategory.toLowerCase().includes('cashew') || product.id.includes('cashew');
   const isRice = product.category === 'Rice';
   const isCoffee = product.category === 'Coffee';
   const hasProductPdf = Boolean(product.pdfUrl?.trim());

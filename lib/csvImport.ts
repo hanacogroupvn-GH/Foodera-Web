@@ -1,5 +1,6 @@
 import { CategoryType, NewsCategory, NewsItem, Product } from '../types';
 import { buildUniqueNewsSlug, normalizeNewsSlug } from './newsSeo';
+import { normalizeProductCategory } from './productCategories';
 
 type CsvRow = Record<string, string>;
 
@@ -22,7 +23,6 @@ const DEFAULT_PRODUCT_IMAGE =
 const DEFAULT_NEWS_IMAGE =
   'https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200';
 
-const PRODUCT_CATEGORIES: CategoryType[] = ['Rice', 'Coffee', 'Agriculture'];
 const NEWS_CATEGORIES: NewsCategory[] = ['Market Insights', 'Company Updates', 'Sustainability', 'Events'];
 
 const normalizeKey = (value: string): string =>
@@ -126,13 +126,6 @@ const parseContentParagraphs = (raw: string): string[] => {
       : value.split(/\r?\n+/);
 
   return blocks.map((part) => part.trim()).filter(Boolean);
-};
-
-const parseCategory = (raw: string): CategoryType => {
-  const value = raw.trim().toLowerCase();
-  if (value.includes('coffee')) return 'Coffee';
-  if (value.includes('agri')) return 'Agriculture';
-  return 'Rice';
 };
 
 const parseNewsCategory = (raw: string): NewsCategory => {
@@ -295,9 +288,7 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
     }
 
     const name = csvField(row, ['name', 'product name', 'title']) || id;
-    const categoryRaw = csvField(row, ['category', 'global category']) || PRODUCT_CATEGORIES[0];
-    const category = parseCategory(categoryRaw);
-    const subCategory = csvField(row, ['sub category', 'subcategory', 'line']) || category;
+    const subCategoryRaw = csvField(row, ['sub category', 'subcategory', 'line']);
     const description = csvField(row, ['description', 'technical portfolio description', 'long description']);
     const shortDescription =
       csvField(row, ['short description', 'short commercial description', 'summary']) || description || name;
@@ -309,6 +300,14 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
       ...extractPrefixedObject(row, ['spec', 'specification', 'specifications'])
     };
     const filters = parseProductFilters(row);
+    const category = normalizeProductCategory({
+      category: csvField(row, ['category', 'global category']),
+      subCategory: subCategoryRaw,
+      id,
+      name,
+      filters
+    });
+    const subCategory = subCategoryRaw || category;
 
     byId.set(id, {
       id,

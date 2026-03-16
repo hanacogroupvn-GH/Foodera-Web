@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Product, CategoryType } from '../../types';
 import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
+import { PRODUCT_CATEGORIES } from '../../lib/productCategories';
 import {
   Package, 
   Search, 
@@ -77,12 +78,28 @@ const clearInventoryDraft = () => {
   window.localStorage.removeItem(INVENTORY_DRAFT_KEY);
 };
 
+const buildNextProductId = (requestedId: string, existingIds: string[], excludedId?: string): string => {
+  const baseId = requestedId.trim();
+  const takenIds = new Set(existingIds.filter((id) => id !== excludedId));
+  if (!takenIds.has(baseId)) return baseId;
+
+  let suffix = 1;
+  let candidate = `${baseId}(${suffix})`;
+  while (takenIds.has(candidate)) {
+    suffix += 1;
+    candidate = `${baseId}(${suffix})`;
+  }
+
+  return candidate;
+};
+
 const AdminInventory: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useData();
   const { logout } = useAuth();
   const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -141,11 +158,18 @@ const AdminInventory: React.FC = () => {
     });
   }, [isModalOpen, editingProduct?.id, formData, newGalleryUrl]);
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
+      !normalizedSearchTerm ||
+      p.name.toLowerCase().includes(normalizedSearchTerm) ||
+      p.category.toLowerCase().includes(normalizedSearchTerm) ||
+      p.subCategory.toLowerCase().includes(normalizedSearchTerm) ||
+      p.id.toLowerCase().includes(normalizedSearchTerm);
+    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const openModal = (product?: Product) => {
     setPrimaryImageUploadError(null);
@@ -255,16 +279,9 @@ const AdminInventory: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
 
-    if (!formData.id) {
+    const requestedId = formData.id?.trim() || '';
+    if (!requestedId) {
       alert("Product ID is required.");
-      setIsSaving(false);
-      return;
-    }
-
-    // Check for ID collision
-    const collision = products.find(p => p.id === formData.id);
-    if (collision && (!editingProduct || editingProduct.id !== formData.id)) {
-      alert(`The ID "${formData.id}" is already assigned to "${collision.name}". Please use a unique identifier.`);
       setIsSaving(false);
       return;
     }
@@ -275,17 +292,48 @@ const AdminInventory: React.FC = () => {
       return;
     }
 
-    // Simulate API delay
-    setTimeout(() => {
-      if (editingProduct) {
-        // Pass original ID to handle primary key changes
-        updateProduct(formData as Product, editingProduct.id);
+    const collision = products.find((p) => p.id === requestedId && p.id !== editingProduct?.id);
+    let resolvedId = requestedId;
+    let replacedExistingProduct = false;
+
+    if (collision) {
+      const shouldReplace = window.confirm(
+        `The ID "${requestedId}" is already assigned to "${collision.name}". Press OK to replace it, or Cancel to save this product as a new ID.`
+      );
+
+      if (shouldReplace) {
+        replacedExistingProduct = true;
       } else {
-        addProduct(formData as Product);
+        resolvedId = buildNextProductId(requestedId, products.map((product) => product.id), editingProduct?.id);
       }
-      setIsSaving(false);
+    }
+
+    const nextProduct = {
+      ...formData,
+      id: resolvedId
+    } as Product;
+
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 600));
+
+      if (editingProduct) {
+        await updateProduct(nextProduct, editingProduct.id);
+      } else if (replacedExistingProduct) {
+        await updateProduct(nextProduct);
+      } else {
+        await addProduct(nextProduct);
+      }
+
+      if (resolvedId !== requestedId) {
+        alert(`The ID "${requestedId}" already existed, so this product was saved as "${resolvedId}".`);
+      }
+
       closeModal();
-    }, 600);
+    } catch (err: any) {
+      alert(err?.message || 'Unable to save product.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -493,9 +541,21 @@ const AdminInventory: React.FC = () => {
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
               />
             </div>
-            <button className="px-6 py-3 border border-gray-200 rounded-xl text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all">
-              <Filter size={16} /> Filter Segment
-            </button>
+            <div className="relative md:w-72">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={16} />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-xs font-black text-gray-500 uppercase tracking-widest cursor-pointer"
+              >
+                <option value="all">All Categories</option>
+                {PRODUCT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Product Table */}
@@ -747,9 +807,9 @@ const AdminInventory: React.FC = () => {
                     onChange={(e) => setFormData({...formData, category: e.target.value as CategoryType})}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
-                    <option value="Rice">Rice</option>
-                    <option value="Coffee">Coffee</option>
-                    <option value="Agriculture">Agriculture</option>
+                    {PRODUCT_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
                   </select>
                 </div>
               </div>

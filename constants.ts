@@ -187,12 +187,12 @@ export const PRODUCTS: Product[] = [
   },
   
   // ==========================================
-  // AGRICULTURE - CASHEW KERNELS
+  // CASHEW KERNELS
   // ==========================================
   {
     id: 'agri-cashew-ww180',
     name: 'Cashew Nut WW180 (King of Cashews)',
-    category: 'Agriculture',
+    category: 'Cashew',
     subCategory: 'Cashew Kernels',
     shortDescription: 'Largest available cashew kernels, premium white whole grade.',
     description: 'The WW180 is known as the "King of Cashews" due to its exceptional size and weight. These kernels are perfectly white and whole, sourced from the finest harvests in Binh Phuoc. They are the primary choice for luxury gift sets and premium retail brands.',
@@ -203,7 +203,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'agri-cashew-ww240',
     name: 'Cashew Nut WW240 (Large)',
-    category: 'Agriculture',
+    category: 'Cashew',
     subCategory: 'Cashew Kernels',
     shortDescription: 'Large premium white whole cashew kernels for elite snacking.',
     description: 'WW240 kernels offer a superior balance of size and value. These large white wholes are a favorite for international roasters who require a high-impact visual presence for their retail packaging.',
@@ -214,7 +214,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'agri-cashew-ww320',
     name: 'Cashew Nut WW320 (Standard)',
-    category: 'Agriculture',
+    category: 'Cashew',
     subCategory: 'Cashew Kernels',
     shortDescription: 'World-standard export grade cashew kernels.',
     description: 'WW320 is the most commonly traded cashew grade globally. It provides a consistent size and quality profile that is highly versatile, used in everything from snack packs to confectionery coatings.',
@@ -225,7 +225,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'agri-cashew-ws',
     name: 'Cashew Nut WS (White Splits)',
-    category: 'Agriculture',
+    category: 'Cashew',
     subCategory: 'Cashew Kernels',
     shortDescription: 'Clean white cashew halves, ideal for confectionery and baking.',
     description: 'White Splits (WS) are kernels that have naturally split lengthwise during processing. They retain the same crispness and buttery flavor as whole kernels, making them an economical choice for the food processing industry.',
@@ -236,7 +236,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'agri-cashew-lbw',
     name: 'Cashew Nut LBW (Light Blemished Wholes)',
-    category: 'Agriculture',
+    category: 'Cashew',
     subCategory: 'Cashew Kernels',
     shortDescription: 'Economical whole kernels with minor surface discoloration.',
     description: 'Light Blemished Wholes (LBW) are whole kernels that may show slight surface discoloration or minor blemishes. Despite the aesthetic variation, they maintain the full nutritional value and flavor profile of the white grades.',

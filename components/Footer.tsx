@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
               <li><Link to="/about" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Our Legacy</Link></li>
               <li><Link to="/products/rice" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Rice Portfolios</Link></li>
               <li><Link to="/products/coffee" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Coffee Portfolios</Link></li>
-              <li><Link to="/products/agriculture" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Agri-Products</Link></li>
+              <li><Link to="/products/cashew" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">Cashew Portfolios</Link></li>
             </ul>
           </div>
 

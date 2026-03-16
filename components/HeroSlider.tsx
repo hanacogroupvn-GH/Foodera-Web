@@ -18,10 +18,10 @@ const slides = [
     image: "https://images.unsplash.com/photo-1769159686935-c516d57023b5?auto=format&fit=crop&q=80&w=1600"
   },
   {
-    title: "Global Agricultural Trading",
-    description: "Your reliable partner in sustainable agri-exports. Delivering premium cashews, pepper, and cinnamon to 30+ countries.",
-    cta: "Browse All Products",
-    link: "/products/agriculture",
+    title: "Premium Vietnamese Cashew Kernels",
+    description: "Export-ready WW180, WW240, WW320, WS, and LBW grades sourced for retail, foodservice, and industrial buyers.",
+    cta: "Explore Cashew Grades",
+    link: "/products/cashew",
     image: "https://images.unsplash.com/photo-1720720580549-70b4ebfa699a?auto=format&fit=crop&q=80&w=1600"
   }
 ];

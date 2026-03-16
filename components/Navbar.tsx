@@ -197,22 +197,21 @@ const Navbar: React.FC = () => {
                             </ul>
                           </div>
 
-                          {/* Column 3: Agriculture */}
+                          {/* Column 3: Cashew */}
                           <div className="col-span-3 border-l border-gray-100 pl-12">
                             <h3 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
                               <div className="w-1.5 h-1.5 rounded-full bg-foodmax-lime"></div>
-                              Agriculture
+                              Cashew Exports
                             </h3>
                             <ul className="space-y-4">
                               {[
-                                { name: 'Cashew Kernels', sub: 'WW180, WW240, WW320, WS, LBW' },
-                                { name: 'Spices & Seasoning', sub: 'Pepper, Cinnamon, Star Anise' },
-                                { name: 'Functional Ingredients', sub: 'Desiccated Coconut, Tapioca' },
-                                { name: 'Seasonal Fruits', sub: 'Dragon Fruit, Pomelo (Fresh/IQF)' }
+                                { name: 'Cashew Kernels', sub: 'WW180, WW240, WW320, WS, LBW', path: `/products/cashew?sub=${encodeURIComponent('Cashew Kernels')}` },
+                                { name: 'Whole White Grades', sub: 'Premium whole kernels for retail and gifting', path: '/products/cashew' },
+                                { name: 'Industrial Grades', sub: 'WS and LBW for confectionery and foodservice', path: '/products/cashew' }
                               ].map((item, idx) => (
                                 <li key={idx} className="group/item">
                                   <Link 
-                                    to={`/products/agriculture?sub=${encodeURIComponent(item.name)}`} 
+                                    to={item.path}
                                     className="block"
                                     onClick={() => setIsMegaMenuOpen(false)}
                                   >
@@ -461,6 +460,7 @@ const Navbar: React.FC = () => {
                   <div className="flex flex-col gap-3">
                     <button onClick={() => handleSearchNavigation('/products/rice')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Rice Export Portfolios</button>
                     <button onClick={() => handleSearchNavigation('/products/coffee')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Coffee Trade Lines</button>
+                    <button onClick={() => handleSearchNavigation('/products/cashew')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Cashew Kernel Grades</button>
                     <button onClick={() => handleSearchNavigation('/news')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">Market Analysis Archive</button>
                   </div>
                 </div>

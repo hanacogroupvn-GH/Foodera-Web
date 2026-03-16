@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import SectionHeading from '../components/SectionHeading';
 import ProductCard from '../components/ProductCard';
 import { Filter, X, ChevronDown, Settings2 } from 'lucide-react';
+import { PRODUCT_CATEGORIES } from '../lib/productCategories';
 
 const Products: React.FC = () => {
   const { products } = useData();
@@ -19,8 +20,9 @@ const Products: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    if (category) setFilterCategory(category);
-    if (subCategoryParam) setFilterSub(subCategoryParam);
+    setFilterCategory(category || 'all');
+    setFilterSub(subCategoryParam || 'all');
+    setFilterProcessing('all');
   }, [category, subCategoryParam]);
 
   const handleCategoryChange = (newCat: string) => {
@@ -36,13 +38,29 @@ const Products: React.FC = () => {
     return catMatch && subMatch && procMatch;
   });
 
-  const categories = ['All', 'Rice', 'Coffee', 'Agriculture'];
-  
-  const subs = {
-    'Rice': ['Long Grain White Rice', 'Premium & Fragrant Rice', 'Short & Medium Grain Rice'],
-    'Coffee': ['Specialty Coffee', 'Robusta Coffee', 'Arabica Coffee'],
-    'Agriculture': ['Spices', 'Cashew Kernels', 'IQF Frozen Fruit']
-  };
+  const categories = useMemo(
+    () => ['All', ...PRODUCT_CATEGORIES.filter((cat) => products.some((product) => product.category === cat))],
+    [products]
+  );
+
+  const subs = useMemo(
+    () =>
+      PRODUCT_CATEGORIES.reduce((output, cat) => {
+        const lines = Array.from(new Set(products.filter((product) => product.category === cat).map((product) => product.subCategory)))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+
+        if (lines.length) {
+          output[cat] = lines;
+        }
+
+        return output;
+      }, {} as Record<string, string[]>),
+    [products]
+  );
+
+  const activeCategory = PRODUCT_CATEGORIES.find((item) => item.toLowerCase() === filterCategory);
+  const activeSubCategories = activeCategory ? subs[activeCategory] || [] : [];
 
   const processingMethods = {
     'rice': ['Standard', 'Soft', 'Premium', 'Luxury'],
@@ -101,23 +119,19 @@ const Products: React.FC = () => {
                         >
                           All Varieties
                         </button>
-                        {Object.entries(subs).map(([cat, lines]) => (
-                          (filterCategory === cat.toLowerCase()) && (
-                            <div key={cat} className="space-y-1">
-                              {lines.map(line => (
-                                <button
-                                  key={line}
-                                  onClick={() => setFilterSub(line.toLowerCase())}
-                                  className={`block w-full text-xs text-left px-3 py-2 rounded-lg transition-all ${
-                                    filterSub === line.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
-                                  }`}
-                                >
-                                  {line}
-                                </button>
-                              ))}
-                            </div>
-                          )
-                        ))}
+                        <div className="space-y-1">
+                          {activeSubCategories.map(line => (
+                            <button
+                              key={line}
+                              onClick={() => setFilterSub(line.toLowerCase())}
+                              className={`block w-full text-xs text-left px-3 py-2 rounded-lg transition-all ${
+                                filterSub === line.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
+                              }`}
+                            >
+                              {line}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                    </div>
                 )}
