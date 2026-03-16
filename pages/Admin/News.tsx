@@ -85,7 +85,7 @@ const AdminNews: React.FC = () => {
           exitHome: '返回首页',
           portalTitle: '资讯与新闻中心',
           createPost: '新建文章',
-          importFromSheet: '从 Google Sheet 导入 CSV',
+          importFromSheet: '从 Google 表格导入 CSV',
           importLink: '导入链接',
           importing: '导入中...',
           uploadCsv: '上传 CSV',
@@ -103,7 +103,35 @@ const AdminNews: React.FC = () => {
           publishDate: '发布日期',
           actions: '操作',
           noMatches: '未找到匹配资讯',
-          cmsLanguage: 'CMS 语言'
+          cmsLanguage: 'CMS 语言',
+          imageUploadFailed: '图片上传失败。',
+          saveFailed: '无法保存该文章，请检查 Supabase schema 或权限策略。',
+          csvLinkRequired: '请先输入 Google 表格链接。',
+          csvImportFailed: 'CSV 导入失败。',
+          supportedColumns: '支持的资讯列：id、title、slug、category、date、excerpt、content（或 content_1/content_2...）、image。',
+          slugLabel: '短链',
+          modalSubtitle: '市场分析与传播中心',
+          coverImageLabel: '封面图（URL 或上传）',
+          coverUrlPlaceholder: '输入 Unsplash 或图片直链...',
+          uploadingImage: '图片上传中...',
+          uploadFromComputer: '从电脑上传',
+          resolutionHint: '建议分辨率：1200x800px，适合高分屏显示。',
+          headlineLabel: '标题 / 主标题',
+          headlinePlaceholder: '例如：第四季度大米出口稳定性分析...',
+          seoSlugLabel: 'SEO Slug（可选）',
+          canonicalUrlLabel: '规范 URL',
+          categoryLabel: '资讯分类',
+          releaseDateLabel: '发布日期',
+          releaseDatePlaceholder: '2024年2月15日',
+          excerptLabel: '文章摘要（短简介）',
+          excerptPlaceholder: '用于资讯列表的简短引导文...',
+          zhHeadlineLabel: '中文标题',
+          zhExcerptLabel: '中文摘要',
+          fullContentLabel: '正文内容',
+          fullContentHint: '每次换行都会生成一个段落',
+          zhContentLabel: '中文正文',
+          zhContentHint: '使用换行创建中文段落',
+          saveFailedPrefix: '保存失败：'
         }
       : {
           exitHome: 'Exit to Home',
@@ -127,7 +155,35 @@ const AdminNews: React.FC = () => {
           publishDate: 'Publish Date',
           actions: 'Actions',
           noMatches: 'No matching insights found',
-          cmsLanguage: 'CMS Language'
+          cmsLanguage: 'CMS Language',
+          imageUploadFailed: 'Image upload failed.',
+          saveFailed: 'Unable to save this article. Please check Supabase schema/policies.',
+          csvLinkRequired: 'Please enter a Google Sheet link first.',
+          csvImportFailed: 'CSV import failed.',
+          supportedColumns: 'Supported insight columns: id, title, slug, category, date, excerpt, content (or content_1/content_2...), image.',
+          slugLabel: 'Slug',
+          modalSubtitle: 'Market Analysis & Communication Hub',
+          coverImageLabel: 'Featured Cover Image (URL or upload)',
+          coverUrlPlaceholder: 'Enter Unsplash or Direct URL...',
+          uploadingImage: 'Uploading image...',
+          uploadFromComputer: 'Upload from computer',
+          resolutionHint: 'Resolution: 1200x800px recommended for high-DPI displays.',
+          headlineLabel: 'Headline / Title',
+          headlinePlaceholder: 'e.g. Q4 Rice Export Stability Analysis...',
+          seoSlugLabel: 'SEO Slug (Optional)',
+          canonicalUrlLabel: 'Canonical URL',
+          categoryLabel: 'Intelligence Category',
+          releaseDateLabel: 'Release Date',
+          releaseDatePlaceholder: 'Feb 15, 2024',
+          excerptLabel: 'Article Excerpt (Short Summary)',
+          excerptPlaceholder: 'A brief hook for the news archive grid...',
+          zhHeadlineLabel: 'Chinese Headline',
+          zhExcerptLabel: 'Chinese Excerpt',
+          fullContentLabel: 'Full Article Content',
+          fullContentHint: 'Newlines create paragraphs',
+          zhContentLabel: 'Chinese Article Content',
+          zhContentHint: 'Use new lines to create Chinese paragraphs',
+          saveFailedPrefix: 'Save failed: '
         };
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -267,7 +323,7 @@ const AdminNews: React.FC = () => {
         image: publicUrl
       }));
     } catch (err: any) {
-      setCoverImageUploadError(err?.message || 'Image upload failed.');
+      setCoverImageUploadError(err?.message || copy.imageUploadFailed);
     } finally {
       setIsUploadingCoverImage(false);
     }
@@ -320,7 +376,7 @@ const AdminNews: React.FC = () => {
         }
         isSuccess = true;
       } catch (err: any) {
-        setSaveError(err?.message || 'Unable to save this article. Please check Supabase schema/policies.');
+        setSaveError(err?.message || copy.saveFailed);
       } finally {
         setIsSaving(false);
         if (isSuccess) closeModal();
@@ -329,7 +385,7 @@ const AdminNews: React.FC = () => {
   };
 
   const handleDelete = (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to permanently delete the post: "${title}"?`)) {
+    if (window.confirm(locale === 'zh' ? `确定要永久删除文章“${title}”吗？` : `Are you sure you want to permanently delete the post: "${title}"?`)) {
       deleteNews(id);
     }
   };
@@ -337,13 +393,13 @@ const AdminNews: React.FC = () => {
   const importNewsFromCsvText = async (csvText: string, sourceLabel: string) => {
     const parsed = parseCsv(csvText);
     if (!parsed.rows.length) {
-      throw new Error('CSV has no data rows to import.');
+      throw new Error(locale === 'zh' ? 'CSV 中没有可导入的数据行。' : 'CSV has no data rows to import.');
     }
 
     const existingById = Object.fromEntries(news.map((item) => [item.id, item.slug]));
     const mapped = mapCsvRowsToNews(parsed.rows, { existingById });
     if (!mapped.items.length) {
-      throw new Error(mapped.errors[0] || 'No valid insight rows found.');
+      throw new Error(mapped.errors[0] || (locale === 'zh' ? '未找到有效的资讯数据行。' : 'No valid insight rows found.'));
     }
 
     const existingIds = new Set(news.map((item) => item.id));
@@ -363,20 +419,28 @@ const AdminNews: React.FC = () => {
 
     if (mapped.errors.length > 0) {
       // eslint-disable-next-line no-console
-      console.warn('News CSV skipped rows:', mapped.errors);
+      console.warn(locale === 'zh' ? '资讯 CSV 已跳过以下行:' : 'News CSV skipped rows:', mapped.errors);
     }
 
-    const skippedPart = mapped.errors.length > 0 ? `, skipped ${mapped.errors.length} invalid row(s)` : '';
+    const skippedPart =
+      mapped.errors.length > 0
+        ? locale === 'zh'
+          ? `，跳过 ${mapped.errors.length} 行无效数据`
+          : `, skipped ${mapped.errors.length} invalid row(s)`
+        : '';
     setCsvImportStatus({
       type: 'success',
-      message: `${sourceLabel}: imported ${mapped.items.length} insight(s) (${createdCount} new, ${updatedCount} updated${skippedPart}).`
+      message:
+        locale === 'zh'
+          ? `${sourceLabel}: 已导入 ${mapped.items.length} 篇资讯（新增 ${createdCount} 篇，更新 ${updatedCount} 篇${skippedPart}）。`
+          : `${sourceLabel}: imported ${mapped.items.length} insight(s) (${createdCount} new, ${updatedCount} updated${skippedPart}).`
     });
   };
 
   const handleImportFromSheet = async () => {
     const rawUrl = csvSheetUrl.trim();
     if (!rawUrl) {
-      setCsvImportStatus({ type: 'error', message: 'Please enter a Google Sheet link first.' });
+      setCsvImportStatus({ type: 'error', message: copy.csvLinkRequired });
       return;
     }
 
@@ -386,12 +450,16 @@ const AdminNews: React.FC = () => {
       const csvUrl = googleSheetToCsvUrl(rawUrl);
       const response = await fetch(csvUrl);
       if (!response.ok) {
-        throw new Error(`Unable to download CSV (HTTP ${response.status}). Check sharing/publish settings on Google Sheet.`);
+        throw new Error(
+          locale === 'zh'
+            ? `无法下载 CSV（HTTP ${response.status}）。请检查 Google Sheet 的共享或发布设置。`
+            : `Unable to download CSV (HTTP ${response.status}). Check sharing/publish settings on Google Sheet.`
+        );
       }
       const csvText = await response.text();
-      await importNewsFromCsvText(csvText, 'Google Sheet');
+      await importNewsFromCsvText(csvText, locale === 'zh' ? 'Google 表格' : 'Google Sheet');
     } catch (err: any) {
-      setCsvImportStatus({ type: 'error', message: err?.message || 'CSV import failed.' });
+      setCsvImportStatus({ type: 'error', message: err?.message || copy.csvImportFailed });
     } finally {
       setIsImportingCsv(false);
     }
@@ -406,9 +474,9 @@ const AdminNews: React.FC = () => {
     setCsvImportStatus({ type: null, message: '' });
     try {
       const csvText = await file.text();
-      await importNewsFromCsvText(csvText, file.name || 'CSV file');
+      await importNewsFromCsvText(csvText, file.name || (locale === 'zh' ? 'CSV 文件' : 'CSV file'));
     } catch (err: any) {
-      setCsvImportStatus({ type: 'error', message: err?.message || 'CSV import failed.' });
+      setCsvImportStatus({ type: 'error', message: err?.message || copy.csvImportFailed });
     } finally {
       setIsImportingCsv(false);
     }
@@ -518,9 +586,7 @@ const AdminNews: React.FC = () => {
                 />
               </label>
             </div>
-            <p className="text-[11px] text-gray-500 font-medium">
-              Supported insight columns: id, title, slug, category, date, excerpt, content (or content_1/content_2...), image.
-            </p>
+            <p className="text-[11px] text-gray-500 font-medium">{copy.supportedColumns}</p>
             {csvImportStatus.type && (
               <div
                 className={`px-4 py-3 rounded-xl text-sm font-semibold ${
@@ -571,7 +637,7 @@ const AdminNews: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-sm font-black text-gray-900 leading-tight line-clamp-1">{localized.title}</p>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Slug: {item.slug}</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">{copy.slugLabel}: {item.slug}</p>
                         </div>
                       </div>
                     </td>
@@ -633,7 +699,7 @@ const AdminNews: React.FC = () => {
                 <h2 className="text-xl font-black uppercase tracking-tight">
                   {editingItem ? copy.editInsight : copy.composeInsight}
                 </h2>
-                <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">Market Analysis & Communication Hub</p>
+                <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">{copy.modalSubtitle}</p>
               </div>
               <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X size={24} />
@@ -643,7 +709,7 @@ const AdminNews: React.FC = () => {
             <form onSubmit={handleSave} className="flex-grow overflow-y-auto p-10 space-y-8">
               {/* Cover Image */}
               <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Featured Cover Image (URL or upload)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.coverImageLabel}</label>
                 <div className="flex gap-6 items-center">
                   <div className="w-48 h-28 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {formData.image ? (
@@ -657,7 +723,7 @@ const AdminNews: React.FC = () => {
                       type="url" 
                       value={formData.image}
                       onChange={(e) => setFormData({...formData, image: e.target.value})}
-                      placeholder="Enter Unsplash or Direct URL..."
+                      placeholder={copy.coverUrlPlaceholder}
                       className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
                       required
                     />
@@ -670,7 +736,7 @@ const AdminNews: React.FC = () => {
                         }`}
                       >
                         {isUploadingCoverImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                        {isUploadingCoverImage ? 'Uploading image...' : 'Upload from computer'}
+                        {isUploadingCoverImage ? copy.uploadingImage : copy.uploadFromComputer}
                         <input
                           type="file"
                           accept={CMS_IMAGE_INPUT_ACCEPT}
@@ -681,7 +747,7 @@ const AdminNews: React.FC = () => {
                       </label>
                       <span className="text-[10px] text-gray-400 font-medium">JPG, PNG, WEBP, GIF, AVIF. Max 10MB.</span>
                     </div>
-                    <p className="text-[10px] text-gray-400 italic font-medium">Resolution: 1200x800px recommended for high-DPI displays.</p>
+                    <p className="text-[10px] text-gray-400 italic font-medium">{copy.resolutionHint}</p>
                     {coverImageUploadError && (
                       <p className="text-[10px] text-red-500 italic">{coverImageUploadError}</p>
                     )}
@@ -690,7 +756,7 @@ const AdminNews: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Headline / Title</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.headlineLabel}</label>
                 <input 
                   type="text" 
                   value={formData.title}
@@ -703,13 +769,13 @@ const AdminNews: React.FC = () => {
                     }));
                   }}
                   className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-lg font-black"
-                  placeholder="e.g. Q4 Rice Export Stability Analysis..."
+                  placeholder={copy.headlinePlaceholder}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">SEO Slug (Optional)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.seoSlugLabel}</label>
                 <input
                   type="text"
                   value={formData.slug || ''}
@@ -722,42 +788,42 @@ const AdminNews: React.FC = () => {
                   placeholder="incoterms-explained-a-practical-guide"
                 />
                 <p className="text-[10px] text-gray-500 font-semibold">
-                  Canonical URL: <span className="text-foodmax-forest">/news/{slugPreview}</span>
+                  {copy.canonicalUrlLabel}: <span className="text-foodmax-forest">/news/{slugPreview}</span>
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Intelligence Category</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.categoryLabel}</label>
                   <select 
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value as NewsCategory})}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{getNewsCategoryLabel(c, locale)}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Release Date</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.releaseDateLabel}</label>
                   <input 
                     type="text" 
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
-                    placeholder="Feb 15, 2024"
+                    placeholder={copy.releaseDatePlaceholder}
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Article Excerpt (Short Summary)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.excerptLabel}</label>
                 <textarea 
                   rows={2}
                   value={formData.excerpt}
                   onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
                   className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
-                  placeholder="A brief hook for the news archive grid..."
+                  placeholder={copy.excerptPlaceholder}
                   required
                 />
               </div>
@@ -771,7 +837,7 @@ const AdminNews: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Headline</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.zhHeadlineLabel}</label>
                   <input
                     type="text"
                     value={formData.translations?.zh?.title || ''}
@@ -793,7 +859,7 @@ const AdminNews: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Excerpt</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.zhExcerptLabel}</label>
                   <textarea
                     rows={2}
                     value={formData.translations?.zh?.excerpt || ''}
@@ -817,8 +883,8 @@ const AdminNews: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Full Article Content</label>
-                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">Newlines create paragraphs</span>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.fullContentLabel}</label>
+                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.fullContentHint}</span>
                 </div>
                 <textarea 
                   rows={10}
@@ -832,8 +898,8 @@ const AdminNews: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Chinese Article Content</label>
-                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">Use new lines to create Chinese paragraphs</span>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.zhContentLabel}</label>
+                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.zhContentHint}</span>
                 </div>
                 <textarea
                   rows={8}
@@ -848,7 +914,7 @@ const AdminNews: React.FC = () => {
             <div className="p-8 border-t border-gray-100 bg-gray-50">
               {saveError && (
                 <div className="mb-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-semibold">
-                  Save failed: {saveError}
+                  {copy.saveFailedPrefix}{saveError}
                 </div>
               )}
               <div className="flex items-center gap-4">

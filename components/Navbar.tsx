@@ -15,7 +15,11 @@ const MEGA_MENU_SECTIONS: Array<{ category: Product['category'] }> = [
   { category: 'Cashew' }
 ];
 
-const buildSectionSubtitle = (items: Product[]) => {
+const buildSectionSubtitle = (items: Product[], locale: 'en' | 'zh') => {
+  if (locale === 'zh') {
+    return `${items.length} 个在售出口 SKU`;
+  }
+
   return `${items.length} active export SKU${items.length === 1 ? '' : 's'}`;
 };
 
@@ -157,7 +161,7 @@ const Navbar: React.FC = () => {
         const items: MegaMenuItem[] = Array.from(groupedItems.values()).map((item) => ({
           name: item.name,
           path: item.path,
-          sub: buildSectionSubtitle(item.products)
+          sub: buildSectionSubtitle(item.products, locale)
         }));
 
         return {
@@ -285,8 +289,8 @@ const Navbar: React.FC = () => {
               <button
                 onClick={handleThemeToggle}
                 className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest"
-                aria-label="Toggle dark mode"
-                title="Toggle dark mode"
+                aria-label={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
+                title={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
               >
                 {isDarkMode ? <Sun size={14} className="text-foodmax-lime" /> : <Moon size={14} className="text-foodmax-forest" />}
                 {isDarkMode ? copy.themeLight : copy.themeDark}
@@ -456,7 +460,6 @@ const Navbar: React.FC = () => {
                              <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodmax-forest"><Globe size={18} /></div>
                                 <div>
-                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Global Logistics</p>
                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{copy.globalLogistics}</p>
                                   <p className="text-[11px] font-bold text-gray-900 uppercase">{copy.shippingToCountries}</p>
                                 </div>
@@ -485,8 +488,8 @@ const Navbar: React.FC = () => {
                 <button
                   onClick={handleThemeToggle}
                   className="text-gray-500 hover:text-foodmax-forest transition-colors p-2 rounded-full hover:bg-gray-50"
-                  aria-label="Toggle dark mode"
-                  title="Toggle dark mode"
+                  aria-label={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
+                  title={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
@@ -529,7 +532,9 @@ const Navbar: React.FC = () => {
 
               <div className="space-y-10">
                 <div className="grid grid-cols-1 gap-4 bg-gray-50 p-6 rounded-3xl">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">Direct Trading Desk</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">
+                    {locale === 'zh' ? '直贸窗口' : 'Direct Trading Desk'}
+                  </p>
                   <a href="mailto:export@foodmax.vn,support@foodmax.vn" className="flex items-center gap-3 text-lg font-black text-gray-900">
                     <Mail className="text-foodmax-forest" size={20} /> export@foodmax.vn
                   </a>

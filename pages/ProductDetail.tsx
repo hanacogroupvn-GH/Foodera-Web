@@ -205,26 +205,6 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const galleryImages = product.gallery && product.gallery.length > 0
-    ? product.gallery
-    : isRice
-    ? [
-        "https://images.unsplash.com/photo-1536304953491-a1312952467d?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600"
-      ]
-    : isCoffee
-    ? [
-        "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?auto=format&fit=crop&q=80&w=600"
-      ]
-    : [
-        "https://images.unsplash.com/photo-1590004953392-5aba2e0859c7?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1606755962773-d32330513252?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1606755456206-b25206cde27e?auto=format&fit=crop&q=80&w=600"
-      ];
-
   const originData = useMemo(() => {
     if (isCashew) {
       return locale === 'zh'
@@ -391,20 +371,9 @@ const ProductDetail: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
-          <div className="space-y-8 animate-in fade-in slide-in-from-left duration-700">
+          <div className="animate-in fade-in slide-in-from-left duration-700">
             <div className="aspect-[4/3] rounded-[2rem] overflow-hidden border border-gray-100 shadow-2xl">
               <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              {galleryImages.map((src, i) => (
-                <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 group cursor-pointer">
-                  <img
-                    src={src}
-                    alt={`detail-${i}`}
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-110"
-                  />
-                </div>
-              ))}
             </div>
           </div>
 

@@ -35,7 +35,10 @@ const Contact: React.FC = () => {
         adminNote: '该咨询将存储到 Supabase，并可在后台查看。',
         subjects: ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'],
         headquarters: '全球总部',
-        directions: '获取路线'
+        directions: '获取路线',
+        officeLabel: '总部办公室',
+        address: '越南胡志明市第一郡多高坊丁先皇街 17 号',
+        mapTitle: 'Foodmax 总部位置'
       }
     : {
         required: 'Please fill in all required fields.',
@@ -61,7 +64,10 @@ const Contact: React.FC = () => {
         adminNote: 'This inquiry will be stored in Supabase and visible to Admin.',
         subjects: ['Rice Export Inquiry', 'Coffee Export Inquiry', 'Logistics & Shipping', 'Private Label Partnership', 'Other Corporate Inquiry'],
         headquarters: 'Global Headquarters',
-        directions: 'Get Directions'
+        directions: 'Get Directions',
+        officeLabel: 'HQ Office',
+        address: '17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam',
+        mapTitle: 'Foodmax Headquarters Location'
       };
 
   const [form, setForm] = useState({
@@ -336,7 +342,7 @@ const Contact: React.FC = () => {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             className="grayscale hover:grayscale-0 transition-all duration-700 opacity-90 group-hover:opacity-100"
-            title="Foodmax Headquarters Location"
+            title={copy.mapTitle}
           ></iframe>
 
           <div className="absolute top-6 left-6 pointer-events-none">
@@ -346,10 +352,10 @@ const Contact: React.FC = () => {
                 <h4 className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em]">{copy.headquarters}</h4>
               </div>
               <p className="text-[11px] font-bold text-gray-700 leading-relaxed mb-4">
-                17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam
+                {copy.address}
               </p>
               <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">HQ Office</span>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{copy.officeLabel}</span>
                 <a
                   href="https://www.google.com/maps/place/17+%C4%90inh+Ti%C3%AAn+Ho%C3%A0ng,+%C4%90a+Kao,+Qu%E1%BA%ADn+1,+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh,+Vietnam/@10.7886314,106.6966048,17z"
                   target="_blank"

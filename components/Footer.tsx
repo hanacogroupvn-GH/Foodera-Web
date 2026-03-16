@@ -21,6 +21,7 @@ const Footer: React.FC = () => {
         packaging: '包装规格',
         terms: '贸易条款',
         headOffice: '总部办公室',
+        address: '越南胡志明市第一郡新定坊丁先皇街 17 号',
         rights: 'Foodmax Agriculture Export Co., Ltd. 保留所有权利。',
         staffPortal: '员工入口'
       }
@@ -37,6 +38,7 @@ const Footer: React.FC = () => {
         packaging: 'Packaging Specs',
         terms: 'Terms of Trade',
         headOffice: 'Head Office',
+        address: '17 Dinh Tien Hoang, Tan Dinh Ward, District 1, Ho Chi Minh City, Vietnam',
         rights: 'Foodmax Agriculture Export Co., Ltd. All Rights Reserved.',
         staffPortal: 'Staff Portal Access'
       };
@@ -96,7 +98,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-5 text-sm font-medium">
               <li className="flex items-start gap-3">
                 <MapPin size={20} className="text-foodmax-forest flex-shrink-0" />
-                <span className="text-foodmax-forest/80">17 Dinh Tien Hoang, Tan Dinh Ward, District 1, Ho Chi Minh City, Vietnam</span>
+                <span className="text-foodmax-forest/80">{copy.address}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={20} className="text-foodmax-forest flex-shrink-0" />

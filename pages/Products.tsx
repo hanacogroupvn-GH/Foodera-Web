@@ -36,6 +36,7 @@ const Products: React.FC = () => {
         mainCategory: '主分类',
         productLines: '产品线',
         allVarieties: '全部品类',
+        filters: '筛选',
         processingMethod: '加工方式',
         allProcesses: '全部工艺',
         showing: '当前显示',
@@ -57,6 +58,7 @@ const Products: React.FC = () => {
         mainCategory: 'Main Category',
         productLines: 'Product Lines',
         allVarieties: 'All Varieties',
+        filters: 'Filters',
         processingMethod: 'Processing Method',
         allProcesses: 'All Processes',
         showing: 'Showing',
@@ -164,7 +166,7 @@ const Products: React.FC = () => {
           <aside className="lg:w-1/4">
             <div className="sticky top-32">
               <div className="flex items-center justify-between lg:hidden mb-6 p-5 bg-gray-50 rounded-2xl border border-gray-200 cursor-pointer" onClick={() => setShowFilters(!showFilters)}>
-                <span className="font-black text-gray-900 flex items-center gap-2"><Filter size={18} className="text-foodmax-forest" /> Filters</span>
+                <span className="font-black text-gray-900 flex items-center gap-2"><Filter size={18} className="text-foodmax-forest" /> {copy.filters}</span>
                 {showFilters ? <X size={18} /> : <ChevronDown size={18} />}
               </div>
 

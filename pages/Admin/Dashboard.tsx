@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
-import { localizeProduct } from '../../lib/contentLocalization';
+import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import { 
   LayoutDashboard, 
   Package, 
@@ -53,7 +53,8 @@ const AdminDashboard: React.FC = () => {
           importError: '数据格式无效。',
           resetDefaults: '恢复默认数据',
           verifiedInventory: '已验证库存',
-          globalCatalog: '全球目录'
+          globalCatalog: '全球目录',
+          cmsLanguage: 'CMS 语言'
         }
       : {
           staffPortal: 'Staff Portal',
@@ -262,7 +263,9 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="flex-grow">
                     <p className="text-sm font-black text-gray-900">{localizeProduct(p, locale).name}</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.category} / {localizeProduct(p, locale).subCategory}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      {getCategoryLabel(p.category, locale)} / {localizeProduct(p, locale).subCategory}
+                    </p>
                   </div>
                 </div>
               ))}
