@@ -4,8 +4,10 @@ import { useLocation, useParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import SectionHeading from '../components/SectionHeading';
 import ProductCard from '../components/ProductCard';
-import { Filter, X, ChevronDown, Settings2 } from 'lucide-react';
+import { Filter, X, ChevronDown, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PRODUCT_CATEGORIES } from '../lib/productCategories';
+
+const ITEMS_PER_PAGE = 9;
 
 const Products: React.FC = () => {
   const { products } = useData();
@@ -18,6 +20,7 @@ const Products: React.FC = () => {
   const [filterSub, setFilterSub] = useState<string>(subCategoryParam || 'all');
   const [filterProcessing, setFilterProcessing] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setFilterCategory(category || 'all');
@@ -37,6 +40,10 @@ const Products: React.FC = () => {
     const procMatch = filterProcessing === 'all' || (p.filters.processing && p.filters.processing.toLowerCase() === filterProcessing.toLowerCase());
     return catMatch && subMatch && procMatch;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterCategory, filterSub, filterProcessing]);
 
   const categories = useMemo(
     () => ['All', ...PRODUCT_CATEGORIES.filter((cat) => products.some((product) => product.category === cat))],
@@ -69,6 +76,19 @@ const Products: React.FC = () => {
 
   // Capitalize category for display in the heading
   const displayCategory = filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const pageStart = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProducts = filteredProducts.slice(pageStart, pageStart + ITEMS_PER_PAGE);
+  const visibleStart = filteredProducts.length === 0 ? 0 : pageStart + 1;
+  const visibleEnd = Math.min(pageStart + paginatedProducts.length, filteredProducts.length);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="bg-white min-h-screen">
@@ -169,16 +189,58 @@ const Products: React.FC = () => {
           <main className="lg:w-3/4">
             <div className="flex justify-between items-center mb-10 pb-6 border-b border-gray-100">
               <p className="text-sm font-medium text-gray-500">
-                Displaying <span className="font-black text-gray-900">{filteredProducts.length}</span> verified export items
+                Showing <span className="font-black text-gray-900">{visibleStart}-{visibleEnd}</span> of{' '}
+                <span className="font-black text-gray-900">{filteredProducts.length}</span> verified export items
               </p>
             </div>
 
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {filteredProducts.map(p => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {paginatedProducts.map(p => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="mt-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-t border-gray-100 pt-8">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+                      Page {safeCurrentPage} of {totalPages}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                        disabled={safeCurrentPage === 1}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft size={14} />
+                        Prev
+                      </button>
+                      {pageNumbers.map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`h-11 min-w-11 rounded-xl px-4 text-xs font-black transition-all ${
+                            safeCurrentPage === page
+                              ? 'bg-foodmax-forest text-white shadow-lg'
+                              : 'border border-gray-200 text-gray-600 hover:border-foodmax-forest hover:text-foodmax-forest'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                        disabled={safeCurrentPage === totalPages}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="py-32 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200 animate-in fade-in duration-500">
                 <X size={48} className="mx-auto mb-6 text-gray-300" />

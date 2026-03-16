@@ -1,13 +1,24 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download, Sun, Moon } from 'lucide-react';
-import { PRODUCTS, NEWS } from '../constants';
-import { Product, NewsItem } from '../types';
+import { Product } from '../types';
 import Logo from '../Logo.png';
 import { getNewsPath } from '../lib/newsSeo';
+import { useData } from '../context/DataContext';
+
+const MEGA_MENU_SECTIONS: Array<{ category: Product['category']; title: string }> = [
+  { category: 'Rice', title: 'Rice Portfolios' },
+  { category: 'Coffee', title: 'Coffee Exports' },
+  { category: 'Cashew', title: 'Cashew Exports' }
+];
+
+const buildSectionSubtitle = (items: Product[]) => {
+  return `${items.length} active export SKU${items.length === 1 ? '' : 's'}`;
+};
 
 const Navbar: React.FC = () => {
+  const { products, news } = useData();
   const [isOpen, setIsOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -16,21 +27,80 @@ const Navbar: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Search results logic
-  const filteredProducts = searchQuery.length > 1 
-    ? PRODUCTS.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        p.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.subCategory.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5)
-    : [];
+  const megaMenuSections = useMemo(
+    () =>
+      MEGA_MENU_SECTIONS.map((section) => {
+        const groupedItems = products.reduce((map, product) => {
+          if (product.category !== section.category || !product.subCategory.trim()) {
+            return map;
+          }
 
-  const filteredNews = searchQuery.length > 1
-    ? NEWS.filter(n => 
-        n.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        n.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 3)
-    : [];
+          const key = product.subCategory.trim().toLowerCase();
+          const existing = map.get(key);
+          if (existing) {
+            existing.products.push(product);
+            return map;
+          }
+
+          map.set(key, {
+            name: product.subCategory.trim(),
+            path: `/products/${section.category.toLowerCase()}?sub=${encodeURIComponent(product.subCategory.trim())}`,
+            products: [product]
+          });
+
+          return map;
+        }, new Map<string, { name: string; path: string; products: Product[] }>());
+
+        const items = Array.from(groupedItems.values()).map((item) => ({
+          name: item.name,
+          path: item.path,
+          sub: buildSectionSubtitle(item.products)
+        }));
+
+        return {
+          ...section,
+          items
+        };
+      }).filter((section) => section.items.length > 0),
+    [products]
+  );
+
+  const featuredProduct = useMemo(() => {
+    if (products.length === 0) {
+      return null;
+    }
+
+    return products.find((product) => product.pdfUrl?.trim()) ?? products[0];
+  }, [products]);
+
+  const filteredProducts = useMemo(
+    () =>
+      searchQuery.length > 1
+        ? products
+            .filter(
+              (product) =>
+                product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.subCategory.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .slice(0, 5)
+        : [],
+    [products, searchQuery]
+  );
+
+  const filteredNews = useMemo(
+    () =>
+      searchQuery.length > 1
+        ? news
+            .filter(
+              (item) =>
+                item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .slice(0, 3)
+        : [],
+    [news, searchQuery]
+  );
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -143,85 +213,40 @@ const Navbar: React.FC = () => {
                     <div className="absolute top-full left-0 w-full bg-white shadow-[0_40px_60px_-15px_rgba(0,0,0,0.1)] border-t border-gray-100 animate-in slide-in-from-top-2 duration-300 z-[100]">
                       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                         <div className="grid grid-cols-12 gap-12">
-                          {/* Column 1: Rice */}
-                          <div className="col-span-3">
-                            <h3 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-foodmax-lime"></div>
-                              Rice Portfolios
-                            </h3>
-                            <ul className="space-y-4">
-                              {[
-                                { name: 'Long Grain White Rice', sub: '5%, 10%, 15%, 25% Broken' },
-                                { name: 'Premium & Fragrant Rice', sub: 'Jasmine, ST24, ST25, Nang Hoa' },
-                                { name: 'Short & Medium Grain Rice', sub: 'Japonica, Round Rice, Calrose' },
-                                { name: 'Glutinous & Specialty', sub: 'Sticky Rice, Brown Rice, Organic' }
-                              ].map((item, idx) => (
-                                <li key={idx} className="group/item">
-                                  <Link 
-                                    to={`/products/rice?sub=${encodeURIComponent(item.name)}`} 
-                                    className="block"
-                                    onClick={() => setIsMegaMenuOpen(false)}
-                                  >
-                                    <p className="text-sm font-black text-gray-900 group-hover/item:text-foodmax-forest transition-colors">{item.name}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{item.sub}</p>
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Column 2: Coffee */}
-                          <div className="col-span-3 border-l border-gray-100 pl-12">
-                            <h3 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-foodmax-lime"></div>
-                              Coffee Exports
-                            </h3>
-                            <ul className="space-y-4">
-                              {[
-                                { name: 'Robusta Coffee', sub: 'Grade 1, S16, S18, Wet Polished' },
-                                { name: 'Arabica Coffee', sub: 'High-Altitude Catimor, Typica' },
-                                { name: 'Specialty & Micro-lots', sub: 'Cau Dat, Son La Origins' },
-                                { name: 'Instant & Blends', sub: 'Spray Dried, Freeze Dried' }
-                              ].map((item, idx) => (
-                                <li key={idx} className="group/item">
-                                  <Link 
-                                    to={`/products/coffee?sub=${encodeURIComponent(item.name)}`} 
-                                    className="block"
-                                    onClick={() => setIsMegaMenuOpen(false)}
-                                  >
-                                    <p className="text-sm font-black text-gray-900 group-hover/item:text-foodmax-forest transition-colors">{item.name}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{item.sub}</p>
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Column 3: Cashew */}
-                          <div className="col-span-3 border-l border-gray-100 pl-12">
-                            <h3 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-foodmax-lime"></div>
-                              Cashew Exports
-                            </h3>
-                            <ul className="space-y-4">
-                              {[
-                                { name: 'Cashew Kernels', sub: 'WW180, WW240, WW320, WS, LBW', path: `/products/cashew?sub=${encodeURIComponent('Cashew Kernels')}` },
-                                { name: 'Whole White Grades', sub: 'Premium whole kernels for retail and gifting', path: '/products/cashew' },
-                                { name: 'Industrial Grades', sub: 'WS and LBW for confectionery and foodservice', path: '/products/cashew' }
-                              ].map((item, idx) => (
-                                <li key={idx} className="group/item">
-                                  <Link 
-                                    to={item.path}
-                                    className="block"
-                                    onClick={() => setIsMegaMenuOpen(false)}
-                                  >
-                                    <p className="text-sm font-black text-gray-900 group-hover/item:text-foodmax-forest transition-colors">{item.name}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{item.sub}</p>
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                          {megaMenuSections.length > 0 ? (
+                            megaMenuSections.map((section, index) => (
+                              <div key={section.category} className={`col-span-3 ${index > 0 ? 'border-l border-gray-100 pl-12' : ''}`}>
+                                <h3 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-foodmax-lime"></div>
+                                  {section.title}
+                                </h3>
+                                <ul className="space-y-4">
+                                  {section.items.map((item) => (
+                                    <li key={item.path} className="group/item">
+                                      <Link
+                                        to={item.path}
+                                        className="block"
+                                        onClick={() => setIsMegaMenuOpen(false)}
+                                      >
+                                        <p className="text-sm font-black text-gray-900 group-hover/item:text-foodmax-forest transition-colors">
+                                          {item.name}
+                                        </p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                                          {item.sub}
+                                        </p>
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="col-span-9 flex items-center rounded-[2rem] border border-dashed border-gray-200 bg-gray-50 px-8 py-12">
+                              <p className="text-sm font-bold text-gray-500">
+                                Product groups will appear here as soon as items are available in the current catalog.
+                              </p>
+                            </div>
+                          )}
 
                           {/* Column 4: Featured Portfolio (Visual) */}
                           <div className="col-span-3 pl-4">
@@ -229,21 +254,56 @@ const Navbar: React.FC = () => {
                               <div className="absolute top-0 right-0 w-32 h-32 bg-foodmax-forest/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/featured:bg-foodmax-lime/10 transition-colors duration-700"></div>
                               
                               <div className="relative z-10 flex flex-col h-full">
-                                <span className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.3em] mb-4 block">Seasonal Spotlight</span>
-                                <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">Vietnam Premium <br /><span className="text-foodmax-forest">ST25 Fragrant Rice</span></h4>
-                                <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
-                                  Voted World's Best Rice. Now accepting bulk export contracts for the 2024/25 harvest season.
-                                </p>
+                                <span className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.3em] mb-4 block">
+                                  Catalog Highlight
+                                </span>
+                                {featuredProduct ? (
+                                  <>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.28em] mb-3">
+                                      {featuredProduct.category} / {featuredProduct.subCategory}
+                                    </p>
+                                    <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">
+                                      {featuredProduct.name}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
+                                      {featuredProduct.shortDescription}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">
+                                      Current catalog is updating
+                                    </h4>
+                                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
+                                      Add products in the inventory panel to populate this featured card automatically.
+                                    </p>
+                                  </>
+                                )}
                                 
                                 <div className="space-y-3">
-                                  <Link 
-                                    to="/product/rice-st25" 
-                                    className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
-                                    onClick={() => setIsMegaMenuOpen(false)}
-                                  >
-                                    <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Full Technical Specs</span>
-                                    <ArrowRight size={14} className="text-foodmax-forest" />
-                                  </Link>
+                                  {featuredProduct ? (
+                                    <Link
+                                      to={`/product/${featuredProduct.id}`}
+                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
+                                      onClick={() => setIsMegaMenuOpen(false)}
+                                    >
+                                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
+                                        View Product Details
+                                      </span>
+                                      <ArrowRight size={14} className="text-foodmax-forest" />
+                                    </Link>
+                                  ) : (
+                                    <Link
+                                      to="/products"
+                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
+                                      onClick={() => setIsMegaMenuOpen(false)}
+                                    >
+                                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
+                                        Browse Full Catalog
+                                      </span>
+                                      <ArrowRight size={14} className="text-foodmax-forest" />
+                                    </Link>
+                                  )}
                                   <Link 
                                     to="/contact" 
                                     className="flex items-center justify-between w-full p-4 bg-foodmax-forest text-white rounded-xl shadow-lg hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
@@ -467,7 +527,7 @@ const Navbar: React.FC = () => {
                 <div className="md:col-span-2">
                    <div className="bg-gray-50 rounded-[2rem] p-10">
                       <h4 className="text-xl font-black text-gray-900 mb-4">Start your search</h4>
-                      <p className="text-gray-500 font-medium mb-0">Looking for a specific grade of Robusta or the latest ST25 rice specs? Type a variety name or category to browse our internal export database.</p>
+                      <p className="text-gray-500 font-medium mb-0">Type a product name, category, or product line to browse the current export catalog and market content.</p>
                    </div>
                 </div>
               </div>
