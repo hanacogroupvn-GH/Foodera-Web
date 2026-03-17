@@ -5,6 +5,7 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
+import { appRoutes } from '../../lib/routes';
 import { 
   LayoutDashboard, 
   Package, 
@@ -131,13 +132,13 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <nav className="space-y-2 flex-grow">
-          <Link to="/admin" className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl font-bold text-sm">
+          <Link to={appRoutes.admin} className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl font-bold text-sm">
             <LayoutDashboard size={18} /> {copy.dashboard}
           </Link>
-          <Link to="/admin/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
+          <Link to={appRoutes.adminInventory} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
             <Package size={18} /> {copy.inventory}
           </Link>
-          <Link to="/admin/news" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
+          <Link to={appRoutes.adminNews} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
             <FileText size={18} /> {copy.insights}
           </Link>
         </nav>
@@ -145,7 +146,7 @@ const AdminDashboard: React.FC = () => {
         {/* Branded Logout / Exit Section */}
         <div className="mt-auto pt-8 border-t border-white/10">
           <Link
-            to="/"
+            to={appRoutes.home}
             onClick={handleLogout}
             className="w-full flex items-center gap-4 p-4 rounded-[1.5rem] bg-white/5 hover:bg-white/10 transition-all group relative overflow-hidden"
           >
@@ -191,7 +192,7 @@ const AdminDashboard: React.FC = () => {
                   中文
                 </button>
              </div>
-             <button onClick={() => navigate('/admin/inventory')} className="px-6 py-3 bg-foodmax-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
+             <button onClick={() => navigate(appRoutes.adminInventory)} className="px-6 py-3 bg-foodmax-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
                 <Plus size={16} /> {copy.newExport}
              </button>
           </div>
@@ -253,7 +254,7 @@ const AdminDashboard: React.FC = () => {
           <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{copy.verifiedInventory}</h3>
-              <Link to="/admin/inventory" className="text-xs font-black text-foodmax-forest hover:text-foodmax-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
+              <Link to={appRoutes.adminInventory} className="text-xs font-black text-foodmax-forest hover:text-foodmax-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
             </div>
             <div className="space-y-4">
               {products.slice(0, 6).map(p => (

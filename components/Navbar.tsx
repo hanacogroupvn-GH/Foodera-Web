@@ -8,6 +8,7 @@ import { getNewsPath } from '../lib/newsSeo';
 import { useData } from '../context/DataContext';
 import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, getCategoryLabel, getNewsCategoryLabel, localizeNewsItem, localizeProduct } from '../lib/contentLocalization';
+import { appRoutes } from '../lib/routes';
 
 const MEGA_MENU_SECTIONS: Array<{ category: Product['category'] }> = [
   { category: 'Rice' },
@@ -20,7 +21,7 @@ const buildSectionSubtitle = (items: Product[], locale: 'en' | 'zh') => {
     return `${items.length} 个在售出口 SKU`;
   }
 
-  return `${items.length} active export SKU${items.length === 1 ? '' : 's'}`;
+  return `${items.length} active SKU${items.length === 1 ? '' : 's'}`;
 };
 
 interface MegaMenuGroup {
@@ -36,7 +37,7 @@ interface MegaMenuItem {
 }
 
 const Navbar: React.FC = () => {
-  const { products, news } = useData();
+  const { activeProducts: products, activeNews: news } = useData();
   const { locale, setLocale } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
@@ -153,7 +154,7 @@ const Navbar: React.FC = () => {
 
           groupedItems.set(key, {
             name: localizeProduct(product, locale).subCategory.trim(),
-            path: `/products/${section.category.toLowerCase()}?sub=${encodeURIComponent(product.subCategory.trim())}`,
+            path: appRoutes.productLine(section.category, product.subCategory),
             products: [product]
           });
         });
@@ -271,7 +272,7 @@ const Navbar: React.FC = () => {
         <div className="bg-gray-50 border-b border-gray-100 py-2.5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <div className="flex items-center space-x-6">
-              <a href="mailto:export@foodmax.vn,support@foodmax.vn" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-wider">
+              <a href="mailto:export@foodmax.vn?cc=support@foodmax.vn" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-wider">
                 <Mail size={14} className="text-foodmax-lime" />
                 <span className="hidden sm:inline">export@foodmax.vn</span>
               </a>
@@ -282,7 +283,7 @@ const Navbar: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-6">
-              <Link to="/commercial-tool" className="flex items-center gap-2 text-[11px] font-black text-foodmax-forest hover:text-foodmax-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+              <Link to={appRoutes.commercialTool} className="flex items-center gap-2 text-[11px] font-black text-foodmax-forest hover:text-foodmax-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                 <BarChart3 size={14} />
                 {copy.commercialTool}
               </Link>
@@ -324,7 +325,7 @@ const Navbar: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-20">
               <div className="flex items-center">
-                <Link to="/" className="flex-shrink-0 flex items-center">
+                <Link to={appRoutes.home} className="flex-shrink-0 flex items-center">
                   <BrandLogo />
                 </Link>
               </div>
@@ -337,7 +338,7 @@ const Navbar: React.FC = () => {
                   onMouseLeave={() => setIsMegaMenuOpen(false)}
                 >
                   <Link 
-                    to="/products"
+                    to={appRoutes.products}
                     onClick={() => setIsMegaMenuOpen(false)}
                     className={`flex items-center text-xs font-black transition-colors tracking-[0.2em] uppercase py-8 ${isMegaMenuOpen ? 'text-foodmax-forest' : 'text-gray-700 hover:text-foodmax-forest'}`}
                   >
@@ -419,7 +420,7 @@ const Navbar: React.FC = () => {
                                 <div className="space-y-3">
                                   {featuredProduct ? (
                                     <Link
-                                      to={`/product/${featuredProduct.id}`}
+                                      to={appRoutes.productById(featuredProduct.id)}
                                       className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
                                       onClick={() => setIsMegaMenuOpen(false)}
                                     >
@@ -430,7 +431,7 @@ const Navbar: React.FC = () => {
                                     </Link>
                                   ) : (
                                     <Link
-                                      to="/products"
+                                      to={appRoutes.products}
                                       className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
                                       onClick={() => setIsMegaMenuOpen(false)}
                                     >
@@ -441,7 +442,7 @@ const Navbar: React.FC = () => {
                                     </Link>
                                   )}
                                   <Link 
-                                    to="/contact" 
+                                    to={appRoutes.contact} 
                                     className="flex items-center justify-between w-full p-4 bg-foodmax-forest text-white rounded-xl shadow-lg hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
                                     onClick={() => setIsMegaMenuOpen(false)}
                                   >
@@ -472,7 +473,7 @@ const Navbar: React.FC = () => {
                                 </div>
                              </div>
                           </div>
-                          <Link to="/products" className="group flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] hover:text-foodmax-lime transition-colors" onClick={() => setIsMegaMenuOpen(false)}>
+                          <Link to={appRoutes.products} className="group flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] hover:text-foodmax-lime transition-colors" onClick={() => setIsMegaMenuOpen(false)}>
                             {copy.exploreFullCatalog} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                           </Link>
                         </div>
@@ -481,8 +482,8 @@ const Navbar: React.FC = () => {
                   )}
                 </div>
 
-                <Link to="/news" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.news}</Link>
-                <Link to="/about" className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.about}</Link>
+                <Link to={appRoutes.news} className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.news}</Link>
+                <Link to={appRoutes.about} className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.about}</Link>
                 
               <div className="flex items-center space-x-6">
                 <button
@@ -499,7 +500,7 @@ const Navbar: React.FC = () => {
                 >
                     <Search size={20} />
                   </button>
-                  <Link to="/contact" className="px-7 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
+                  <Link to={appRoutes.contact} className="px-7 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
                     {copy.contact}
                   </Link>
                 </div>
@@ -535,13 +536,13 @@ const Navbar: React.FC = () => {
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">
                     {locale === 'zh' ? '直贸窗口' : 'Direct Trading Desk'}
                   </p>
-                  <a href="mailto:export@foodmax.vn,support@foodmax.vn" className="flex items-center gap-3 text-lg font-black text-gray-900">
+                  <a href="mailto:export@foodmax.vn?cc=support@foodmax.vn" className="flex items-center gap-3 text-lg font-black text-gray-900">
                     <Mail className="text-foodmax-forest" size={20} /> export@foodmax.vn
                   </a>
                   <a href="tel:+84964791902" className="flex items-center gap-3 text-lg font-black text-gray-900">
                     <Phone className="text-foodmax-forest" size={20} /> +84 964 791 902
                   </a>
-                  <Link to="/commercial-tool" className="flex items-center gap-3 text-lg font-black text-foodmax-forest mt-4" onClick={() => setIsOpen(false)}>
+                  <Link to={appRoutes.commercialTool} className="flex items-center gap-3 text-lg font-black text-foodmax-forest mt-4" onClick={() => setIsOpen(false)}>
                     <BarChart3 size={20} /> {copy.commercialTool}
                   </Link>
                   <div className="flex items-center gap-3 text-sm font-black text-gray-500 mt-4">
@@ -566,10 +567,10 @@ const Navbar: React.FC = () => {
 
                 <div className="space-y-6">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{copy.mainMenu}</p>
-                  <Link to="/products" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.products}</Link>
-                  <Link to="/news" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
-                  <Link to="/about" className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.about}</Link>
-                  <Link to="/contact" className="block w-full py-5 bg-foodmax-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
+                  <Link to={appRoutes.products} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.products}</Link>
+                  <Link to={appRoutes.news} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
+                  <Link to={appRoutes.about} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.about}</Link>
+                  <Link to={appRoutes.contact} className="block w-full py-5 bg-foodmax-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
                     {copy.contactUs}
                   </Link>
                 </div>
@@ -620,7 +621,7 @@ const Navbar: React.FC = () => {
                         return (
                         <button 
                           key={product.id} 
-                          onClick={() => handleSearchNavigation(`/product/${product.id}`)}
+                          onClick={() => handleSearchNavigation(appRoutes.productById(product.id))}
                           className="w-full text-left group flex items-center gap-6 p-4 rounded-2xl border border-gray-50 hover:border-foodmax-lime/30 hover:bg-foodmax-lime/5 transition-all"
                         >
                           <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
@@ -677,10 +678,10 @@ const Navbar: React.FC = () => {
                 <div>
                   <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-100 pb-4">{copy.quickBrowse}</h4>
                   <div className="flex flex-col gap-3">
-                    <button onClick={() => handleSearchNavigation('/products/rice')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.riceExportPortfolios}</button>
-                    <button onClick={() => handleSearchNavigation('/products/coffee')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.coffeeTradeLines}</button>
-                    <button onClick={() => handleSearchNavigation('/products/cashew')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.cashewKernelGrades}</button>
-                    <button onClick={() => handleSearchNavigation('/news')} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.marketAnalysisArchive}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Rice'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.riceExportPortfolios}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Coffee'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.coffeeTradeLines}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Cashew'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.cashewKernelGrades}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.news)} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.marketAnalysisArchive}</button>
                   </div>
                 </div>
                 <div className="md:col-span-2">

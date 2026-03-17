@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Youtube, Shield } from 'lucide-react';
 import Logo from '../Logo-optimized.png';
 import { useLocale } from '../context/LocaleContext';
+import { appRoutes } from '../lib/routes';
 
 const Footer: React.FC = () => {
   const { locale } = useLocale();
@@ -60,36 +61,36 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div>
-            <Link to="/">
+            <Link to={appRoutes.home}>
               <BrandLogo />
             </Link>
             <p className="text-sm leading-relaxed mb-8 text-foodmax-forest/80">
               {copy.description}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Facebook size={20} /></a>
+              <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodmax-forest/40 rounded-xl flex items-center justify-center cursor-default"><Facebook size={20} /></span>
               <a href="https://www.linkedin.com/in/hobinhnghia/" target="_blank" rel="noreferrer" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Linkedin size={20} /></a>
-              <a href="#" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Youtube size={20} /></a>
+              <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodmax-forest/40 rounded-xl flex items-center justify-center cursor-default"><Youtube size={20} /></span>
             </div>
           </div>
 
           <div>
             <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">{copy.quickLinks}</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/about" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.legacy}</Link></li>
-              <li><Link to="/products/rice" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.rice}</Link></li>
-              <li><Link to="/products/coffee" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.coffee}</Link></li>
-              <li><Link to="/products/cashew" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.cashew}</Link></li>
+              <li><Link to={appRoutes.about} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.legacy}</Link></li>
+              <li><Link to={appRoutes.productsByCategory('Rice')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.rice}</Link></li>
+              <li><Link to={appRoutes.productsByCategory('Coffee')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.coffee}</Link></li>
+              <li><Link to={appRoutes.productsByCategory('Cashew')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.cashew}</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-foodmax-forest font-black uppercase text-xs tracking-[0.2em] mb-8">{copy.compliance}</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/operations#quality" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.quality}</Link></li>
-              <li><Link to="/operations#logistics" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.logistics}</Link></li>
-              <li><Link to="/operations#packaging" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.packaging}</Link></li>
-              <li><Link to="/operations#terms" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.terms}</Link></li>
+              <li><Link to={appRoutes.operationsSection('quality')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.quality}</Link></li>
+              <li><Link to={appRoutes.operationsSection('logistics')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.logistics}</Link></li>
+              <li><Link to={appRoutes.operationsSection('packaging')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.packaging}</Link></li>
+              <li><Link to={appRoutes.operationsSection('terms')} className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">{copy.terms}</Link></li>
             </ul>
           </div>
 
@@ -106,7 +107,7 @@ const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={20} className="text-foodmax-forest flex-shrink-0" />
-                <a href="mailto:export@foodmax.vn,support@foodmax.vn" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">export@foodmax.vn</a>
+                <a href="mailto:export@foodmax.vn?cc=support@foodmax.vn" className="text-foodmax-forest/80 hover:text-foodmax-lime transition-colors">export@foodmax.vn</a>
               </li>
             </ul>
           </div>
@@ -115,7 +116,7 @@ const Footer: React.FC = () => {
         <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] font-bold text-foodmax-forest/60 uppercase tracking-widest">&copy; {new Date().getFullYear()} {copy.rights}</p>
           <div className="flex items-center gap-6">
-            <Link to="/login" className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest/60 hover:text-foodmax-lime transition-colors uppercase tracking-widest">
+            <Link to={appRoutes.login} className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest/60 hover:text-foodmax-lime transition-colors uppercase tracking-widest">
               <Shield size={12} /> {copy.staffPortal}
             </Link>
           </div>

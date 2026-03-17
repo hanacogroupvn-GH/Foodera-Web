@@ -13,6 +13,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
+import { appRoutes } from '../lib/routes';
 
 interface YieldData {
   year: string;
@@ -68,7 +69,7 @@ const FM_REGIONS: Region[] = [
     },
     seasonMonths: [10, 11, 12],
     specsheet: '#',
-    contact: '/contact',
+    contact: appRoutes.contact,
     historicalYield: [
       { year: '2022', volume: 38000 },
       { year: '2023', volume: 42000 },
@@ -111,7 +112,7 @@ const FM_REGIONS: Region[] = [
     },
     seasonMonths: [11, 12, 1],
     specsheet: '#',
-    contact: '/contact',
+    contact: appRoutes.contact,
     historicalYield: [
       { year: '2022', volume: 8000 },
       { year: '2023', volume: 10500 },
@@ -154,7 +155,7 @@ const FM_REGIONS: Region[] = [
     },
     seasonMonths: [11, 12, 1],
     specsheet: '#',
-    contact: '/contact',
+    contact: appRoutes.contact,
     historicalYield: [
       { year: '2022', volume: 165000 },
       { year: '2023', volume: 172000 },
@@ -197,7 +198,7 @@ const FM_REGIONS: Region[] = [
     },
     seasonMonths: [11, 12, 1, 2],
     specsheet: '#',
-    contact: '/contact',
+    contact: appRoutes.contact,
     historicalYield: [
       { year: '2022', volume: 395000 },
       { year: '2023', volume: 410000 },
@@ -240,7 +241,7 @@ const FM_REGIONS: Region[] = [
     },
     seasonMonths: [10, 11, 12],
     specsheet: '#',
-    contact: '/contact',
+    contact: appRoutes.contact,
     historicalYield: [
       { year: '2022', volume: 48000 },
       { year: '2023', volume: 52000 },
@@ -670,7 +671,7 @@ const CommercialTool: React.FC = () => {
                 <h4 className="mb-4 text-2xl font-black tracking-tight">{copy.strategicSupport}</h4>
                 <p className="mb-10 text-sm font-medium leading-relaxed text-white/60">{copy.strategicDesc}</p>
                 <Link
-                  to="/contact"
+                  to={appRoutes.contact}
                   className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-foodmax-lime transition-all group-hover:gap-5"
                 >
                   {copy.consultDesk} <Globe size={16} />

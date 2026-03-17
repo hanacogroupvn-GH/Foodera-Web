@@ -136,6 +136,21 @@ const parseNewsCategory = (raw: string): NewsCategory => {
   return 'Market Insights';
 };
 
+const parseOptionalBoolean = (raw: string): boolean | undefined => {
+  const value = raw.trim().toLowerCase();
+  if (!value) return undefined;
+
+  if (['true', '1', 'yes', 'y', 'active', 'published', 'show', 'visible'].includes(value)) {
+    return true;
+  }
+
+  if (['false', '0', 'no', 'n', 'inactive', 'hidden', 'draft', 'unpublished'].includes(value)) {
+    return false;
+  }
+
+  return undefined;
+};
+
 const extractPrefixedObject = (row: CsvRow, prefixes: string[]): Record<string, string> => {
   const output: Record<string, string> = {};
   const regex = new RegExp(`^(?:${prefixes.join('|')})[\\s_.:-]+(.+)$`, 'i');
@@ -300,6 +315,7 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
       ...extractPrefixedObject(row, ['spec', 'specification', 'specifications'])
     };
     const filters = parseProductFilters(row);
+    const parsedIsActive = parseOptionalBoolean(csvField(row, ['is active', 'is_active', 'active', 'status']));
     const zhSpecifications = parseLooseObject(csvField(row, ['zh specifications', 'zh_specifications', 'zh specs']));
     const zhTranslation = {
       ...(csvField(row, ['zh name', 'zh_name', 'cn name']) ? { name: csvField(row, ['zh name', 'zh_name', 'cn name']) } : {}),
@@ -320,6 +336,7 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
     byId.set(id, {
       id,
       name,
+      isActive: parsedIsActive ?? true,
       category,
       subCategory,
       description,
@@ -386,6 +403,7 @@ export const mapCsvRowsToNews = (rows: CsvRow[], options: MapNewsOptions = {}): 
     const zhContent = Array.from(new Set([...zhMainContent, ...zhExtraSections]));
     const date = csvField(row, ['date', 'release date', 'publish date']) || today;
     const image = csvField(row, ['image', 'image url', 'cover image']) || DEFAULT_NEWS_IMAGE;
+    const parsedIsActive = parseOptionalBoolean(csvField(row, ['is active', 'is_active', 'active', 'status']));
     const zhTranslation = {
       ...(csvField(row, ['zh title', 'zh_title', 'cn title']) ? { title: csvField(row, ['zh title', 'zh_title', 'cn title']) } : {}),
       ...(csvField(row, ['zh excerpt', 'zh_excerpt', 'cn excerpt']) ? { excerpt: csvField(row, ['zh excerpt', 'zh_excerpt', 'cn excerpt']) } : {}),
@@ -396,6 +414,7 @@ export const mapCsvRowsToNews = (rows: CsvRow[], options: MapNewsOptions = {}): 
       id,
       slug: generatedSlug,
       title,
+      isActive: parsedIsActive ?? true,
       category,
       date,
       excerpt: excerpt || content[0] || title,

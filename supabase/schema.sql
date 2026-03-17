@@ -5,6 +5,7 @@ create extension if not exists unaccent with schema extensions;
 create table if not exists public.products (
   id text primary key,
   name text not null,
+  is_active boolean not null default true,
   category text not null,
   sub_category text not null,
   description text not null,
@@ -23,6 +24,7 @@ create table if not exists public.news (
   id text primary key,
   slug text not null unique,
   title text not null,
+  is_active boolean not null default true,
   date text not null,
   category text not null,
   excerpt text not null,

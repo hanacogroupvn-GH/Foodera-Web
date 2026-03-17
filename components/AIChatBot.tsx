@@ -127,7 +127,7 @@ const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en'
 };
 
 const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
-  const { products } = useData();
+  const { activeProducts: products } = useData();
   const { locale } = useLocale();
   const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY?.trim();
   const hasLiveIntelligence = Boolean(geminiApiKey);

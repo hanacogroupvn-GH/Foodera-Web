@@ -20,7 +20,7 @@ const extractYear = (value: string) => {
 };
 
 const News: React.FC = () => {
-  const { news, isLoading } = useData();
+  const { activeNews: news, isLoading } = useData();
   const { locale } = useLocale();
   const [activeCategory, setActiveCategory] = useState<NewsCategory | 'All'>('All');
   const [activeYear, setActiveYear] = useState<string>('All');

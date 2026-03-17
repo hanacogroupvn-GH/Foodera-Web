@@ -10,6 +10,7 @@ import FloatingContact from './components/FloatingContact';
 import LazyAIChatBot from './components/LazyAIChatBot';
 import AppShellLoader from './components/AppShellLoader';
 import AppErrorBoundary from './components/AppErrorBoundary';
+import { appRoutes } from './lib/routes';
 
 const Home = lazy(() => import('./pages/Home'));
 const Products = lazy(() => import('./pages/Products'));
@@ -41,9 +42,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <AppShellLoader label={locale === 'zh' ? '正在检查安全会话...' : 'Checking secure session...'} compact />;
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to={appRoutes.login} replace />;
 
-  if (!isAdmin) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to={appRoutes.login} replace />;
 
   return <>{children}</>;
 };
@@ -83,7 +84,7 @@ const AppRoutes: React.FC = () => {
             <div className="min-h-screen flex flex-col font-sans antialiased text-gray-900 bg-white">
               <Routes>
                 <Route
-                  path="/login"
+                  path={appRoutes.login}
                   element={
                     <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载登录页面...' : 'Loading sign-in...'} compact />}>
                       <Login />
@@ -91,7 +92,7 @@ const AppRoutes: React.FC = () => {
                   }
                 />
                 <Route
-                  path="/admin"
+                  path={appRoutes.admin}
                   element={
                     <ProtectedRoute>
                       <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载后台总览...' : 'Loading dashboard...'} compact />}>
@@ -101,7 +102,7 @@ const AppRoutes: React.FC = () => {
                   }
                 />
                 <Route
-                  path="/admin/inventory"
+                  path={appRoutes.adminInventory}
                   element={
                     <ProtectedRoute>
                       <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载产品库...' : 'Loading inventory...'} compact />}>
@@ -111,7 +112,7 @@ const AppRoutes: React.FC = () => {
                   }
                 />
                 <Route
-                  path="/admin/news"
+                  path={appRoutes.adminNews}
                   element={
                     <ProtectedRoute>
                       <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载资讯中心...' : 'Loading insights...'} compact />}>
@@ -122,18 +123,18 @@ const AppRoutes: React.FC = () => {
                 />
 
                 <Route element={<PublicLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:category" element={<Products />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/about" element={<AboutUs />} />
-                  <Route path="/news" element={<News />} />
-                  <Route path="/news/:slug" element={<NewsDetail />} />
-                  <Route path="/news/:legacyId/:legacySlug" element={<NewsDetail />} />
-                  <Route path="/commercial-tool" element={<CommercialTool />} />
-                  <Route path="/operations" element={<Operations />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path={appRoutes.home} element={<Home />} />
+                  <Route path={appRoutes.products} element={<Products />} />
+                  <Route path={`${appRoutes.products}/:category`} element={<Products />} />
+                  <Route path={`${appRoutes.productBase}/:id`} element={<ProductDetail />} />
+                  <Route path={appRoutes.about} element={<AboutUs />} />
+                  <Route path={appRoutes.news} element={<News />} />
+                  <Route path={`${appRoutes.news}/:slug`} element={<NewsDetail />} />
+                  <Route path={`${appRoutes.news}/:legacyId/:legacySlug`} element={<NewsDetail />} />
+                  <Route path={appRoutes.commercialTool} element={<CommercialTool />} />
+                  <Route path={appRoutes.operations} element={<Operations />} />
+                  <Route path={appRoutes.contact} element={<Contact />} />
+                  <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
                 </Route>
               </Routes>
             </div>

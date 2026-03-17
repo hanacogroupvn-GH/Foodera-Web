@@ -5,6 +5,7 @@ import { ArrowRight, CheckCircle } from 'lucide-react';
 import { Product } from '../types';
 import { useLocale } from '../context/LocaleContext';
 import { getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
+import { appRoutes } from '../lib/routes';
 
 interface ProductCardProps {
   product: Product;
@@ -54,7 +55,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <Link 
-      to={`/product/${product.id}`}
+      to={appRoutes.productById(product.id)}
       className="group block bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 transform hover:-translate-y-2 overflow-hidden flex flex-col h-full"
     >
       <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">

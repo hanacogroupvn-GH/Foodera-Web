@@ -21,12 +21,13 @@ import { useData } from '../context/DataContext';
 import { getNewsPath } from '../lib/newsSeo';
 import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, localizeNewsItem } from '../lib/contentLocalization';
+import { appRoutes } from '../lib/routes';
 
 const Home: React.FC = () => {
-  const { products, news, isLoading } = useData();
+  const { activeProducts, activeNews, isLoading } = useData();
   const { locale } = useLocale();
-  const featuredProducts = products.slice(0, 4);
-  const featuredNews = news.slice(0, 3).map((item) => localizeNewsItem(item, locale));
+  const featuredProducts = activeProducts.slice(0, 4);
+  const featuredNews = activeNews.slice(0, 3).map((item) => localizeNewsItem(item, locale));
   const copy = locale === 'zh'
     ? {
         loader: '正在加载目录与市场洞察...',
@@ -157,7 +158,7 @@ const Home: React.FC = () => {
         browseCatalog: 'Browse Catalog'
       };
 
-  if (isLoading && products.length === 0 && news.length === 0) {
+  if (isLoading && activeProducts.length === 0 && activeNews.length === 0) {
     return <AppShellLoader compact label={copy.loader} />;
   }
 
@@ -197,7 +198,7 @@ const Home: React.FC = () => {
           </div>
           <div className="text-center">
             <Link
-              to="/products"
+              to={appRoutes.products}
               className="inline-flex items-center gap-2 rounded-2xl bg-foodmax-forest px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-foodmax-forest/20 transition-all hover:-translate-y-1 hover:bg-foodmax-lime hover:text-foodmax-forest"
             >
               {copy.viewAllCategories}
@@ -234,7 +235,7 @@ const Home: React.FC = () => {
                 ))}
               </ul>
               <Link
-                to="/operations#quality"
+                to={appRoutes.operationsSection('quality')}
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-foodmax-lime transition-colors hover:text-white"
               >
                 {copy.technicalSpecs}
@@ -262,7 +263,7 @@ const Home: React.FC = () => {
                 </div>
               </div>
               <Link
-                to="/operations#logistics"
+                to={appRoutes.operationsSection('logistics')}
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-foodmax-forest"
               >
                 {copy.routeIntel}
@@ -290,7 +291,7 @@ const Home: React.FC = () => {
                 ))}
               </div>
               <Link
-                to="/operations#packaging"
+                to={appRoutes.operationsSection('packaging')}
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-foodmax-forest"
               >
                 {copy.packagingManual}
@@ -318,7 +319,7 @@ const Home: React.FC = () => {
                 </div>
               </div>
               <Link
-                to="/operations#terms"
+                to={appRoutes.operationsSection('terms')}
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-foodmax-lime transition-colors hover:text-white"
               >
                 {copy.tradeFramework}
@@ -402,13 +403,13 @@ const Home: React.FC = () => {
               </p>
               <div className="flex flex-col items-center justify-center gap-6 sm:flex-row">
                 <Link
-                  to="/contact"
+                  to={appRoutes.contact}
                   className="flex items-center gap-3 rounded-2xl bg-foodmax-forest px-14 py-6 text-xs font-black uppercase tracking-[0.3em] text-white shadow-2xl shadow-foodmax-forest/20 transition-all hover:scale-105 hover:bg-foodmax-lime hover:text-foodmax-forest active:scale-95"
                 >
                   {copy.connectSales} <ArrowRight size={18} />
                 </Link>
                 <Link
-                  to="/products"
+                  to={appRoutes.products}
                   className="rounded-2xl border-2 border-gray-200 bg-white px-14 py-6 text-xs font-black uppercase tracking-[0.3em] text-gray-400 transition-all hover:border-foodmax-forest hover:text-foodmax-forest"
                 >
                   {copy.browseCatalog}

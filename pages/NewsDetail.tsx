@@ -6,6 +6,7 @@ import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import AppShellLoader from '../components/AppShellLoader';
 import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
+import { appRoutes } from '../lib/routes';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -270,7 +271,7 @@ const NewsDetail: React.FC = () => {
     legacySlug?: string;
   }>();
   const navigate = useNavigate();
-  const { news, isLoading } = useData();
+  const { activeNews: news, isLoading } = useData();
   const { locale } = useLocale();
   const primarySegment = useMemo(() => decodeRouteSegment(rawSlug), [rawSlug]);
   const legacyId = useMemo(() => decodeRouteSegment(rawLegacyId), [rawLegacyId]);
@@ -477,7 +478,7 @@ const NewsDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <h1 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h1>
-        <button onClick={() => navigate('/news')} className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-bold">
+        <button onClick={() => navigate(appRoutes.news)} className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-bold">
           {copy.returnArchive}
         </button>
       </div>
@@ -488,7 +489,7 @@ const NewsDetail: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-white animate-in fade-in duration-500">
       <div className="bg-white/85 backdrop-blur border-b border-gray-100 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
-          <Link to="/news" className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest">
+          <Link to={appRoutes.news} className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest">
             <ArrowLeft size={14} />
             {copy.backToInsights}
           </Link>
@@ -623,7 +624,7 @@ const NewsDetail: React.FC = () => {
 
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <Link
-                  to="/contact"
+                  to={appRoutes.contact}
                   className="w-full inline-flex items-center justify-center px-4 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg"
                 >
                   {copy.discussInsight}

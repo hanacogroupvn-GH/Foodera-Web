@@ -5,10 +5,13 @@ import { NEWS as fallbackNewsData, PRODUCTS as fallbackProductData } from '../co
 import { getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import { normalizeProductCategory } from '../lib/productCategories';
 import { FALLBACK_NEWS_TRANSLATIONS, FALLBACK_PRODUCT_TRANSLATIONS } from '../lib/fallbackTranslations';
+import { getActiveNews, getActiveProducts } from '../lib/contentStatus';
 
 interface DataContextType {
   products: Product[];
   news: NewsItem[];
+  activeProducts: Product[];
+  activeNews: NewsItem[];
   isLoading: boolean;
   addProduct: (product: Product) => Promise<void>;
   updateProduct: (product: Product, oldId?: string) => Promise<void>;
@@ -121,6 +124,7 @@ const cloneNewsTranslations = (translations?: NewsItem['translations']): NewsIte
 
 const cloneProduct = (product: Product): Product => ({
   ...product,
+  isActive: product.isActive !== false,
   specifications: { ...product.specifications },
   filters: { ...product.filters },
   gallery: product.gallery ? [...product.gallery] : undefined,
@@ -129,6 +133,7 @@ const cloneProduct = (product: Product): Product => ({
 
 const cloneNewsItem = (item: NewsItem): NewsItem => ({
   ...item,
+  isActive: item.isActive !== false,
   content: [...item.content],
   translations: cloneNewsTranslations(item.translations)
 });
@@ -218,6 +223,7 @@ const mapProductFromRow = (row: any): Product => {
   return {
     id: row.id,
     name: row.name,
+    isActive: row.is_active !== false,
     category: normalizeProductCategory(row),
     subCategory: row.sub_category,
     description: row.description,
@@ -234,6 +240,7 @@ const mapProductFromRow = (row: any): Product => {
 const mapProductToRow = (p: Product) => ({
   id: p.id,
   name: p.name,
+  is_active: p.isActive !== false,
   category: normalizeProductCategory(p),
   sub_category: p.subCategory,
   description: p.description,
@@ -401,6 +408,7 @@ const mapNewsFromRow = (row: any): NewsItem => {
     id,
     slug: getNewsSlug({ id, title, slug: rowSlug || fallback?.slug }),
     title,
+    isActive: row.is_active !== false,
     date: row.date ?? fallback?.date ?? '',
     category: (row.category ?? fallback?.category ?? 'Market Insights') as NewsItem['category'],
     excerpt: row.excerpt ?? fallback?.excerpt ?? '',
@@ -417,6 +425,7 @@ const mapNewsToRow = (n: NewsItem) => ({
   id: n.id,
   slug: getNewsSlug(n),
   title: n.title,
+  is_active: n.isActive !== false,
   date: n.date,
   category: n.category,
   excerpt: n.excerpt,
@@ -429,6 +438,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [products, setProducts] = useState<Product[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const activeProducts = useMemo(() => getActiveProducts(products), [products]);
+  const activeNews = useMemo(() => getActiveNews(news), [news]);
 
   const refresh = async () => {
     setIsLoading(true);
@@ -590,6 +601,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     () => ({
       products,
       news,
+      activeProducts,
+      activeNews,
       isLoading,
       addProduct,
       updateProduct,
@@ -602,7 +615,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       resetToDefaults,
       refresh
     }),
-    [products, news, isLoading]
+    [products, news, activeProducts, activeNews, isLoading]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

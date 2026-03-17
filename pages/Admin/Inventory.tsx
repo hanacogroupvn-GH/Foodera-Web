@@ -9,6 +9,8 @@ import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/c
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { PRODUCT_CATEGORIES } from '../../lib/productCategories';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
+import { appRoutes } from '../../lib/routes';
+import { canTranslateCmsContent, translateProductToChinese } from '../../lib/zhTranslation';
 import {
   Package, 
   Search, 
@@ -30,7 +32,8 @@ import {
   FileText,
   LogOut,
   Upload,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Languages
 } from 'lucide-react';
 
 const isValidPdfUrl = (value: string): boolean => {
@@ -88,6 +91,13 @@ const cloneProductTranslations = (product?: Partial<Product>) => ({
       : {}
   }
 });
+
+const normalizeSpecificationRecord = (record?: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(record || {})
+      .map(([key, value]) => [key.trim(), String(value).trim()] as const)
+      .filter(([key, value]) => key && value)
+  );
 
 const buildNextProductId = (requestedId: string, existingIds: string[], excludedId?: string): string => {
   const baseId = requestedId.trim();
@@ -250,6 +260,27 @@ const AdminInventory: React.FC = () => {
           zhSpecsLabelPlaceholder: 'Label (e.g. Moisture)',
           zhSpecsValuePlaceholder: 'Value (e.g. 14.0% Max)'
         };
+  const activeStatusLabel = locale === 'zh' ? '启用' : 'Active';
+  const inactiveStatusLabel = locale === 'zh' ? '停用' : 'Inactive';
+  const statusHelpText =
+    locale === 'zh'
+      ? '停用后，该产品将不再在公开网站上显示。'
+      : 'Inactive products are hidden from the public website.';
+  const translateButtonLabel = locale === 'zh' ? 'ç¿»è¯‘æˆä¸­æ–‡' : 'Translate to Chinese';
+  const translatingButtonLabel = locale === 'zh' ? 'ç¿»è¯‘ä¸­...' : 'Translating...';
+  const translateMissingKeyMessage =
+    locale === 'zh'
+      ? 'Ollama ç¿»è¯‘æœªå°±ç»ªï¼Œè¯·æ£€æŸ¥ VITE_OLLAMA_BASE_URLã€VITE_OLLAMA_MODEL æˆ–æœ¬åœ° Ollama æœåŠ¡ã€‚'
+      : 'Ollama translation is unavailable. Check VITE_OLLAMA_BASE_URL, VITE_OLLAMA_MODEL, or the local Ollama service.';
+  const translateSuccessMessage =
+    locale === 'zh' ? 'å·²ç”Ÿæˆä¸­æ–‡äº§å“ç¿»è¯‘å¹¶ä¿å­˜ã€‚' : 'Chinese product translation generated and saved.';
+  const translateDraftSuccessMessage =
+    locale === 'zh' ? 'å·²å¡«å……ä¸­æ–‡äº§å“ç¿»è¯‘è‰ç¨¿ã€‚' : 'Chinese product translation draft populated.';
+  const translateFailedPrefix = locale === 'zh' ? 'ç¿»è¯‘å¤±è´¥ï¼š' : 'Translation failed: ';
+  const translateDraftRequirementMessage =
+    locale === 'zh'
+      ? 'è¯·å…ˆå¡«å†™è‹±æ–‡äº§å“åç§°ï¼Œå†æ‰§è¡Œç¿»è¯‘ã€‚'
+      : 'Fill in the English product name before translating.';
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -263,13 +294,20 @@ const AdminInventory: React.FC = () => {
     type: null,
     message: ''
   });
+  const [translationStatus, setTranslationStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
+    type: null,
+    message: ''
+  });
   const [isUploadingPrimaryImage, setIsUploadingPrimaryImage] = useState(false);
   const [primaryImageUploadError, setPrimaryImageUploadError] = useState<string | null>(null);
+  const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
+  const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
     id: '',
     name: '',
+    isActive: true,
     category: 'Rice',
     subCategory: '',
     description: '',
@@ -328,6 +366,7 @@ const AdminInventory: React.FC = () => {
 
   const openModal = (product?: Product) => {
     setPrimaryImageUploadError(null);
+    setTranslationStatus({ type: null, message: '' });
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -342,6 +381,7 @@ const AdminInventory: React.FC = () => {
       setFormData({
         id: `FM-${Math.floor(Math.random() * 10000)}`,
         name: '',
+        isActive: true,
         category: 'Rice',
         subCategory: '',
         description: '',
@@ -403,6 +443,105 @@ const AdminInventory: React.FC = () => {
       setPrimaryImageUploadError(err?.message || copy.imageUploadFailed);
     } finally {
       setIsUploadingPrimaryImage(false);
+    }
+  };
+
+  const pushTranslationStatus = (type: 'success' | 'error', message: string) => {
+    setTranslationStatus({ type, message });
+    window.setTimeout(() => {
+      setTranslationStatus((current) => (current.message === message ? { type: null, message: '' } : current));
+    }, 4000);
+  };
+
+  const translateProductSource = async (source: {
+    name: string;
+    subCategory: string;
+    shortDescription: string;
+    description: string;
+    specifications: Record<string, string>;
+  }) => {
+    if (!canTranslateCmsContent) {
+      throw new Error(translateMissingKeyMessage);
+    }
+
+    return translateProductToChinese(source);
+  };
+
+  const handleTranslateDraft = async () => {
+    if (isTranslatingDraft) return;
+
+    const source = {
+      name: (formData.name || '').trim(),
+      subCategory: (formData.subCategory || '').trim(),
+      shortDescription: (formData.shortDescription || '').trim(),
+      description: (formData.description || '').trim(),
+      specifications: normalizeSpecificationRecord(formData.specifications)
+    };
+
+    if (!source.name) {
+      pushTranslationStatus('error', translateDraftRequirementMessage);
+      return;
+    }
+
+    setIsTranslatingDraft(true);
+    try {
+      const translated = await translateProductSource(source);
+      setFormData((prev) => ({
+        ...prev,
+        translations: {
+          ...prev.translations,
+          zh: {
+            ...prev.translations?.zh,
+            name: translated.name || prev.translations?.zh?.name || '',
+            subCategory: translated.subCategory || prev.translations?.zh?.subCategory || '',
+            shortDescription: translated.shortDescription || prev.translations?.zh?.shortDescription || '',
+            description: translated.description || prev.translations?.zh?.description || '',
+            specifications: translated.specifications || prev.translations?.zh?.specifications || {}
+          }
+        }
+      }));
+      pushTranslationStatus('success', translateDraftSuccessMessage);
+    } catch (error: any) {
+      pushTranslationStatus('error', `${translateFailedPrefix}${error?.message || ''}`);
+    } finally {
+      setIsTranslatingDraft(false);
+    }
+  };
+
+  const handleTranslateExistingProduct = async (product: Product) => {
+    if (translatingItemId === product.id) return;
+
+    setTranslatingItemId(product.id);
+    try {
+      const translated = await translateProductSource({
+        name: product.name.trim(),
+        subCategory: product.subCategory.trim(),
+        shortDescription: product.shortDescription.trim(),
+        description: product.description.trim(),
+        specifications: normalizeSpecificationRecord(product.specifications)
+      });
+
+      await updateProduct({
+        ...product,
+        isActive: product.isActive !== false,
+        translations: {
+          ...product.translations,
+          zh: {
+            ...(product.translations?.zh || {}),
+            name: translated.name || product.translations?.zh?.name || '',
+            subCategory: translated.subCategory || product.translations?.zh?.subCategory || '',
+            shortDescription: translated.shortDescription || product.translations?.zh?.shortDescription || '',
+            description: translated.description || product.translations?.zh?.description || '',
+            specifications: translated.specifications || product.translations?.zh?.specifications || {}
+          }
+        }
+      });
+
+      pushTranslationStatus('success', translateSuccessMessage);
+    } catch (error: any) {
+      pushTranslationStatus('error', `${translateFailedPrefix}${error?.message || ''}`);
+    } finally {
+      setTranslatingItemId(null);
     }
   };
 
@@ -532,6 +671,7 @@ const AdminInventory: React.FC = () => {
 
     const nextProduct = {
       ...formData,
+      isActive: formData.isActive !== false,
       id: resolvedId
     } as Product;
 
@@ -667,15 +807,15 @@ const AdminInventory: React.FC = () => {
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Mini Sidebar */}
       <aside className="w-22 bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
-        <Link to="/admin" className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
+        <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
-          <Link to="/admin/inventory" className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><Package size={24} /></Link>
+          <Link to={appRoutes.adminInventory} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><Package size={24} /></Link>
         </div>
 
         {/* Mini Branded Exit Button */}
         <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
           <Link
-            to="/"
+            to={appRoutes.home}
             onClick={handleExit}
             className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
             title={locale === 'zh' ? '返回首页' : 'Exit to Homepage'}
@@ -778,6 +918,17 @@ const AdminInventory: React.FC = () => {
                 {csvImportStatus.message}
               </div>
             )}
+            {translationStatus.type && (
+              <div
+                className={`px-4 py-3 rounded-xl text-sm font-semibold ${
+                  translationStatus.type === 'success'
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-red-50 border border-red-200 text-red-700'
+                }`}
+              >
+                {translationStatus.message}
+              </div>
+            )}
           </div>
 
           {/* Search & Filters */}
@@ -844,8 +995,14 @@ const AdminInventory: React.FC = () => {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
-                        <CheckCircle size={14} className="text-green-500" />
-                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{copy.activeExport}</span>
+                        {p.isActive !== false ? (
+                          <CheckCircle size={14} className="text-green-500" />
+                        ) : (
+                          <X size={14} className="text-gray-400" />
+                        )}
+                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
+                          {p.isActive !== false ? activeStatusLabel : inactiveStatusLabel}
+                        </span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
@@ -855,6 +1012,14 @@ const AdminInventory: React.FC = () => {
                           className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm"
                         >
                           <Edit3 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleTranslateExistingProduct(p)}
+                          disabled={translatingItemId === p.id}
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm disabled:opacity-50"
+                          title={translateButtonLabel}
+                        >
+                          {translatingItemId === p.id ? <Loader2 size={18} className="animate-spin" /> : <Languages size={18} />}
                         </button>
                         <button 
                           onClick={() => handleDelete(p.id, p.name)}
@@ -1067,16 +1232,30 @@ const AdminInventory: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.subCategoryLabel}</label>
-                <input 
-                  type="text" 
-                  value={formData.subCategory}
-                  onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
-                  placeholder={copy.subCategoryPlaceholder}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.subCategoryLabel}</label>
+                  <input 
+                    type="text" 
+                    value={formData.subCategory}
+                    onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                    placeholder={copy.subCategoryPlaceholder}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.status}</label>
+                  <select
+                    value={formData.isActive === false ? 'inactive' : 'active'}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                  >
+                    <option value="active">{activeStatusLabel}</option>
+                    <option value="inactive">{inactiveStatusLabel}</option>
+                  </select>
+                  <p className="text-[10px] text-gray-400 italic">{statusHelpText}</p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1104,11 +1283,25 @@ const AdminInventory: React.FC = () => {
               </div>
 
               <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
-                  <p className="mt-2 text-[11px] font-medium text-gray-500">
-                    {copy.translationNote}
-                  </p>
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
+                    <p className="mt-2 text-[11px] font-medium text-gray-500">
+                      {copy.translationNote}
+                    </p>
+                    {!canTranslateCmsContent && (
+                      <p className="mt-2 text-[11px] font-medium text-amber-600">{translateMissingKeyMessage}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTranslateDraft}
+                    disabled={isTranslatingDraft}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foodmax-forest transition-all hover:bg-foodmax-forest hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isTranslatingDraft ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
+                    {isTranslatingDraft ? translatingButtonLabel : translateButtonLabel}
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -1269,24 +1462,37 @@ const AdminInventory: React.FC = () => {
               </div>
             </form>
 
-            <div className="p-8 border-t border-gray-100 bg-gray-50 flex items-center gap-4">
-              <button 
-                onClick={closeModal}
-                className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
-              >
-                {copy.discardChanges}
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={isSaving || isUploadingPrimaryImage}
-                className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <><Save size={18} /> {editingProduct ? copy.updatePortfolio : copy.initializeCommodity}</>
-                )}
-              </button>
+            <div className="p-8 border-t border-gray-100 bg-gray-50">
+              {translationStatus.type && (
+                <div
+                  className={`mb-3 px-4 py-3 rounded-xl text-sm font-semibold ${
+                    translationStatus.type === 'success'
+                      ? 'bg-green-50 border border-green-200 text-green-700'
+                      : 'bg-red-50 border border-red-200 text-red-700'
+                  }`}
+                >
+                  {translationStatus.message}
+                </div>
+              )}
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={closeModal}
+                  className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  {copy.discardChanges}
+                </button>
+                <button 
+                  onClick={handleSave}
+                  disabled={isSaving || isUploadingPrimaryImage}
+                  className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <><Save size={18} /> {editingProduct ? copy.updatePortfolio : copy.initializeCommodity}</>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

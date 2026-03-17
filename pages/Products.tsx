@@ -13,7 +13,7 @@ import { getCategoryLabel, getLocalizedFilterValue, localizeProduct } from '../l
 const ITEMS_PER_PAGE = 9;
 
 const Products: React.FC = () => {
-  const { products, isLoading } = useData();
+  const { activeProducts: products, isLoading } = useData();
   const { locale } = useLocale();
   const { category } = useParams<{ category?: string }>();
   const location = useLocation();

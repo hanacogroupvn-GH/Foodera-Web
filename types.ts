@@ -23,6 +23,7 @@ export interface NewsTranslation {
 export interface Product {
   id: string;
   name: string;
+  isActive?: boolean;
   category: CategoryType;
   subCategory: string;
   description: string;
@@ -46,6 +47,7 @@ export interface NewsItem {
   id: string;
   slug: string;
   title: string;
+  isActive?: boolean;
   date: string;
   category: NewsCategory;
   excerpt: string;

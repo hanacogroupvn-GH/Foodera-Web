@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
   Truck,
@@ -13,6 +13,7 @@ import {
   Anchor
 } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
+import { appRoutes } from '../lib/routes';
 
 const Operations: React.FC = () => {
   const { hash } = useLocation();
@@ -185,7 +186,7 @@ const Operations: React.FC = () => {
         </div>
       </section>
 
-      <section id="quality" className="py-24 border-b border-gray-100 relative overflow-hidden">
+      <section id="quality" className="scroll-mt-40 py-24 border-b border-gray-100 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
@@ -234,7 +235,7 @@ const Operations: React.FC = () => {
         </div>
       </section>
 
-      <section id="logistics" className="py-24 bg-gray-50 border-b border-gray-100">
+      <section id="logistics" className="scroll-mt-40 py-24 bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -260,7 +261,7 @@ const Operations: React.FC = () => {
         </div>
       </section>
 
-      <section id="packaging" className="py-24 border-b border-gray-100">
+      <section id="packaging" className="scroll-mt-40 py-24 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="order-2 lg:order-1">
@@ -309,7 +310,7 @@ const Operations: React.FC = () => {
         </div>
       </section>
 
-      <section id="terms" className="py-24 bg-gray-900 text-white overflow-hidden relative">
+      <section id="terms" className="scroll-mt-40 py-24 bg-gray-900 text-white overflow-hidden relative">
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(#8cc63f 1px, transparent 1px)', backgroundSize: '32px 32px' }}
@@ -367,9 +368,9 @@ const Operations: React.FC = () => {
           <h4 className="text-2xl font-black text-gray-900 mb-6">{copy.ctaTitle}</h4>
           <p className="text-gray-500 mb-10 font-medium">{copy.ctaDesc}</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="px-10 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-xl">
+            <Link to={appRoutes.contact} className="px-10 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-xl">
               {copy.requestPdf}
-            </button>
+            </Link>
             <a
               href="mailto:export@foodmax.vn"
               className="px-10 py-4 border-2 border-foodmax-forest text-foodmax-forest rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all"

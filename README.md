@@ -25,6 +25,7 @@ Optional:
 - `VITE_SUPABASE_PDF_BUCKET=product-pdfs`
 - `VITE_SUPABASE_IMAGE_BUCKET=cms-images`
 - `VITE_GEMINI_API_KEY=...` to enable the AI assistant's live market lookup mode
+- `VITE_OLLAMA_BASE_URL=http://127.0.0.1:11434` and `VITE_OLLAMA_MODEL=qwen2.5:7b` for local browser-side CMS translation fallback only
 - `SUPABASE_SERVICE_ROLE_KEY=...` for server-side maintenance scripts
 - `AI_PROVIDER=auto|gemini|ollama|openai` for translation backfill
 - `AI_MODEL=...` generic model override for backfill
@@ -57,7 +58,37 @@ For existing projects, also run:
 - `supabase/migrations/20260302_enable_product_pdf_storage.sql`
 - `supabase/migrations/20260304_add_news_slug_seo.sql`
 - `supabase/migrations/20260312_enable_cms_image_storage.sql`
+- `supabase/migrations/20260316_add_content_translations.sql`
 - `supabase/migrations/20260316_reclassify_cashew_category.sql`
+- `supabase/migrations/20260317_add_content_is_active.sql`
+
+## Shared CMS translation with Ollama
+
+If multiple admins will use the CMS from different IP addresses or devices, do not point the browser at `127.0.0.1`.
+
+Use the included Supabase Edge Function instead:
+
+1. Run Ollama on a shared server or expose it behind a secure HTTPS endpoint.
+2. Set Supabase function secrets:
+
+```bash
+npx supabase secrets set OLLAMA_BASE_URL=https://your-ollama-endpoint.example.com
+npx supabase secrets set OLLAMA_MODEL=qwen2.5:7b
+npx supabase secrets set OLLAMA_API_KEY=YOUR_OPTIONAL_OLLAMA_KEY
+```
+
+3. Deploy the function:
+
+```bash
+npx supabase functions deploy cms-translate-zh
+```
+
+Behavior:
+- Admin CMS translation buttons call `supabase/functions/cms-translate-zh`
+- The function verifies the caller is in `public.admin_users`
+- Ollama credentials stay server-side instead of shipping in `VITE_*`
+
+For local-only development, the frontend can still fall back to `VITE_OLLAMA_BASE_URL`.
 
 ## CMS features
 

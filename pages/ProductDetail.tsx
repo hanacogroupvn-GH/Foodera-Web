@@ -24,11 +24,12 @@ import {
 import ProductCard from '../components/ProductCard';
 import { useLocale } from '../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../lib/contentLocalization';
+import { appRoutes } from '../lib/routes';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, isLoading } = useData();
+  const { activeProducts: products, isLoading } = useData();
   const product = products.find((p) => p.id === id);
   const { locale } = useLocale();
   const localizedProduct = useMemo(() => (product ? localizeProduct(product, locale) : null), [locale, product]);
@@ -150,7 +151,7 @@ const ProductDetail: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
         <h2 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h2>
         <p className="text-gray-600 mb-8">{copy.notFoundDesc}</p>
-        <Link to="/products" className="px-8 py-3 bg-foodmax-forest text-white rounded-lg font-bold">
+        <Link to={appRoutes.products} className="px-8 py-3 bg-foodmax-forest text-white rounded-lg font-bold">
           {copy.backToProducts}
         </Link>
       </div>
@@ -553,7 +554,7 @@ const ProductDetail: React.FC = () => {
                 </p>
               </div>
               <Link
-                to={`/products/${product.category.toLowerCase()}`}
+                to={appRoutes.productsByCategory(product.category)}
                 className="inline-flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] group border-b-2 border-transparent hover:border-foodmax-lime transition-all pb-1"
               >
                 {copy.viewAllPrefix} {getCategoryLabel(product.category, locale)} {copy.viewAllSuffix} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

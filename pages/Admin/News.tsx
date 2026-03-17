@@ -9,6 +9,8 @@ import { buildUniqueNewsSlug, getNewsPath, normalizeNewsSlug } from '../../lib/n
 import { googleSheetToCsvUrl, mapCsvRowsToNews, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../../lib/contentLocalization';
+import { appRoutes } from '../../lib/routes';
+import { canTranslateCmsContent, translateNewsToChinese } from '../../lib/zhTranslation';
 import { 
   FileText, 
   Search, 
@@ -24,9 +26,11 @@ import {
   AlertCircle,
   Clock,
   Eye,
+  CheckCircle,
   LogOut,
   Upload,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Languages
 } from 'lucide-react';
 
 const NEWS_DRAFT_KEY = 'foodmax_admin_news_draft_v1';
@@ -185,6 +189,24 @@ const AdminNews: React.FC = () => {
           zhContentHint: 'Use new lines to create Chinese paragraphs',
           saveFailedPrefix: 'Save failed: '
         };
+  const activeStatusLabel = locale === 'zh' ? '启用' : 'Active';
+  const inactiveStatusLabel = locale === 'zh' ? '停用' : 'Inactive';
+  const statusFieldLabel = locale === 'zh' ? '状态' : 'Status';
+  const statusHelpText =
+    locale === 'zh'
+      ? '停用后，该文章将不再在公开网站上显示。'
+      : 'Inactive articles are hidden from the public website.';
+  const translateButtonLabel = locale === 'zh' ? '翻译成中文' : 'Translate to Chinese';
+  const translatingButtonLabel = locale === 'zh' ? '翻译中...' : 'Translating...';
+  const translateMissingKeyMessage =
+    locale === 'zh'
+      ? 'Ollama 翻译未就绪，请检查 VITE_OLLAMA_BASE_URL、VITE_OLLAMA_MODEL 或本地 Ollama 服务。'
+      : 'Ollama translation is unavailable. Check VITE_OLLAMA_BASE_URL, VITE_OLLAMA_MODEL, or the local Ollama service.';
+  const translateSuccessMessage =
+    locale === 'zh' ? '已生成中文翻译并保存。' : 'Chinese translation generated and saved.';
+  const translateDraftSuccessMessage =
+    locale === 'zh' ? '已填充中文翻译草稿。' : 'Chinese translation draft populated.';
+  const translateFailedPrefix = locale === 'zh' ? '翻译失败：' : 'Translation failed: ';
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -198,13 +220,20 @@ const AdminNews: React.FC = () => {
     type: null,
     message: ''
   });
+  const [translationStatus, setTranslationStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
+    type: null,
+    message: ''
+  });
   const [isUploadingCoverImage, setIsUploadingCoverImage] = useState(false);
   const [coverImageUploadError, setCoverImageUploadError] = useState<string | null>(null);
+  const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
+  const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<NewsItem>>({
     slug: '',
     title: '',
+    isActive: true,
     category: 'Market Insights',
     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     excerpt: '',
@@ -279,6 +308,7 @@ const AdminNews: React.FC = () => {
       setFormData({
         slug: '',
         title: '',
+        isActive: true,
         category: 'Market Insights',
         date: today,
         excerpt: '',
@@ -329,6 +359,96 @@ const AdminNews: React.FC = () => {
     }
   };
 
+  const pushTranslationStatus = (type: 'success' | 'error', message: string) => {
+    setTranslationStatus({ type, message });
+    window.setTimeout(() => {
+      setTranslationStatus((current) => (current.message === message ? { type: null, message: '' } : current));
+    }, 4000);
+  };
+
+  const translateDraftSource = async (source: { title: string; excerpt: string; content: string[] }) => {
+    if (!canTranslateCmsContent) {
+      throw new Error(translateMissingKeyMessage);
+    }
+
+    return translateNewsToChinese(source);
+  };
+
+  const handleTranslateDraft = async () => {
+    if (isTranslatingDraft) return;
+
+    const source = {
+      title: (formData.title || '').trim(),
+      excerpt: (formData.excerpt || '').trim(),
+      content: contentString.split('\n').map((part) => part.trim()).filter(Boolean)
+    };
+
+    if (!source.title || !source.excerpt || source.content.length === 0) {
+      pushTranslationStatus(
+        'error',
+        locale === 'zh'
+          ? '请先填写英文标题、摘要和正文，再执行翻译。'
+          : 'Fill in the English title, excerpt, and content before translating.'
+      );
+      return;
+    }
+
+    setIsTranslatingDraft(true);
+    try {
+      const translated = await translateDraftSource(source);
+      setFormData((prev) => ({
+        ...prev,
+        translations: {
+          ...prev.translations,
+          zh: {
+            ...prev.translations?.zh,
+            title: translated.title || '',
+            excerpt: translated.excerpt || ''
+          }
+        }
+      }));
+      setZhContentString((translated.content || []).join('\n\n'));
+      pushTranslationStatus('success', translateDraftSuccessMessage);
+    } catch (error: any) {
+      pushTranslationStatus('error', `${translateFailedPrefix}${error?.message || ''}`);
+    } finally {
+      setIsTranslatingDraft(false);
+    }
+  };
+
+  const handleTranslateExistingItem = async (item: NewsItem) => {
+    if (translatingItemId === item.id) return;
+
+    setTranslatingItemId(item.id);
+    try {
+      const translated = await translateDraftSource({
+        title: item.title.trim(),
+        excerpt: item.excerpt.trim(),
+        content: item.content.map((part) => part.trim()).filter(Boolean)
+      });
+
+      await updateNews({
+        ...item,
+        isActive: item.isActive !== false,
+        translations: {
+          ...item.translations,
+          zh: {
+            ...(item.translations?.zh || {}),
+            title: translated.title || item.translations?.zh?.title || '',
+            excerpt: translated.excerpt || item.translations?.zh?.excerpt || '',
+            content: translated.content?.length ? translated.content : item.translations?.zh?.content || []
+          }
+        }
+      });
+
+      pushTranslationStatus('success', translateSuccessMessage);
+    } catch (error: any) {
+      pushTranslationStatus('error', `${translateFailedPrefix}${error?.message || ''}`);
+    } finally {
+      setTranslatingItemId(null);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -350,6 +470,7 @@ const AdminNews: React.FC = () => {
           id: editingItem?.id || createNewsId(),
           slug: finalSlug,
           title,
+          isActive: formData.isActive !== false,
           category: (formData.category || 'Market Insights') as NewsCategory,
           date: (formData.date || '').trim(),
           excerpt: (formData.excerpt || '').trim(),
@@ -492,15 +613,15 @@ const AdminNews: React.FC = () => {
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Mini Sidebar */}
       <aside className="w-22 bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
-        <Link to="/admin" className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
+        <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
-          <Link to="/admin/news" className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><FileText size={24} /></Link>
+          <Link to={appRoutes.adminNews} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><FileText size={24} /></Link>
         </div>
 
         {/* Mini Branded Exit Button */}
         <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
           <Link
-            to="/"
+            to={appRoutes.home}
             onClick={handleExit}
             className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
             title={locale === 'zh' ? '返回首页' : 'Exit to Homepage'}
@@ -587,15 +708,26 @@ const AdminNews: React.FC = () => {
               </label>
             </div>
             <p className="text-[11px] text-gray-500 font-medium">{copy.supportedColumns}</p>
-            {csvImportStatus.type && (
-              <div
-                className={`px-4 py-3 rounded-xl text-sm font-semibold ${
+          {csvImportStatus.type && (
+            <div
+              className={`px-4 py-3 rounded-xl text-sm font-semibold ${
                   csvImportStatus.type === 'success'
                     ? 'bg-green-50 border border-green-200 text-green-700'
                     : 'bg-red-50 border border-red-200 text-red-700'
                 }`}
               >
                 {csvImportStatus.message}
+              </div>
+            )}
+            {translationStatus.type && (
+              <div
+                className={`px-4 py-3 rounded-xl text-sm font-semibold ${
+                  translationStatus.type === 'success'
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-red-50 border border-red-200 text-red-700'
+                }`}
+              >
+                {translationStatus.message}
               </div>
             )}
           </div>
@@ -621,6 +753,7 @@ const AdminNews: React.FC = () => {
                 <tr className="bg-gray-50/50 border-b border-gray-100">
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.articleIntel}</th>
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.category}</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{statusFieldLabel}</th>
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.publishDate}</th>
                   <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{copy.actions}</th>
                 </tr>
@@ -647,6 +780,18 @@ const AdminNews: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                        {item.isActive !== false ? (
+                          <CheckCircle size={14} className="text-green-500" />
+                        ) : (
+                          <X size={14} className="text-gray-400" />
+                        )}
+                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
+                          {item.isActive !== false ? activeStatusLabel : inactiveStatusLabel}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
                       <div className="flex items-center gap-2 text-gray-500">
                         <Calendar size={14} className="text-foodmax-lime" />
                         <span className="text-[10px] font-black uppercase tracking-widest">{formatDisplayDate(item.date, locale)}</span>
@@ -666,6 +811,14 @@ const AdminNews: React.FC = () => {
                           className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm"
                         >
                           <Edit3 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleTranslateExistingItem(item)}
+                          disabled={translatingItemId === item.id}
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm disabled:opacity-50"
+                          title={translateButtonLabel}
+                        >
+                          {translatingItemId === item.id ? <Loader2 size={18} className="animate-spin" /> : <Languages size={18} />}
                         </button>
                         <button 
                           onClick={() => handleDelete(item.id, item.title)}
@@ -817,6 +970,19 @@ const AdminNews: React.FC = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{statusFieldLabel}</label>
+                <select
+                  value={formData.isActive === false ? 'inactive' : 'active'}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                >
+                  <option value="active">{activeStatusLabel}</option>
+                  <option value="inactive">{inactiveStatusLabel}</option>
+                </select>
+                <p className="text-[10px] text-gray-400 italic">{statusHelpText}</p>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.excerptLabel}</label>
                 <textarea 
                   rows={2}
@@ -829,11 +995,25 @@ const AdminNews: React.FC = () => {
               </div>
 
               <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
-                <div>
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div>
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
                   <p className="mt-2 text-[11px] font-medium text-gray-500">
                     {copy.translationNote}
                   </p>
+                  {!canTranslateCmsContent && (
+                    <p className="mt-2 text-[11px] font-medium text-amber-600">{translateMissingKeyMessage}</p>
+                  )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTranslateDraft}
+                    disabled={isTranslatingDraft}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foodmax-forest transition-all hover:bg-foodmax-forest hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isTranslatingDraft ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
+                    {isTranslatingDraft ? translatingButtonLabel : translateButtonLabel}
+                  </button>
                 </div>
 
                 <div className="space-y-2">
@@ -912,6 +1092,17 @@ const AdminNews: React.FC = () => {
             </form>
 
             <div className="p-8 border-t border-gray-100 bg-gray-50">
+              {translationStatus.type && (
+                <div
+                  className={`mb-3 px-4 py-3 rounded-xl text-sm font-semibold ${
+                    translationStatus.type === 'success'
+                      ? 'bg-green-50 border border-green-200 text-green-700'
+                      : 'bg-red-50 border border-red-200 text-red-700'
+                  }`}
+                >
+                  {translationStatus.message}
+                </div>
+              )}
               {saveError && (
                 <div className="mb-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-semibold">
                   {copy.saveFailedPrefix}{saveError}
