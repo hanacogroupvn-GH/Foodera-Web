@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import { appRoutes } from '../../lib/routes';
+import { repairMojibakeDeep } from '../../lib/repairMojibake';
 import { 
   LayoutDashboard, 
   Package, 
@@ -33,7 +34,7 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   
   const [importStatus, setImportStatus] = useState<{message: string, type: 'success' | 'error' | null}>({message: '', type: null});
-  const copy =
+  const rawCopy =
     locale === 'zh'
       ? {
           staffPortal: '员工后台',
@@ -79,6 +80,7 @@ const AdminDashboard: React.FC = () => {
           globalCatalog: 'Global Catalog',
           cmsLanguage: 'CMS Language'
         };
+  const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
 
   const handleLogout = () => {
     logout();
@@ -189,7 +191,7 @@ const AdminDashboard: React.FC = () => {
                 </button>
                 <span>/</span>
                 <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
-                  中文
+                  {'\u4e2d\u6587'}
                 </button>
              </div>
              <button onClick={() => navigate(appRoutes.adminInventory)} className="px-6 py-3 bg-foodmax-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">

@@ -4,10 +4,21 @@ import { hasSupabaseEnv, supabase } from './supabaseClient';
 const DEFAULT_OLLAMA_BASE_URL = 'http://127.0.0.1:11434';
 const DEFAULT_OLLAMA_MODEL = 'qwen2.5:7b';
 const CMS_TRANSLATE_FUNCTION = 'cms-translate-zh';
+const DEV_CMS_TRANSLATE_PATH = '/__cms_translate_ollama';
 
-const ollamaBaseUrl = import.meta.env.VITE_OLLAMA_BASE_URL?.trim() || DEFAULT_OLLAMA_BASE_URL;
+const configuredOllamaBaseUrl = import.meta.env.VITE_OLLAMA_BASE_URL?.trim();
+const configuredOllamaApiKey = import.meta.env.VITE_OLLAMA_API_KEY?.trim();
+const configuredOllamaModel = import.meta.env.VITE_OLLAMA_MODEL?.trim();
+const ollamaBaseUrl = configuredOllamaBaseUrl || DEFAULT_OLLAMA_BASE_URL;
 const ollamaApiKey = import.meta.env.VITE_OLLAMA_API_KEY?.trim();
-const ollamaModel = import.meta.env.VITE_OLLAMA_MODEL?.trim() || DEFAULT_OLLAMA_MODEL;
+const ollamaModel = configuredOllamaModel || DEFAULT_OLLAMA_MODEL;
+const hasExplicitBrowserOllamaConfig = Boolean(
+  configuredOllamaBaseUrl || configuredOllamaApiKey || configuredOllamaModel
+);
+
+type CmsTranslateError = Error & {
+  status?: number;
+};
 
 const sanitizeText = (value: unknown) => {
   if (typeof value === 'string') {
@@ -174,6 +185,45 @@ ${JSON.stringify(source, null, 2)}
 
 const normalizeOllamaBaseUrl = (baseUrl: string) => baseUrl.replace(/\/$/, '').replace(/\/api$/, '');
 
+const createCmsTranslateError = (message: string, status?: number): CmsTranslateError =>
+  Object.assign(new Error(message), status ? { status } : {});
+
+const readFunctionErrorDetail = async (error: unknown): Promise<{ message: string; status?: number }> => {
+  let status: number | undefined;
+  let message = '';
+
+  if (error && typeof error === 'object') {
+    const response = (error as { context?: unknown }).context;
+    if (response instanceof Response) {
+      status = response.status;
+
+      try {
+        const payload = (await response.clone().json()) as { error?: unknown; message?: unknown };
+        message = sanitizeText(payload.error) || sanitizeText(payload.message);
+      } catch {
+        try {
+          message = sanitizeText(await response.clone().text());
+        } catch {
+          message = '';
+        }
+      }
+    }
+
+    if (!message) {
+      message = sanitizeText((error as { message?: unknown }).message);
+    }
+
+    if (status == null && typeof (error as { status?: unknown }).status === 'number') {
+      status = (error as { status?: number }).status;
+    }
+  }
+
+  return {
+    message: message || 'Failed to reach the CMS translation service.',
+    status
+  };
+};
+
 const invokeCmsTranslateFunction = async <TTranslation>(
   kind: 'news' | 'product',
   source: Record<string, unknown>
@@ -186,12 +236,58 @@ const invokeCmsTranslateFunction = async <TTranslation>(
   });
 
   if (error) {
-    throw new Error(error.message || 'Failed to reach the CMS translation service.');
+    const detail = await readFunctionErrorDetail(error);
+    throw createCmsTranslateError(detail.message, detail.status);
   }
 
   const translation = (data as { translation?: unknown } | null)?.translation;
   if (!translation || typeof translation !== 'object' || Array.isArray(translation)) {
     throw new Error('The CMS translation service returned an invalid payload.');
+  }
+
+  return translation as TTranslation;
+};
+
+const invokeLocalDevTranslateProxy = async <TTranslation>(
+  kind: 'news' | 'product',
+  source: Record<string, unknown>
+) => {
+  let response: Response;
+
+  try {
+    response = await fetch(DEV_CMS_TRANSLATE_PATH, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        kind,
+        source
+      })
+    });
+  } catch {
+    throw createCmsTranslateError('Unable to reach the local CMS translation proxy.', 503);
+  }
+
+  let payload: { translation?: unknown; error?: unknown; message?: unknown } | null = null;
+  try {
+    payload = (await response.json()) as { translation?: unknown; error?: unknown; message?: unknown };
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw createCmsTranslateError(
+      sanitizeText(payload?.error) ||
+        sanitizeText(payload?.message) ||
+        `Local CMS translation failed: ${response.status} ${response.statusText}`,
+      response.status
+    );
+  }
+
+  const translation = payload?.translation;
+  if (!translation || typeof translation !== 'object' || Array.isArray(translation)) {
+    throw new Error('The local CMS translation proxy returned an invalid payload.');
   }
 
   return translation as TTranslation;
@@ -249,16 +345,62 @@ const translateWithOllama = async (prompt: string) => {
   return content;
 };
 
-export const canTranslateCmsContent = hasSupabaseEnv || Boolean(ollamaBaseUrl && ollamaModel);
+const canUseBrowserOllamaFallback = () => (!hasSupabaseEnv && Boolean(ollamaBaseUrl && ollamaModel)) || hasExplicitBrowserOllamaConfig;
+const canUseLocalDevTranslateProxy = () => import.meta.env.DEV;
+const getErrorStatus = (error: unknown) =>
+  typeof (error as { status?: unknown })?.status === 'number'
+    ? (error as { status?: number }).status
+    : undefined;
+
+const shouldFallbackToBrowserOllama = (status?: number) =>
+  canUseBrowserOllamaFallback() && (status == null || status === 404 || status >= 500);
+
+export const canTranslateCmsContent = hasSupabaseEnv || canUseLocalDevTranslateProxy() || canUseBrowserOllamaFallback();
 
 export const translateNewsToChinese = async (source: {
   title: string;
   excerpt: string;
   content: string[];
 }): Promise<NewsTranslation> => {
-  const translated = hasSupabaseEnv
-    ? sanitizeNewsTranslation(await invokeCmsTranslateFunction<NewsTranslation>('news', source))
-    : sanitizeNewsTranslation(extractJson(await translateWithOllama(buildNewsPrompt(source))));
+  let translated: NewsTranslation;
+  const translateInBrowser = async () => sanitizeNewsTranslation(extractJson(await translateWithOllama(buildNewsPrompt(source))));
+
+  if (hasSupabaseEnv) {
+    try {
+      translated = sanitizeNewsTranslation(await invokeCmsTranslateFunction<NewsTranslation>('news', source));
+    } catch (error) {
+      if (canUseLocalDevTranslateProxy()) {
+        try {
+          translated = sanitizeNewsTranslation(await invokeLocalDevTranslateProxy<NewsTranslation>('news', source));
+        } catch (devError) {
+          if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
+            throw devError;
+          }
+
+          translated = await translateInBrowser();
+        }
+      } else {
+        const status = getErrorStatus(error);
+        if (!shouldFallbackToBrowserOllama(status)) {
+          throw error;
+        }
+
+        translated = await translateInBrowser();
+      }
+    }
+  } else if (canUseLocalDevTranslateProxy()) {
+    try {
+      translated = sanitizeNewsTranslation(await invokeLocalDevTranslateProxy<NewsTranslation>('news', source));
+    } catch (error) {
+      if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
+        throw error;
+      }
+
+      translated = await translateInBrowser();
+    }
+  } else {
+    translated = await translateInBrowser();
+  }
 
   if (!translated.title && !translated.excerpt && (!translated.content || translated.content.length === 0)) {
     throw new Error('The translation model returned no usable Chinese content.');
@@ -274,9 +416,46 @@ export const translateProductToChinese = async (source: {
   description: string;
   specifications: Record<string, string>;
 }): Promise<ProductTranslation> => {
-  const translated = hasSupabaseEnv
-    ? sanitizeProductTranslation(await invokeCmsTranslateFunction<ProductTranslation>('product', source))
-    : sanitizeProductTranslation(extractJson(await translateWithOllama(buildProductPrompt(source))));
+  let translated: ProductTranslation;
+  const translateInBrowser = async () =>
+    sanitizeProductTranslation(extractJson(await translateWithOllama(buildProductPrompt(source))));
+
+  if (hasSupabaseEnv) {
+    try {
+      translated = sanitizeProductTranslation(await invokeCmsTranslateFunction<ProductTranslation>('product', source));
+    } catch (error) {
+      if (canUseLocalDevTranslateProxy()) {
+        try {
+          translated = sanitizeProductTranslation(await invokeLocalDevTranslateProxy<ProductTranslation>('product', source));
+        } catch (devError) {
+          if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
+            throw devError;
+          }
+
+          translated = await translateInBrowser();
+        }
+      } else {
+        const status = getErrorStatus(error);
+        if (!shouldFallbackToBrowserOllama(status)) {
+          throw error;
+        }
+
+        translated = await translateInBrowser();
+      }
+    }
+  } else if (canUseLocalDevTranslateProxy()) {
+    try {
+      translated = sanitizeProductTranslation(await invokeLocalDevTranslateProxy<ProductTranslation>('product', source));
+    } catch (error) {
+      if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
+        throw error;
+      }
+
+      translated = await translateInBrowser();
+    }
+  } else {
+    translated = await translateInBrowser();
+  }
 
   if (
     !translated.name &&

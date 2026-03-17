@@ -250,7 +250,7 @@ const mapProductToRow = (p: Product) => ({
   gallery: p.gallery ?? null,
   specifications: p.specifications ?? {},
   filters: p.filters ?? {},
-  translations: p.translations ?? null
+  translations: normalizeProductTranslations(p.translations) ?? {}
 });
 
 const sortProductsById = (items: Product[]): Product[] =>
@@ -431,7 +431,7 @@ const mapNewsToRow = (n: NewsItem) => ({
   excerpt: n.excerpt,
   content: normalizeNewsContent(n.content),
   image: n.image,
-  translations: n.translations ?? null
+  translations: normalizeNewsTranslations(n.translations) ?? {}
 });
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

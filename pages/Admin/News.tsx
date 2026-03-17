@@ -10,6 +10,7 @@ import { googleSheetToCsvUrl, mapCsvRowsToNews, parseCsv } from '../../lib/csvIm
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../../lib/contentLocalization';
 import { appRoutes } from '../../lib/routes';
+import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateNewsToChinese } from '../../lib/zhTranslation';
 import { 
   FileText, 
@@ -83,7 +84,7 @@ const AdminNews: React.FC = () => {
   const { news, addNews, updateNews, deleteNews } = useData();
   const { logout } = useAuth();
   const { locale, setLocale } = useLocale();
-  const copy =
+  const rawCopy =
     locale === 'zh'
       ? {
           exitHome: '返回首页',
@@ -189,25 +190,26 @@ const AdminNews: React.FC = () => {
           zhContentHint: 'Use new lines to create Chinese paragraphs',
           saveFailedPrefix: 'Save failed: '
         };
-  const activeStatusLabel = locale === 'zh' ? '启用' : 'Active';
-  const inactiveStatusLabel = locale === 'zh' ? '停用' : 'Inactive';
-  const statusFieldLabel = locale === 'zh' ? '状态' : 'Status';
+  const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
+  const zh = repairMojibakeText;
+  const activeStatusLabel = locale === 'zh' ? zh('\u542f\u7528') : 'Active';
+  const inactiveStatusLabel = locale === 'zh' ? zh('\u505c\u7528') : 'Inactive';
+  const statusFieldLabel = locale === 'zh' ? zh('\u72b6\u6001') : 'Status';
   const statusHelpText =
     locale === 'zh'
-      ? '停用后，该文章将不再在公开网站上显示。'
+      ? zh('\u505c\u7528\u540e\uff0c\u8be5\u6587\u7ae0\u5c06\u4e0d\u518d\u5728\u516c\u5f00\u7f51\u7ad9\u4e0a\u663e\u793a\u3002')
       : 'Inactive articles are hidden from the public website.';
-  const translateButtonLabel = locale === 'zh' ? '翻译成中文' : 'Translate to Chinese';
-  const translatingButtonLabel = locale === 'zh' ? '翻译中...' : 'Translating...';
+  const translateButtonLabel = locale === 'zh' ? zh('\u7ffb\u8bd1\u6210\u4e2d\u6587') : 'Translate to Chinese';
+  const translatingButtonLabel = locale === 'zh' ? zh('\u7ffb\u8bd1\u4e2d...') : 'Translating...';
   const translateMissingKeyMessage =
     locale === 'zh'
-      ? 'Ollama 翻译未就绪，请检查 VITE_OLLAMA_BASE_URL、VITE_OLLAMA_MODEL 或本地 Ollama 服务。'
+      ? zh('Ollama \u7ffb\u8bd1\u672a\u5c31\u7eea\uff0c\u8bf7\u68c0\u67e5 VITE_OLLAMA_BASE_URL\u3001VITE_OLLAMA_MODEL \u6216\u672c\u5730 Ollama \u670d\u52a1\u3002')
       : 'Ollama translation is unavailable. Check VITE_OLLAMA_BASE_URL, VITE_OLLAMA_MODEL, or the local Ollama service.';
   const translateSuccessMessage =
-    locale === 'zh' ? '已生成中文翻译并保存。' : 'Chinese translation generated and saved.';
+    locale === 'zh' ? zh('\u5df2\u751f\u6210\u4e2d\u6587\u7ffb\u8bd1\u5e76\u4fdd\u5b58\u3002') : 'Chinese translation generated and saved.';
   const translateDraftSuccessMessage =
-    locale === 'zh' ? '已填充中文翻译草稿。' : 'Chinese translation draft populated.';
-  const translateFailedPrefix = locale === 'zh' ? '翻译失败：' : 'Translation failed: ';
-  
+    locale === 'zh' ? zh('\u5df2\u586b\u5145\u4e2d\u6587\u7ffb\u8bd1\u8349\u7a3f\u3002') : 'Chinese translation draft populated.';
+  const translateFailedPrefix = locale === 'zh' ? zh('\u7ffb\u8bd1\u5931\u8d25\uff1a') : 'Translation failed: ';
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
@@ -506,7 +508,7 @@ const AdminNews: React.FC = () => {
   };
 
   const handleDelete = (id: string, title: string) => {
-    if (window.confirm(locale === 'zh' ? `确定要永久删除文章“${title}”吗？` : `Are you sure you want to permanently delete the post: "${title}"?`)) {
+    if (window.confirm(locale === 'zh' ? zh(`\u786e\u5b9a\u8981\u6c38\u4e45\u5220\u9664\u6587\u7ae0\u201c${title}\u201d\u5417\uff1f`) : `Are you sure you want to permanently delete the post: "${title}"?`)) {
       deleteNews(id);
     }
   };
@@ -514,13 +516,13 @@ const AdminNews: React.FC = () => {
   const importNewsFromCsvText = async (csvText: string, sourceLabel: string) => {
     const parsed = parseCsv(csvText);
     if (!parsed.rows.length) {
-      throw new Error(locale === 'zh' ? 'CSV 中没有可导入的数据行。' : 'CSV has no data rows to import.');
+      throw new Error(locale === 'zh' ? zh('CSV \u4e2d\u6ca1\u6709\u53ef\u5bfc\u5165\u7684\u6570\u636e\u884c\u3002') : 'CSV has no data rows to import.');
     }
 
     const existingById = Object.fromEntries(news.map((item) => [item.id, item.slug]));
     const mapped = mapCsvRowsToNews(parsed.rows, { existingById });
     if (!mapped.items.length) {
-      throw new Error(mapped.errors[0] || (locale === 'zh' ? '未找到有效的资讯数据行。' : 'No valid insight rows found.'));
+      throw new Error(mapped.errors[0] || (locale === 'zh' ? zh('\u672a\u627e\u5230\u6709\u6548\u7684\u8d44\u8baf\u6570\u636e\u884c\u3002') : 'No valid insight rows found.'));
     }
 
     const existingIds = new Set(news.map((item) => item.id));
@@ -540,20 +542,20 @@ const AdminNews: React.FC = () => {
 
     if (mapped.errors.length > 0) {
       // eslint-disable-next-line no-console
-      console.warn(locale === 'zh' ? '资讯 CSV 已跳过以下行:' : 'News CSV skipped rows:', mapped.errors);
+      console.warn(locale === 'zh' ? zh('\u8d44\u8baf CSV \u5df2\u8df3\u8fc7\u4ee5\u4e0b\u884c:') : 'News CSV skipped rows:', mapped.errors);
     }
 
     const skippedPart =
       mapped.errors.length > 0
         ? locale === 'zh'
-          ? `，跳过 ${mapped.errors.length} 行无效数据`
+          ? zh(`\uff0c\u8df3\u8fc7 ${mapped.errors.length} \u884c\u65e0\u6548\u6570\u636e`)
           : `, skipped ${mapped.errors.length} invalid row(s)`
         : '';
     setCsvImportStatus({
       type: 'success',
       message:
         locale === 'zh'
-          ? `${sourceLabel}: 已导入 ${mapped.items.length} 篇资讯（新增 ${createdCount} 篇，更新 ${updatedCount} 篇${skippedPart}）。`
+          ? zh(`${sourceLabel}: \u5df2\u5bfc\u5165 ${mapped.items.length} \u7bc7\u8d44\u8baf\uff08\u65b0\u589e ${createdCount} \u7bc7\uff0c\u66f4\u65b0 ${updatedCount} \u7bc7${skippedPart}\uff09\u3002`)
           : `${sourceLabel}: imported ${mapped.items.length} insight(s) (${createdCount} new, ${updatedCount} updated${skippedPart}).`
     });
   };
@@ -573,12 +575,12 @@ const AdminNews: React.FC = () => {
       if (!response.ok) {
         throw new Error(
           locale === 'zh'
-            ? `无法下载 CSV（HTTP ${response.status}）。请检查 Google Sheet 的共享或发布设置。`
+            ? zh(`\u65e0\u6cd5\u4e0b\u8f7d CSV\uff08HTTP ${response.status}\uff09\u3002\u8bf7\u68c0\u67e5 Google Sheet \u7684\u5171\u4eab\u6216\u53d1\u5e03\u8bbe\u7f6e\u3002`)
             : `Unable to download CSV (HTTP ${response.status}). Check sharing/publish settings on Google Sheet.`
         );
       }
       const csvText = await response.text();
-      await importNewsFromCsvText(csvText, locale === 'zh' ? 'Google 表格' : 'Google Sheet');
+      await importNewsFromCsvText(csvText, locale === 'zh' ? zh('Google \u8868\u683c') : 'Google Sheet');
     } catch (err: any) {
       setCsvImportStatus({ type: 'error', message: err?.message || copy.csvImportFailed });
     } finally {
@@ -595,7 +597,7 @@ const AdminNews: React.FC = () => {
     setCsvImportStatus({ type: null, message: '' });
     try {
       const csvText = await file.text();
-      await importNewsFromCsvText(csvText, file.name || (locale === 'zh' ? 'CSV 文件' : 'CSV file'));
+      await importNewsFromCsvText(csvText, file.name || (locale === 'zh' ? zh('CSV \u6587\u4ef6') : 'CSV file'));
     } catch (err: any) {
       setCsvImportStatus({ type: 'error', message: err?.message || copy.csvImportFailed });
     } finally {
@@ -624,7 +626,7 @@ const AdminNews: React.FC = () => {
             to={appRoutes.home}
             onClick={handleExit}
             className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
-            title={locale === 'zh' ? '返回首页' : 'Exit to Homepage'}
+            title={locale === 'zh' ? copy.exitHome : 'Exit to Homepage'}
           >
             <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
                <div className="flex items-center relative">
@@ -660,7 +662,7 @@ const AdminNews: React.FC = () => {
                 </button>
                 <span>/</span>
                 <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
-                  中文
+                  {'\u4e2d\u6587'}
                 </button>
               </div>
               <button 

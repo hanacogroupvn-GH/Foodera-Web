@@ -25,7 +25,8 @@ Optional:
 - `VITE_SUPABASE_PDF_BUCKET=product-pdfs`
 - `VITE_SUPABASE_IMAGE_BUCKET=cms-images`
 - `VITE_GEMINI_API_KEY=...` to enable the AI assistant's live market lookup mode
-- `VITE_OLLAMA_BASE_URL=http://127.0.0.1:11434` and `VITE_OLLAMA_MODEL=qwen2.5:7b` for local browser-side CMS translation fallback only
+- `VITE_OLLAMA_BASE_URL=http://127.0.0.1:11434` and `VITE_OLLAMA_MODEL=qwen2.5:7b` for local browser-side CMS translation fallback
+- `OLLAMA_BASE_URL=http://127.0.0.1:11434` and `OLLAMA_MODEL=qwen2.5:7b` for the local Vite dev-server translation proxy
 - `SUPABASE_SERVICE_ROLE_KEY=...` for server-side maintenance scripts
 - `AI_PROVIDER=auto|gemini|ollama|openai` for translation backfill
 - `AI_MODEL=...` generic model override for backfill
@@ -88,7 +89,9 @@ Behavior:
 - The function verifies the caller is in `public.admin_users`
 - Ollama credentials stay server-side instead of shipping in `VITE_*`
 
-For local-only development, the frontend can still fall back to `VITE_OLLAMA_BASE_URL`.
+For local-only development:
+- `npm run dev` can fall back to a local Vite proxy that uses `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, and `OLLAMA_API_KEY`
+- if that proxy is unavailable, the frontend can still fall back to `VITE_OLLAMA_BASE_URL`
 
 ## CMS features
 
