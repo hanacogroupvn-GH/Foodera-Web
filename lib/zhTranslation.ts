@@ -362,35 +362,26 @@ export const translateNewsToChinese = async (source: {
   excerpt: string;
   content: string[];
 }): Promise<NewsTranslation> => {
-  let translated: NewsTranslation;
+  let translated: NewsTranslation | undefined;
   const translateInBrowser = async () => sanitizeNewsTranslation(extractJson(await translateWithOllama(buildNewsPrompt(source))));
 
-  if (hasSupabaseEnv) {
+  if (canUseLocalDevTranslateProxy()) {
     try {
-      translated = sanitizeNewsTranslation(await invokeCmsTranslateFunction<NewsTranslation>('news', source));
-    } catch (error) {
-      if (canUseLocalDevTranslateProxy()) {
-        try {
-          translated = sanitizeNewsTranslation(await invokeLocalDevTranslateProxy<NewsTranslation>('news', source));
-        } catch (devError) {
-          if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
-            throw devError;
-          }
-
-          translated = await translateInBrowser();
-        }
-      } else {
-        const status = getErrorStatus(error);
-        if (!shouldFallbackToBrowserOllama(status)) {
-          throw error;
+      translated = sanitizeNewsTranslation(await invokeLocalDevTranslateProxy<NewsTranslation>('news', source));
+    } catch (devError) {
+      if (!hasSupabaseEnv) {
+        if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
+          throw devError;
         }
 
         translated = await translateInBrowser();
       }
     }
-  } else if (canUseLocalDevTranslateProxy()) {
+  }
+
+  if (!translated && hasSupabaseEnv) {
     try {
-      translated = sanitizeNewsTranslation(await invokeLocalDevTranslateProxy<NewsTranslation>('news', source));
+      translated = sanitizeNewsTranslation(await invokeCmsTranslateFunction<NewsTranslation>('news', source));
     } catch (error) {
       if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
         throw error;
@@ -398,7 +389,9 @@ export const translateNewsToChinese = async (source: {
 
       translated = await translateInBrowser();
     }
-  } else {
+  }
+
+  if (!translated) {
     translated = await translateInBrowser();
   }
 
@@ -416,36 +409,27 @@ export const translateProductToChinese = async (source: {
   description: string;
   specifications: Record<string, string>;
 }): Promise<ProductTranslation> => {
-  let translated: ProductTranslation;
+  let translated: ProductTranslation | undefined;
   const translateInBrowser = async () =>
     sanitizeProductTranslation(extractJson(await translateWithOllama(buildProductPrompt(source))));
 
-  if (hasSupabaseEnv) {
+  if (canUseLocalDevTranslateProxy()) {
     try {
-      translated = sanitizeProductTranslation(await invokeCmsTranslateFunction<ProductTranslation>('product', source));
-    } catch (error) {
-      if (canUseLocalDevTranslateProxy()) {
-        try {
-          translated = sanitizeProductTranslation(await invokeLocalDevTranslateProxy<ProductTranslation>('product', source));
-        } catch (devError) {
-          if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
-            throw devError;
-          }
-
-          translated = await translateInBrowser();
-        }
-      } else {
-        const status = getErrorStatus(error);
-        if (!shouldFallbackToBrowserOllama(status)) {
-          throw error;
+      translated = sanitizeProductTranslation(await invokeLocalDevTranslateProxy<ProductTranslation>('product', source));
+    } catch (devError) {
+      if (!hasSupabaseEnv) {
+        if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
+          throw devError;
         }
 
         translated = await translateInBrowser();
       }
     }
-  } else if (canUseLocalDevTranslateProxy()) {
+  }
+
+  if (!translated && hasSupabaseEnv) {
     try {
-      translated = sanitizeProductTranslation(await invokeLocalDevTranslateProxy<ProductTranslation>('product', source));
+      translated = sanitizeProductTranslation(await invokeCmsTranslateFunction<ProductTranslation>('product', source));
     } catch (error) {
       if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
         throw error;
@@ -453,7 +437,9 @@ export const translateProductToChinese = async (source: {
 
       translated = await translateInBrowser();
     }
-  } else {
+  }
+
+  if (!translated) {
     translated = await translateInBrowser();
   }
 
