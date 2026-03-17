@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, ArrowRight, AlertCircle, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
+import { repairMojibakeDeep } from '../lib/repairMojibake';
 
 const Login: React.FC = () => {
   const { locale } = useLocale();
@@ -14,7 +15,7 @@ const Login: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const copy =
+  const rawCopy =
     locale === 'zh'
       ? {
           title: '管理员登录',
@@ -38,6 +39,7 @@ const Login: React.FC = () => {
           signIn: 'Sign in',
           loginFailed: 'Login failed'
         };
+  const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();

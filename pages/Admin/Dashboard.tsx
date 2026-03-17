@@ -7,6 +7,7 @@ import { useLocale } from '../../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import { appRoutes } from '../../lib/routes';
 import { repairMojibakeDeep } from '../../lib/repairMojibake';
+import { hasSupabaseEnv } from '../../lib/supabaseClient';
 import { 
   LayoutDashboard, 
   Package, 
@@ -66,10 +67,10 @@ const AdminDashboard: React.FC = () => {
           operationsPortal: 'Operations Portal',
           exitHome: 'Exit to Home',
           pageTitle: 'Staff Overview',
-          pageDesc: 'Running in Local Storage mode for maximum reliability.',
+          pageDesc: 'Supabase status is detected automatically.',
           newExport: 'New Export',
           stats: ['Export Inventory', 'Market Reports', 'Global Regions', 'System Mode'],
-          localOffline: 'Local Offline',
+          localOffline: 'Mode',
           dataManagement: 'Data Management',
           exportJson: 'Export JSON',
           importJson: 'Import JSON',
@@ -80,7 +81,46 @@ const AdminDashboard: React.FC = () => {
           globalCatalog: 'Global Catalog',
           cmsLanguage: 'CMS Language'
         };
-  const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
+  const baseCopy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
+  const computedCopy = {
+    ...baseCopy,
+    pageDesc:
+      locale === 'zh'
+        ? hasSupabaseEnv
+          ? '已连接 Supabase 云端内容库与 CMS 工作流。'
+          : 'Supabase 未配置，当前使用内置回退数据。'
+        : hasSupabaseEnv
+          ? 'Connected to Supabase for live CMS data and translation workflows.'
+          : 'Supabase is not configured, so the CMS is running in bundled fallback mode.',
+    localOffline:
+      locale === 'zh'
+        ? hasSupabaseEnv
+          ? 'Supabase 云端'
+          : '回退模式'
+        : hasSupabaseEnv
+          ? 'Supabase Cloud'
+          : 'Fallback Mode'
+  };
+
+  const copy = {
+    ...computedCopy,
+    pageDesc:
+      locale === 'zh'
+        ? hasSupabaseEnv
+          ? '\u5df2\u8fde\u63a5 Supabase \u4e91\u7aef\u5185\u5bb9\u5e93\u4e0e CMS \u5de5\u4f5c\u6d41\u3002'
+          : 'Supabase \u672a\u914d\u7f6e\uff0c\u5f53\u524d\u4f7f\u7528\u5185\u7f6e\u56de\u9000\u6570\u636e\u3002'
+        : hasSupabaseEnv
+          ? 'Connected to Supabase for live CMS data and translation workflows.'
+          : 'Supabase is not configured, so the CMS is running in bundled fallback mode.',
+    localOffline:
+      locale === 'zh'
+        ? hasSupabaseEnv
+          ? 'Supabase \u4e91\u7aef'
+          : '\u56de\u9000\u6a21\u5f0f'
+        : hasSupabaseEnv
+          ? 'Supabase Cloud'
+          : 'Fallback Mode'
+  };
 
   const handleLogout = () => {
     logout();
@@ -118,7 +158,7 @@ const AdminDashboard: React.FC = () => {
     { label: copy.stats[0], val: products.length, icon: Package, color: 'bg-blue-500' },
     { label: copy.stats[1], val: news.length, icon: FileText, color: 'bg-purple-500' },
     { label: copy.stats[2], val: '32', icon: Globe, color: 'bg-foodmax-forest' },
-    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: 'bg-orange-500' }
+    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: hasSupabaseEnv ? 'bg-foodmax-forest' : 'bg-orange-500' }
   ];
 
   return (

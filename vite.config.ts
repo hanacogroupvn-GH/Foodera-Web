@@ -2,6 +2,7 @@ import path from 'path';
 import { IncomingMessage, ServerResponse } from 'http';
 import { defineConfig, loadEnv, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 const DEFAULT_OLLAMA_BASE_URL = 'http://127.0.0.1:11434';
 const DEFAULT_OLLAMA_MODEL = 'qwen2.5:7b';
@@ -370,11 +371,43 @@ export default defineConfig(({ mode }) => {
   const ollamaApiKey = env.OLLAMA_API_KEY?.trim();
 
   return {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) {
+              return undefined;
+            }
+
+            if (id.includes('@google/genai')) {
+              return 'genai';
+            }
+
+            if (id.includes('@supabase')) {
+              return 'supabase';
+            }
+
+            if (id.includes('lucide-react')) {
+              return 'icons';
+            }
+
+            if (
+              id.includes('react') ||
+              id.includes('scheduler')
+            ) {
+              return 'react-vendor';
+            }
+
+            return 'vendor';
+          }
+        }
+      }
+    },
     server: {
       port: 3000,
       host: '0.0.0.0'
     },
-    plugins: [react(), createDevCmsTranslatePlugin({ baseUrl: ollamaBaseUrl, model: ollamaModel, apiKey: ollamaApiKey })],
+    plugins: [react(), tailwindcss(), createDevCmsTranslatePlugin({ baseUrl: ollamaBaseUrl, model: ollamaModel, apiKey: ollamaApiKey })],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.')

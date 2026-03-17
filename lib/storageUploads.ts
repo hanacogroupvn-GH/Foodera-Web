@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { hasSupabaseEnv, supabase } from './supabaseClient';
 
 export const SUPABASE_IMAGE_BUCKET = import.meta.env.VITE_SUPABASE_IMAGE_BUCKET || 'cms-images';
 export const CMS_IMAGE_INPUT_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml,image/heic,image/heif';
@@ -58,6 +58,10 @@ const validateImageFile = (file: File) => {
 };
 
 export const uploadCmsImage = async (file: File, folderSegments: string[]) => {
+  if (!hasSupabaseEnv) {
+    throw new Error('Image upload is unavailable because Supabase storage is not configured.');
+  }
+
   validateImageFile(file);
 
   const path = buildUploadPath(folderSegments, file);

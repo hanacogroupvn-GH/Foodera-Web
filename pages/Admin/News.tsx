@@ -614,7 +614,7 @@ const AdminNews: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Mini Sidebar */}
-      <aside className="w-22 bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
+      <aside className="w-[5.5rem] bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
         <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
           <Link to={appRoutes.adminNews} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><FileText size={24} /></Link>

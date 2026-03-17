@@ -81,8 +81,13 @@ npx supabase secrets set OLLAMA_API_KEY=YOUR_OPTIONAL_OLLAMA_KEY
 3. Deploy the function:
 
 ```bash
-npx supabase functions deploy cms-translate-zh
+npm run deploy:cms-translate -- --project-ref YOUR_PROJECT_ID
 ```
+
+This repo ships `supabase/config.toml`, which sets `verify_jwt = false` for `cms-translate-zh`.
+That avoids Supabase gateway-level `Invalid JWT` failures and lets the function perform its own session and `admin_users` verification internally.
+If `cms-translate-zh` was already deployed before this config existed, redeploy it once so the new setting takes effect.
+The deploy helper stages a temporary Supabase workdir so local root files like `.env.local` cannot break the CLI parser during deployment.
 
 Behavior:
 - Admin CMS translation buttons call `supabase/functions/cms-translate-zh`
