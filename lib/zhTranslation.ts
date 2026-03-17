@@ -188,6 +188,22 @@ const normalizeOllamaBaseUrl = (baseUrl: string) => baseUrl.replace(/\/$/, '').r
 const createCmsTranslateError = (message: string, status?: number): CmsTranslateError =>
   Object.assign(new Error(message), status ? { status } : {});
 
+const isRetryableFunctionAuthError = ({ message, status }: { message: string; status?: number }) =>
+  status === 401 && /invalid jwt|expired session|invalid or expired session|authorization|session/i.test(message);
+
+const refreshCmsSession = async () => {
+  if (!hasSupabaseEnv) {
+    return false;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    return Boolean(data.session && !error);
+  } catch {
+    return false;
+  }
+};
+
 const readFunctionErrorDetail = async (error: unknown): Promise<{ message: string; status?: number }> => {
   let status: number | undefined;
   let message = '';
@@ -226,7 +242,8 @@ const readFunctionErrorDetail = async (error: unknown): Promise<{ message: strin
 
 const invokeCmsTranslateFunction = async <TTranslation>(
   kind: 'news' | 'product',
-  source: Record<string, unknown>
+  source: Record<string, unknown>,
+  hasRetriedAuth = false
 ) => {
   const { data, error } = await supabase.functions.invoke(CMS_TRANSLATE_FUNCTION, {
     body: {
@@ -237,6 +254,11 @@ const invokeCmsTranslateFunction = async <TTranslation>(
 
   if (error) {
     const detail = await readFunctionErrorDetail(error);
+
+    if (!hasRetriedAuth && isRetryableFunctionAuthError(detail) && (await refreshCmsSession())) {
+      return invokeCmsTranslateFunction<TTranslation>(kind, source, true);
+    }
+
     throw createCmsTranslateError(detail.message, detail.status);
   }
 
