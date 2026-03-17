@@ -175,6 +175,7 @@ Rules:
 - Do not wrap the response in markdown or code fences.
 - Do not add new facts or rewrite the structure.
 - Preserve dates, product names, grades, numbers, units, and named standards exactly.
+- Preserve Vietnamese proper nouns and Vietnam location names exactly in Latin script. Never translate them into Chinese characters.
 - Preserve any token of the form [[IMAGE:...]] exactly as written.
 - Keep the content array order exactly the same as the source.
 - If any source text is already Chinese, keep it as-is.
@@ -198,6 +199,7 @@ Rules:
 - Do not wrap the response in markdown or code fences.
 - Do not add new facts.
 - Preserve product codes, grades, sizes, percentages, acronyms, units, and numbers exactly.
+- Preserve Vietnamese proper nouns and Vietnam location names exactly in Latin script. Never translate them into Chinese characters.
 - Translate specification keys into natural Simplified Chinese.
 - Keep specification values faithful to the source.
 - If any source text is already Chinese, keep it as-is.

@@ -9,6 +9,7 @@ const repoRoot = scriptDir;
 const stagingRoot = resolve(repoRoot, '.supabase-deploy');
 const stagingSupabaseRoot = resolve(stagingRoot, 'supabase');
 const sourceSupabaseRoot = resolve(repoRoot, 'supabase');
+const isWindows = process.platform === 'win32';
 
 const cleanup = () => {
   rmSync(stagingRoot, { recursive: true, force: true });
@@ -25,10 +26,18 @@ const stageDeployWorkspace = () => {
   );
 };
 
+const quoteShellArg = (value) => {
+  if (!isWindows) {
+    return value;
+  }
+
+  return /[\s"]/u.test(value) ? `"${value.replace(/"/g, '\\"')}"` : value;
+};
+
 const run = async () => {
   stageDeployWorkspace();
 
-  const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const command = isWindows ? 'npx.cmd' : 'npx';
   const forwardedArgs = process.argv.slice(2);
   const args = [
     'supabase',
@@ -41,11 +50,14 @@ const run = async () => {
     stagingRoot,
     ...forwardedArgs
   ];
+  const spawnCommand = isWindows ? `${command} ${args.map(quoteShellArg).join(' ')}` : command;
+  const spawnArgs = isWindows ? [] : args;
 
   await new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(command, args, {
+    const child = spawn(spawnCommand, spawnArgs, {
       cwd: repoRoot,
-      stdio: 'inherit'
+      stdio: 'inherit',
+      shell: isWindows
     });
 
     child.on('error', rejectPromise);

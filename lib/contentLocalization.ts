@@ -5,6 +5,7 @@ import {
   Product,
   SupportedLocale
 } from '../types';
+import { preserveVietnamesePlaceNamesDeep } from './preserveVietnamesePlaceNames';
 
 const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
   en: {
@@ -72,7 +73,7 @@ export const localizeProduct = (product: Product, locale: SupportedLocale): Prod
     return product;
   }
 
-  const translation = product.translations.zh;
+  const translation = preserveVietnamesePlaceNamesDeep(product.translations.zh);
   return {
     ...product,
     name: translation.name || product.name,
@@ -88,7 +89,7 @@ export const localizeNewsItem = (item: NewsItem, locale: SupportedLocale): NewsI
     return item;
   }
 
-  const translation = item.translations.zh;
+  const translation = preserveVietnamesePlaceNamesDeep(item.translations.zh);
   return {
     ...item,
     title: translation.title || item.title,

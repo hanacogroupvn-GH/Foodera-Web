@@ -10,6 +10,7 @@ import { googleSheetToCsvUrl, mapCsvRowsToNews, parseCsv } from '../../lib/csvIm
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../../lib/contentLocalization';
 import { appRoutes } from '../../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePlaceNames';
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateNewsToChinese } from '../../lib/zhTranslation';
 import { 
@@ -258,7 +259,7 @@ const AdminNews: React.FC = () => {
       setEditingItem(null);
     }
 
-    setFormData(draft.formData);
+    setFormData(preserveVietnamesePlaceNamesDeep(draft.formData));
     setContentString(draft.contentString);
     setZhContentString(draft.zhContentString);
     setHasCustomSlug(draft.hasCustomSlug);
@@ -297,12 +298,12 @@ const AdminNews: React.FC = () => {
         ...item,
         translations: {
           zh: {
-            ...(item.translations?.zh || {})
+            ...preserveVietnamesePlaceNamesDeep(item.translations?.zh || {})
           }
         }
       });
       setContentString(item.content.join('\n\n'));
-      setZhContentString(item.translations?.zh?.content?.join('\n\n') || '');
+      setZhContentString(preserveVietnamesePlaceNamesDeep(item.translations?.zh?.content || []).join('\n\n'));
       setHasCustomSlug(!!item.slug?.trim());
     } else {
       setEditingItem(null);

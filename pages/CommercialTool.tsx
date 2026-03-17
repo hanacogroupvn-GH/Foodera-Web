@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
 import { appRoutes } from '../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 interface YieldData {
   year: string;
@@ -287,12 +288,13 @@ const VietnamMapSVG: React.FC = () => (
 
 const localizeRegion = (region: Region, locale: 'en' | 'zh') => {
   if (locale === 'zh' && region.translations?.zh) {
+    const translation = preserveVietnamesePlaceNamesDeep(region.translations.zh);
     return {
       ...region,
-      name: region.translations.zh.name,
-      short: region.translations.zh.short,
-      desc: region.translations.zh.desc,
-      profile: region.translations.zh.profile
+      name: translation.name,
+      short: translation.short,
+      desc: translation.desc,
+      profile: translation.profile
     };
   }
 

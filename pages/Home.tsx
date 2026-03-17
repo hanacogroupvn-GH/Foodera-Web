@@ -22,13 +22,14 @@ import { getNewsPath } from '../lib/newsSeo';
 import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, localizeNewsItem } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const Home: React.FC = () => {
   const { activeProducts, activeNews, isLoading } = useData();
   const { locale } = useLocale();
   const featuredProducts = activeProducts.slice(0, 4);
   const featuredNews = activeNews.slice(0, 3).map((item) => localizeNewsItem(item, locale));
-  const copy = locale === 'zh'
+  const rawCopy = locale === 'zh'
     ? {
         loader: '正在加载目录与市场洞察...',
         advantages: [
@@ -157,6 +158,7 @@ const Home: React.FC = () => {
         connectSales: 'Connect with Export Sales',
         browseCatalog: 'Browse Catalog'
       };
+  const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
   if (isLoading && activeProducts.length === 0 && activeNews.length === 0) {
     return <AppShellLoader compact label={copy.loader} />;

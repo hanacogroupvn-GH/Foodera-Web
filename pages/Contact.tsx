@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Mail, Phone, Send } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useLocale } from '../context/LocaleContext';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const Contact: React.FC = () => {
   const { locale } = useLocale();
@@ -10,7 +11,7 @@ const Contact: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const defaultSubject = locale === 'zh' ? '大米出口咨询' : 'Rice Export Inquiry';
-  const copy = locale === 'zh'
+  const rawCopy = locale === 'zh'
     ? {
         required: '请填写所有必填字段。',
         failed: '发送失败，请稍后重试。',
@@ -69,6 +70,7 @@ const Contact: React.FC = () => {
         address: '17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam',
         mapTitle: 'Foodmax Headquarters Location'
       };
+  const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
   const [form, setForm] = useState({
     companyName: '',

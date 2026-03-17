@@ -25,6 +25,7 @@ import ProductCard from '../components/ProductCard';
 import { useLocale } from '../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -356,6 +357,10 @@ const ProductDetail: React.FC = () => {
     }
     return null;
   }, [isCashew, isCoffee, isRice, locale]);
+  const displayOriginData = useMemo(
+    () => (locale === 'zh' && originData ? preserveVietnamesePlaceNamesDeep(originData) : originData),
+    [locale, originData]
+  );
 
   return (
     <div className="bg-white min-h-screen">
@@ -444,7 +449,7 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {originData && (
+      {displayOriginData && (
         <section
           ref={regionSectionRef}
           className="bg-gray-50 py-24 lg:py-32 border-t border-b border-gray-100 overflow-hidden relative"
@@ -466,15 +471,15 @@ const ProductDetail: React.FC = () => {
                   </h2>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-8 tracking-tighter">
-                  {originData.title.split(' ')[0]}{' '}
+                  {displayOriginData.title.split(' ')[0]}{' '}
                   <span className="text-foodmax-forest">
-                    {originData.title.split(' ').slice(1).join(' ')}
+                    {displayOriginData.title.split(' ').slice(1).join(' ')}
                   </span>
                 </h2>
-                <p className="text-lg text-gray-500 mb-10 leading-relaxed font-medium">{originData.desc}</p>
+                <p className="text-lg text-gray-500 mb-10 leading-relaxed font-medium">{displayOriginData.desc}</p>
 
                 <div className="space-y-6">
-                  {originData.regions.map((r, i) => (
+                  {displayOriginData.regions.map((r, i) => (
                     <div
                       key={i}
                       style={{ transitionDelay: `${i * 200}ms` }}
@@ -504,12 +509,12 @@ const ProductDetail: React.FC = () => {
                 <div className="bg-white p-10 rounded-[3rem] text-gray-900 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-500 border border-gray-100">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-foodmax-forest/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                   <h4 className="text-2xl font-black mb-4 flex items-center gap-3">
-                    <Database size={24} className="text-foodmax-forest" /> {originData.usefulInfo.title}
+                    <Database size={24} className="text-foodmax-forest" /> {displayOriginData.usefulInfo.title}
                   </h4>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium">{originData.usefulInfo.desc}</p>
+                  <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium">{displayOriginData.usefulInfo.desc}</p>
 
                   <div className="space-y-3">
-                    {originData.usefulInfo.points.map((pt, i) => (
+                    {displayOriginData.usefulInfo.points.map((pt, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <CheckCircle size={16} className="text-foodmax-lime" />
                         <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{pt}</span>
@@ -524,10 +529,10 @@ const ProductDetail: React.FC = () => {
 
                   <div className="relative z-10 p-8 text-center flex flex-col items-center">
                     <div className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 transition-transform">
-                      <originData.protocol.icon size={32} className="text-foodmax-lime" />
+                      <displayOriginData.protocol.icon size={32} className="text-foodmax-lime" />
                     </div>
-                    <h5 className="text-white text-2xl font-black tracking-tight mb-3">{originData.protocol.title}</h5>
-                    <p className="text-white/70 text-sm font-medium max-w-sm leading-relaxed">{originData.protocol.desc}</p>
+                    <h5 className="text-white text-2xl font-black tracking-tight mb-3">{displayOriginData.protocol.title}</h5>
+                    <p className="text-white/70 text-sm font-medium max-w-sm leading-relaxed">{displayOriginData.protocol.desc}</p>
                     <div className="mt-8 flex items-center gap-2">
                       <ShieldCheck size={16} className="text-foodmax-lime" />
                       <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">

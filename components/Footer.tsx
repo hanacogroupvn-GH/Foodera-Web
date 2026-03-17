@@ -5,10 +5,11 @@ import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Youtube, Shield } from 
 import Logo from '../Logo-optimized.png';
 import { useLocale } from '../context/LocaleContext';
 import { appRoutes } from '../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const Footer: React.FC = () => {
   const { locale } = useLocale();
-  const copy = locale === 'zh'
+  const rawCopy = locale === 'zh'
     ? {
         description: 'Foodmax 是一家领先的越南农产品出口商，连接本地农业优势与全球市场需求。',
         quickLinks: '快捷链接',
@@ -43,6 +44,7 @@ const Footer: React.FC = () => {
         rights: 'Foodmax Agriculture Export Co., Ltd. All Rights Reserved.',
         staffPortal: 'Staff Portal Access'
       };
+  const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
   const BrandLogo = () => (
     <div className="mb-6 inline-flex -mt-24">

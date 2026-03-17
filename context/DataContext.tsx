@@ -6,6 +6,7 @@ import { getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import { normalizeProductCategory } from '../lib/productCategories';
 import { FALLBACK_NEWS_TRANSLATIONS, FALLBACK_PRODUCT_TRANSLATIONS } from '../lib/fallbackTranslations';
 import { getActiveNews, getActiveProducts } from '../lib/contentStatus';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 interface DataContextType {
   products: Product[];
@@ -99,13 +100,13 @@ const writeWithTranslationsFallback = async <T extends Record<string, unknown> |
 };
 
 const cloneProductTranslation = (translation: ProductTranslation): ProductTranslation => ({
-  ...translation,
-  specifications: translation.specifications ? { ...translation.specifications } : undefined
+  ...preserveVietnamesePlaceNamesDeep(translation),
+  specifications: translation.specifications ? preserveVietnamesePlaceNamesDeep({ ...translation.specifications }) : undefined
 });
 
 const cloneNewsTranslation = (translation: NewsTranslation): NewsTranslation => ({
-  ...translation,
-  content: translation.content ? [...translation.content] : undefined
+  ...preserveVietnamesePlaceNamesDeep(translation),
+  content: translation.content ? preserveVietnamesePlaceNamesDeep([...translation.content]) : undefined
 });
 
 const cloneProductTranslations = (translations?: Product['translations']): Product['translations'] => {
@@ -159,7 +160,7 @@ const mergeProductTranslations = (
     delete mergedZh.specifications;
   }
 
-  return Object.keys(mergedZh).length > 0 ? { zh: mergedZh } : undefined;
+  return Object.keys(mergedZh).length > 0 ? preserveVietnamesePlaceNamesDeep({ zh: mergedZh }) : undefined;
 };
 
 const mergeNewsTranslations = (
@@ -183,7 +184,7 @@ const mergeNewsTranslations = (
     delete mergedZh.content;
   }
 
-  return Object.keys(mergedZh).length > 0 ? { zh: mergedZh } : undefined;
+  return Object.keys(mergedZh).length > 0 ? preserveVietnamesePlaceNamesDeep({ zh: mergedZh }) : undefined;
 };
 
 const normalizeProductTranslations = (raw: unknown): Product['translations'] => {
@@ -209,7 +210,7 @@ const normalizeProductTranslations = (raw: unknown): Product['translations'] => 
       : {})
   };
 
-  return Object.keys(zh).length > 0 ? { zh } : undefined;
+  return Object.keys(zh).length > 0 ? preserveVietnamesePlaceNamesDeep({ zh }) : undefined;
 };
 
 const fallbackProductsById = new Map(fallbackProductData.map((product) => [product.id, product]));
@@ -388,7 +389,7 @@ const normalizeNewsTranslations = (raw: unknown): NewsItem['translations'] => {
     zh.content = translatedContent;
   }
 
-  return Object.keys(zh).length > 0 ? { zh } : undefined;
+  return Object.keys(zh).length > 0 ? preserveVietnamesePlaceNamesDeep({ zh }) : undefined;
 };
 
 const fallbackNewsById = new Map(fallbackNewsData.map((item) => [item.id, item]));

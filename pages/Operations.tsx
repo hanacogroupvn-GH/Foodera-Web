@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
 import { appRoutes } from '../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const Operations: React.FC = () => {
   const { hash } = useLocation();
@@ -28,7 +29,7 @@ const Operations: React.FC = () => {
     }
   }, [hash]);
 
-  const copy =
+  const rawCopy =
     locale === 'zh'
       ? {
           heroTitle: '运营与合规',
@@ -172,6 +173,7 @@ const Operations: React.FC = () => {
           requestPdf: 'Request Technical PDF',
           emailDesk: 'Email Trade Desk'
         };
+  const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
   return (
     <div className="bg-white min-h-screen animate-in fade-in duration-700">

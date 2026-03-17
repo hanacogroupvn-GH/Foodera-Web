@@ -10,6 +10,7 @@ import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads
 import { PRODUCT_CATEGORIES } from '../../lib/productCategories';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import { appRoutes } from '../../lib/routes';
+import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePlaceNames';
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateProductToChinese } from '../../lib/zhTranslation';
 import {
@@ -86,9 +87,9 @@ const clearInventoryDraft = () => {
 
 const cloneProductTranslations = (product?: Partial<Product>) => ({
   zh: {
-    ...(product?.translations?.zh || {}),
+    ...preserveVietnamesePlaceNamesDeep(product?.translations?.zh || {}),
     specifications: product?.translations?.zh?.specifications
-      ? { ...product.translations.zh.specifications }
+      ? preserveVietnamesePlaceNamesDeep({ ...product.translations.zh.specifications })
       : {}
   }
 });
@@ -333,7 +334,7 @@ const AdminInventory: React.FC = () => {
       setEditingProduct(null);
     }
 
-    setFormData(draft.formData);
+    setFormData(preserveVietnamesePlaceNamesDeep(draft.formData));
     setNewGalleryUrl(draft.newGalleryUrl);
     setIsModalOpen(true);
   }, []);
