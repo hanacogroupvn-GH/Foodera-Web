@@ -6,12 +6,25 @@ export type NewsCategory = 'Market Insights' | 'Company Updates' | 'Sustainabili
 export type SupportedLocale = 'en' | 'zh';
 export type ContentLocale = Exclude<SupportedLocale, 'en'>;
 
+export interface ProductFilters {
+  [key: string]: string | undefined;
+  type?: string;
+  brokenRatio?: string;
+  grainLength?: string;
+  processing?: string;
+  grade?: string;
+  screenSize?: string;
+}
+
 export interface ProductTranslation {
   name?: string;
   subCategory?: string;
   description?: string;
   shortDescription?: string;
   specifications?: Record<string, string>;
+  packaging?: Record<string, string>;
+  payment?: Record<string, string>;
+  filters?: ProductFilters;
 }
 
 export interface NewsTranslation {
@@ -32,14 +45,9 @@ export interface Product {
   pdfUrl?: string;
   gallery?: string[];
   specifications: Record<string, string>;
-  filters: {
-    type?: string;
-    brokenRatio?: string;
-    grainLength?: string;
-    processing?: string;
-    grade?: string;
-    screenSize?: string;
-  };
+  packaging?: Record<string, string>;
+  payment?: Record<string, string>;
+  filters: ProductFilters;
   translations?: Partial<Record<ContentLocale, ProductTranslation>>;
 }
 

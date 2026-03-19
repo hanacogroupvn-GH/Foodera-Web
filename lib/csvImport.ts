@@ -314,15 +314,27 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
       ...parseLooseObject(csvField(row, ['specifications', 'specification', 'specs', 'quality matrix'])),
       ...extractPrefixedObject(row, ['spec', 'specification', 'specifications'])
     };
+    const packaging = {
+      ...parseLooseObject(csvField(row, ['packaging', 'packing', 'packaging details', 'packaging & loading'])),
+      ...extractPrefixedObject(row, ['packaging', 'packing', 'pack'])
+    };
+    const payment = {
+      ...parseLooseObject(csvField(row, ['payment', 'payment terms', 'payment & delivery'])),
+      ...extractPrefixedObject(row, ['payment', 'pay'])
+    };
     const filters = parseProductFilters(row);
     const parsedIsActive = parseOptionalBoolean(csvField(row, ['is active', 'is_active', 'active', 'status']));
     const zhSpecifications = parseLooseObject(csvField(row, ['zh specifications', 'zh_specifications', 'zh specs']));
+    const zhPackaging = parseLooseObject(csvField(row, ['zh packaging', 'zh_packaging', 'zh packing']));
+    const zhPayment = parseLooseObject(csvField(row, ['zh payment', 'zh_payment', 'zh payment terms']));
     const zhTranslation = {
       ...(csvField(row, ['zh name', 'zh_name', 'cn name']) ? { name: csvField(row, ['zh name', 'zh_name', 'cn name']) } : {}),
       ...(csvField(row, ['zh sub category', 'zh_sub_category', 'zh_subcategory']) ? { subCategory: csvField(row, ['zh sub category', 'zh_sub_category', 'zh_subcategory']) } : {}),
       ...(csvField(row, ['zh short description', 'zh_short_description']) ? { shortDescription: csvField(row, ['zh short description', 'zh_short_description']) } : {}),
       ...(csvField(row, ['zh description', 'zh long description']) ? { description: csvField(row, ['zh description', 'zh long description']) } : {}),
-      ...(Object.keys(zhSpecifications).length > 0 ? { specifications: zhSpecifications } : {})
+      ...(Object.keys(zhSpecifications).length > 0 ? { specifications: zhSpecifications } : {}),
+      ...(Object.keys(zhPackaging).length > 0 ? { packaging: zhPackaging } : {}),
+      ...(Object.keys(zhPayment).length > 0 ? { payment: zhPayment } : {})
     };
     const category = normalizeProductCategory({
       category: csvField(row, ['category', 'global category']),
@@ -345,6 +357,8 @@ export const mapCsvRowsToProducts = (rows: CsvRow[]): CsvMapResult<Product> => {
       pdfUrl: pdfUrl || undefined,
       gallery: gallery.length ? gallery : undefined,
       specifications,
+      packaging,
+      payment,
       filters,
       translations: Object.keys(zhTranslation).length > 0 ? { zh: zhTranslation } : undefined
     });

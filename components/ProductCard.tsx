@@ -32,13 +32,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const renderAttributeChips = () => {
     return (
       <div className="flex flex-wrap gap-1.5 mt-3">
-        {Object.entries(product.filters).map(([key, value]) => {
+        {Object.entries(localizedProduct.filters).map(([key, value]) => {
           if (!value) return null;
           
           const rawValue = String(value);
           let displayValue = getLocalizedFilterValue(rawValue, locale);
           // Apply specific formatting for key attributes
-          if (key === 'brokenRatio') displayValue = `${rawValue} ${copy.brokenSuffix}`;
+          if (key === 'brokenRatio' && /^\d+(?:\.\d+)?%$/.test(rawValue)) {
+            displayValue = `${rawValue} ${copy.brokenSuffix}`;
+          }
           
           return (
             <span 

@@ -42,11 +42,10 @@ const ProductDetail: React.FC = () => {
         backToProducts: '返回产品列表',
         backToList: '返回列表',
         qualitySpecs: '质量规格',
-        tradeLogistics: '贸易物流',
-        packaging: '提供散装包装',
-        oem: '支持白牌 / OEM 供应',
-        tradeTerms: '支持 FOB / CIF / CFR',
-        routing: '全球港口路线支持',
+        tradeLogistics: '包装与贸易条款',
+        packagingSection: '包装与装运',
+        paymentSection: '付款与交付',
+        noTradeLogistics: '具体物流与贸易条款将在正式报价中确认。',
         productPdf: '产品 PDF',
         productPdfDesc: '查看该产品的技术资料、规格文件或认证文件。',
         openProductPdf: '打开产品 PDF',
@@ -74,11 +73,10 @@ const ProductDetail: React.FC = () => {
         backToProducts: 'Back to Products',
         backToList: 'Back to List',
         qualitySpecs: 'Quality Specs',
-        tradeLogistics: 'Trade Logistics',
-        packaging: 'Bulk Packaging Available',
-        oem: 'White-Label / OEM Supply',
-        tradeTerms: 'FOB / CIF / CFR Alignment',
-        routing: 'Global Port Routing',
+        tradeLogistics: 'Packaging & Trade Terms',
+        packagingSection: 'Packaging & Loading',
+        paymentSection: 'Payment & Delivery',
+        noTradeLogistics: 'Final logistics and trade terms will be confirmed in the quotation.',
         productPdf: 'Product PDF',
         productPdfDesc: 'Access the technical datasheet, specifications, or certifications for this product.',
         openProductPdf: 'Open Product PDF',
@@ -110,6 +108,22 @@ const ProductDetail: React.FC = () => {
   const [inquirySent, setInquirySent] = useState(false);
   const [sending, setSending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const packagingEntries = useMemo(
+    () =>
+      Object.entries(localizedProduct?.packaging || product?.packaging || {}).filter(
+        ([key, value]) => key.trim() && String(value || '').trim()
+      ),
+    [localizedProduct, product]
+  );
+
+  const paymentEntries = useMemo(
+    () =>
+      Object.entries(localizedProduct?.payment || product?.payment || {}).filter(
+        ([key, value]) => key.trim() && String(value || '').trim()
+      ),
+    [localizedProduct, product]
+  );
 
   // Animation States
   const [isSectionVisible, setIsSectionVisible] = useState(false);
@@ -411,20 +425,47 @@ const ProductDetail: React.FC = () => {
                 <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-6 flex items-center gap-2">
                   <Truck size={16} className="text-foodmax-forest" /> {copy.tradeLogistics}
                 </h3>
-                <ul className="space-y-4 text-xs font-bold text-gray-600">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle size={14} className="text-foodmax-lime" /> {copy.packaging}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle size={14} className="text-foodmax-lime" /> {copy.oem}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle size={14} className="text-foodmax-lime" /> {copy.tradeTerms}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle size={14} className="text-foodmax-lime" /> {copy.routing}
-                  </li>
-                </ul>
+                <div className="space-y-6">
+                  {packagingEntries.length > 0 && (
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.28em] text-foodmax-forest mb-3">
+                        {copy.packagingSection}
+                      </h4>
+                      <ul className="space-y-3 text-xs text-gray-600">
+                        {packagingEntries.map(([key, value]) => (
+                          <li key={key} className="flex items-start gap-3 border-b border-gray-100 pb-3">
+                            <CheckCircle size={14} className="text-foodmax-lime mt-0.5 shrink-0" />
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">{key}</p>
+                              <p className="font-bold leading-relaxed text-gray-700">{value as string}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {paymentEntries.length > 0 && (
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.28em] text-foodmax-forest mb-3">
+                        {copy.paymentSection}
+                      </h4>
+                      <ul className="space-y-3 text-xs text-gray-600">
+                        {paymentEntries.map(([key, value]) => (
+                          <li key={key} className="flex items-start gap-3 border-b border-gray-100 pb-3">
+                            <CheckCircle size={14} className="text-foodmax-lime mt-0.5 shrink-0" />
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">{key}</p>
+                              <p className="font-bold leading-relaxed text-gray-700">{value as string}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {packagingEntries.length === 0 && paymentEntries.length === 0 && (
+                    <p className="text-sm text-gray-500 leading-relaxed">{copy.noTradeLogistics}</p>
+                  )}
+                </div>
               </div>
               {hasProductPdf && (
                 <div className="md:col-span-2 bg-gray-50 p-8 rounded-[2rem] border border-gray-100">

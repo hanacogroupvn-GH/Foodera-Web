@@ -101,7 +101,10 @@ const writeWithTranslationsFallback = async <T extends Record<string, unknown> |
 
 const cloneProductTranslation = (translation: ProductTranslation): ProductTranslation => ({
   ...preserveVietnamesePlaceNamesDeep(translation),
-  specifications: translation.specifications ? preserveVietnamesePlaceNamesDeep({ ...translation.specifications }) : undefined
+  specifications: translation.specifications ? preserveVietnamesePlaceNamesDeep({ ...translation.specifications }) : undefined,
+  packaging: translation.packaging ? preserveVietnamesePlaceNamesDeep({ ...translation.packaging }) : undefined,
+  payment: translation.payment ? preserveVietnamesePlaceNamesDeep({ ...translation.payment }) : undefined,
+  filters: translation.filters ? preserveVietnamesePlaceNamesDeep({ ...translation.filters }) : undefined
 });
 
 const cloneNewsTranslation = (translation: NewsTranslation): NewsTranslation => ({
@@ -127,6 +130,8 @@ const cloneProduct = (product: Product): Product => ({
   ...product,
   isActive: product.isActive !== false,
   specifications: { ...product.specifications },
+  packaging: product.packaging ? { ...product.packaging } : undefined,
+  payment: product.payment ? { ...product.payment } : undefined,
   filters: { ...product.filters },
   gallery: product.gallery ? [...product.gallery] : undefined,
   translations: cloneProductTranslations(product.translations)
@@ -153,11 +158,23 @@ const mergeProductTranslations = (
   const mergedZh: ProductTranslation = {
     ...(fallbackZh || {}),
     ...(primaryZh || {}),
-    specifications: primaryZh?.specifications || fallbackZh?.specifications
+    specifications: primaryZh?.specifications || fallbackZh?.specifications,
+    packaging: primaryZh?.packaging || fallbackZh?.packaging,
+    payment: primaryZh?.payment || fallbackZh?.payment,
+    filters: primaryZh?.filters || fallbackZh?.filters
   };
 
   if (!mergedZh.specifications) {
     delete mergedZh.specifications;
+  }
+  if (!mergedZh.packaging) {
+    delete mergedZh.packaging;
+  }
+  if (!mergedZh.payment) {
+    delete mergedZh.payment;
+  }
+  if (!mergedZh.filters) {
+    delete mergedZh.filters;
   }
 
   return Object.keys(mergedZh).length > 0 ? preserveVietnamesePlaceNamesDeep({ zh: mergedZh }) : undefined;
@@ -207,6 +224,15 @@ const normalizeProductTranslations = (raw: unknown): Product['translations'] => 
       : {}),
     ...(normalizeStringRecord(zhRecord.specifications)
       ? { specifications: normalizeStringRecord(zhRecord.specifications) }
+      : {}),
+    ...(normalizeStringRecord(zhRecord.packaging)
+      ? { packaging: normalizeStringRecord(zhRecord.packaging) }
+      : {}),
+    ...(normalizeStringRecord(zhRecord.payment)
+      ? { payment: normalizeStringRecord(zhRecord.payment) }
+      : {}),
+    ...(normalizeStringRecord(zhRecord.filters)
+      ? { filters: normalizeStringRecord(zhRecord.filters) }
       : {})
   };
 
@@ -233,6 +259,8 @@ const mapProductFromRow = (row: any): Product => {
     pdfUrl: row.pdf_url && row.pdf_url !== SAMPLE_PDF_URL ? row.pdf_url : undefined,
     gallery: row.gallery ?? undefined,
     specifications: row.specifications ?? {},
+    packaging: normalizeStringRecord(row.packaging) ?? {},
+    payment: normalizeStringRecord(row.payment) ?? {},
     filters: row.filters ?? {},
     translations: mergeProductTranslations(normalizeProductTranslations(row.translations), fallbackTranslations)
   };
@@ -250,6 +278,8 @@ const mapProductToRow = (p: Product) => ({
   pdf_url: p.pdfUrl?.trim() ? p.pdfUrl.trim() : null,
   gallery: p.gallery ?? null,
   specifications: p.specifications ?? {},
+  packaging: p.packaging ?? {},
+  payment: p.payment ?? {},
   filters: p.filters ?? {},
   translations: normalizeProductTranslations(p.translations) ?? {}
 });

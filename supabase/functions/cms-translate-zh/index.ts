@@ -28,6 +28,9 @@ type ProductTranslation = {
   shortDescription?: string;
   description?: string;
   specifications?: Record<string, string>;
+  packaging?: Record<string, string>;
+  payment?: Record<string, string>;
+  filters?: Record<string, string>;
 };
 
 type NewsSource = {
@@ -42,6 +45,9 @@ type ProductSource = {
   shortDescription: string;
   description: string;
   specifications: Record<string, string>;
+  packaging: Record<string, string>;
+  payment: Record<string, string>;
+  filters: Record<string, string>;
 };
 
 type TranslationRequestBody =
@@ -147,6 +153,9 @@ const sanitizeProductTranslation = (value: unknown): ProductTranslation => {
   const shortDescription = sanitizeText(record.shortDescription);
   const description = sanitizeText(record.description);
   const specifications = sanitizeStringRecord(record.specifications);
+  const packaging = sanitizeStringRecord(record.packaging);
+  const payment = sanitizeStringRecord(record.payment);
+  const filters = sanitizeStringRecord(record.filters);
 
   if (name) {
     normalized.name = name;
@@ -162,6 +171,15 @@ const sanitizeProductTranslation = (value: unknown): ProductTranslation => {
   }
   if (specifications) {
     normalized.specifications = specifications;
+  }
+  if (packaging) {
+    normalized.packaging = packaging;
+  }
+  if (payment) {
+    normalized.payment = payment;
+  }
+  if (filters) {
+    normalized.filters = filters;
   }
 
   return normalized;
@@ -201,7 +219,7 @@ Rules:
 - Preserve product codes, grades, sizes, percentages, acronyms, units, and numbers exactly.
 - Preserve Vietnamese proper nouns and Vietnam location names exactly in Latin script. Never translate them into Chinese characters.
 - Translate specification keys into natural Simplified Chinese.
-- Keep specification values faithful to the source.
+- Keep specification, packaging, payment, and filter values faithful to the source.
 - If any source text is already Chinese, keep it as-is.
 
 Target JSON schema:
@@ -212,6 +230,15 @@ Target JSON schema:
   "description": "string",
   "specifications": {
     "translated key": "translated or preserved value"
+  },
+  "packaging": {
+    "translated key": "translated or preserved value"
+  },
+  "payment": {
+    "translated key": "translated or preserved value"
+  },
+  "filters": {
+    "same filter key": "translated or preserved value"
   }
 }
 
@@ -291,7 +318,10 @@ const translateProductToChinese = async (source: ProductSource): Promise<Product
     !translated.subCategory &&
     !translated.shortDescription &&
     !translated.description &&
-    !translated.specifications
+    !translated.specifications &&
+    !translated.packaging &&
+    !translated.payment &&
+    !translated.filters
   ) {
     throw new Error('The translation model returned no usable Chinese content.');
   }
@@ -324,7 +354,9 @@ const parseRequestBody = (raw: unknown): TranslationRequestBody => {
         subCategory: sanitizeText((record.source as Record<string, unknown> | undefined)?.subCategory),
         shortDescription: sanitizeText((record.source as Record<string, unknown> | undefined)?.shortDescription),
         description: sanitizeText((record.source as Record<string, unknown> | undefined)?.description),
-        specifications: sanitizeStringRecord((record.source as Record<string, unknown> | undefined)?.specifications) || {}
+        specifications: sanitizeStringRecord((record.source as Record<string, unknown> | undefined)?.specifications) || {},
+        packaging: sanitizeStringRecord((record.source as Record<string, unknown> | undefined)?.packaging) || {},
+        payment: sanitizeStringRecord((record.source as Record<string, unknown> | undefined)?.payment) || {}
       }
     };
   }

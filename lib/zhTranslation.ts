@@ -1,4 +1,5 @@
 import { NewsTranslation, ProductTranslation } from '../types';
+import { translateProductFilters } from './filterLocalization';
 import { hasSupabaseEnv, supabase } from './supabaseClient';
 import { preserveVietnamesePlaceNamesDeep } from './preserveVietnamesePlaceNames';
 
@@ -108,6 +109,9 @@ const sanitizeProductTranslation = (value: unknown): ProductTranslation => {
   const shortDescription = sanitizeText(record.shortDescription);
   const description = sanitizeText(record.description);
   const specifications = sanitizeStringRecord(record.specifications);
+  const packaging = sanitizeStringRecord(record.packaging);
+  const payment = sanitizeStringRecord(record.payment);
+  const filters = sanitizeStringRecord(record.filters);
 
   if (name) {
     normalized.name = name;
@@ -123,6 +127,15 @@ const sanitizeProductTranslation = (value: unknown): ProductTranslation => {
   }
   if (specifications) {
     normalized.specifications = specifications;
+  }
+  if (packaging) {
+    normalized.packaging = packaging;
+  }
+  if (payment) {
+    normalized.payment = payment;
+  }
+  if (filters) {
+    normalized.filters = filters;
   }
 
   return preserveVietnamesePlaceNamesDeep(normalized);
@@ -158,6 +171,9 @@ const buildProductPrompt = (source: {
   shortDescription: string;
   description: string;
   specifications: Record<string, string>;
+  packaging: Record<string, string>;
+  payment: Record<string, string>;
+  filters: Record<string, string>;
 }) => `
 You are translating B2B agri-export product catalog content from English to Simplified Chinese.
 
@@ -168,7 +184,7 @@ Rules:
 - Preserve product codes, grades, sizes, percentages, acronyms, units, and numbers exactly.
 - Preserve Vietnamese proper nouns and Vietnam location names exactly in Latin script. Never translate them into Chinese characters.
 - Translate specification keys into natural Simplified Chinese.
-- Keep specification values faithful to the source.
+- Keep specification, packaging, payment, and filter values faithful to the source.
 - If any source text is already Chinese, keep it as-is.
 
 Target JSON schema:
@@ -179,6 +195,15 @@ Target JSON schema:
   "description": "string",
   "specifications": {
     "translated key": "translated or preserved value"
+  },
+  "packaging": {
+    "translated key": "translated or preserved value"
+  },
+  "payment": {
+    "translated key": "translated or preserved value"
+  },
+  "filters": {
+    "same filter key": "translated or preserved value"
   }
 }
 
@@ -433,6 +458,9 @@ export const translateProductToChinese = async (source: {
   shortDescription: string;
   description: string;
   specifications: Record<string, string>;
+  packaging: Record<string, string>;
+  payment: Record<string, string>;
+  filters: Record<string, string>;
 }): Promise<ProductTranslation> => {
   let translated: ProductTranslation | undefined;
   const translateInBrowser = async () =>
@@ -473,10 +501,15 @@ export const translateProductToChinese = async (source: {
     !translated.subCategory &&
     !translated.shortDescription &&
     !translated.description &&
-    !translated.specifications
+    !translated.specifications &&
+    !translated.packaging &&
+    !translated.payment &&
+    !translated.filters
   ) {
     throw new Error('The translation model returned no usable Chinese content.');
   }
+
+  translated.filters = translateProductFilters(source.filters, 'zh', translated.filters) || translated.filters;
 
   return translated;
 };

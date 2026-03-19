@@ -1,18 +1,21 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
-import { Product, CategoryType } from '../../types';
+import { Product, CategoryType, SupportedLocale } from '../../types';
 import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
 import { PRODUCT_CATEGORIES } from '../../lib/productCategories';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
+import { buildProductPdfPrintHtml as buildProductPdfTemplateHtml } from '../../lib/productPdfExport';
 import { appRoutes } from '../../lib/routes';
 import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePlaceNames';
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateProductToChinese } from '../../lib/zhTranslation';
+import pdfFooterImage from '../../pdf-footer-current.png?inline';
+import pdfHeaderImage from '../../pdf-header.png?inline';
 import {
   Package, 
   Search, 
@@ -35,7 +38,9 @@ import {
   LogOut,
   Upload,
   Link as LinkIcon,
-  Languages
+  Languages,
+  RefreshCw,
+  FileDown
 } from 'lucide-react';
 
 const isValidPdfUrl = (value: string): boolean => {
@@ -90,11 +95,17 @@ const cloneProductTranslations = (product?: Partial<Product>) => ({
     ...preserveVietnamesePlaceNamesDeep(product?.translations?.zh || {}),
     specifications: product?.translations?.zh?.specifications
       ? preserveVietnamesePlaceNamesDeep({ ...product.translations.zh.specifications })
+      : {},
+    packaging: product?.translations?.zh?.packaging
+      ? preserveVietnamesePlaceNamesDeep({ ...product.translations.zh.packaging })
+      : {},
+    payment: product?.translations?.zh?.payment
+      ? preserveVietnamesePlaceNamesDeep({ ...product.translations.zh.payment })
       : {}
   }
 });
 
-const normalizeSpecificationRecord = (record?: Record<string, string>) =>
+const normalizeRecordSection = (record?: Record<string, string>) =>
   Object.fromEntries(
     Object.entries(record || {})
       .map(([key, value]) => [key.trim(), String(value).trim()] as const)
@@ -116,8 +127,348 @@ const buildNextProductId = (requestedId: string, existingIds: string[], excluded
   return candidate;
 };
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const sanitizeDocumentName = (value: string) =>
+  value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'product-datasheet';
+
+const buildProductPdfPrintHtml = (product: Product, locale: SupportedLocale): string => {
+  const localized = localizeProduct(product, locale);
+  const specEntries = Object.entries(localized.specifications || {});
+  const generatedAt = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    dateStyle: 'long',
+    timeStyle: 'short'
+  }).format(new Date());
+
+  const copy =
+    locale === 'zh'
+      ? {
+          category: '分类',
+          generated: '生成时间',
+          identifier: '产品 ID',
+          overview: '产品概述',
+          specs: '技术规格',
+          value: '数值',
+          sourcePdf: '已关联 PDF',
+          saveHint: '打印窗口打开后，请选择“保存为 PDF”以下载到本地。'
+        }
+      : {
+          category: 'Category',
+          generated: 'Generated',
+          identifier: 'Product ID',
+          overview: 'Overview',
+          specs: 'Technical Specifications',
+          value: 'Value',
+          sourcePdf: 'Linked PDF',
+          saveHint: 'When the print window opens, choose "Save as PDF" to download the file.'
+        };
+
+  const specRows = specEntries
+    .map(
+      ([key, value]) => `
+        <tr>
+          <td>${escapeHtml(key)}</td>
+          <td>${escapeHtml(value)}</td>
+        </tr>
+      `
+    )
+    .join('');
+
+  const pdfRow = product.pdfUrl?.trim()
+    ? `
+      <div class="meta-row">
+        <span>${escapeHtml(copy.sourcePdf)}</span>
+        <span>${escapeHtml(product.pdfUrl.trim())}</span>
+      </div>
+    `
+    : '';
+
+  const imageBlock = product.image?.trim()
+    ? `<img class="hero-image" src="${escapeHtml(product.image.trim())}" alt="${escapeHtml(localized.name)}" />`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="${locale === 'zh' ? 'zh-CN' : 'en'}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(sanitizeDocumentName(localized.name))}</title>
+    <style>
+      :root {
+        --forest: #0c6a3d;
+        --lime: #9ad23b;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --line: #dbe3ea;
+        --panel: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: var(--ink);
+        background: white;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 18mm 16mm;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--forest);
+        font-size: 11px;
+      }
+
+      .brand-mark {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, var(--forest), var(--lime));
+      }
+
+      .meta {
+        min-width: 240px;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel);
+      }
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 11px;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .meta-row:last-child {
+        border-bottom: none;
+      }
+
+      .meta-row span:first-child {
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .meta-row span:last-child {
+        text-align: right;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 10px 0 8px;
+        font-size: 28px;
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+      }
+
+      .subline {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 18px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 18px;
+        margin-bottom: 22px;
+        align-items: stretch;
+      }
+
+      .hero-copy {
+        padding: 20px 22px;
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(12, 106, 61, 0.06), rgba(154, 210, 59, 0.1));
+        border: 1px solid rgba(12, 106, 61, 0.08);
+      }
+
+      .hero-image {
+        width: 100%;
+        height: 100%;
+        min-height: 240px;
+        object-fit: cover;
+        border-radius: 24px;
+        border: 1px solid var(--line);
+      }
+
+      .section-label {
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.24em;
+        color: var(--forest);
+        margin-bottom: 10px;
+      }
+
+      .body-copy {
+        font-size: 13px;
+        line-height: 1.7;
+        color: #334155;
+        white-space: pre-wrap;
+      }
+
+      .spec-card {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th, td {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 12px;
+        vertical-align: top;
+      }
+
+      thead th {
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+      }
+
+      tbody tr:nth-child(odd) {
+        background: rgba(248, 250, 252, 0.7);
+      }
+
+      tbody td:first-child {
+        width: 38%;
+        font-weight: 800;
+        color: #334155;
+      }
+
+      .footer-note {
+        margin-top: 20px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(154, 210, 59, 0.12);
+        color: #365314;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .page {
+          padding: 12mm 10mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div>
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <span>Foodmax Export Sheet</span>
+          </div>
+          <h1>${escapeHtml(localized.name)}</h1>
+          <div class="subline">${escapeHtml(localized.shortDescription || '')}</div>
+        </div>
+        <div class="meta">
+          <div class="meta-row">
+            <span>${escapeHtml(copy.identifier)}</span>
+            <span>${escapeHtml(product.id)}</span>
+          </div>
+          <div class="meta-row">
+            <span>${escapeHtml(copy.category)}</span>
+            <span>${escapeHtml(getCategoryLabel(product.category, locale))}</span>
+          </div>
+          <div class="meta-row">
+            <span>Line</span>
+            <span>${escapeHtml(localized.subCategory)}</span>
+          </div>
+          <div class="meta-row">
+            <span>${escapeHtml(copy.generated)}</span>
+            <span>${escapeHtml(generatedAt)}</span>
+          </div>
+          ${pdfRow}
+        </div>
+      </div>
+
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="section-label">${escapeHtml(copy.overview)}</div>
+          <div class="body-copy">${escapeHtml(localized.description || '')}</div>
+        </div>
+        ${imageBlock || '<div class="hero-copy"><div class="section-label">Foodmax</div><div class="body-copy">Product image is not available for this export sheet.</div></div>'}
+      </div>
+
+      <div class="spec-card">
+        <table>
+          <thead>
+            <tr>
+              <th>${escapeHtml(copy.specs)}</th>
+              <th>${escapeHtml(copy.value)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${specRows}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer-note">${escapeHtml(copy.saveHint)}</div>
+    </div>
+    <script>
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          window.focus();
+          window.print();
+        }, 250);
+      });
+      window.addEventListener('afterprint', function () {
+        window.close();
+      });
+    </script>
+  </body>
+</html>`;
+};
+
 const AdminInventory: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct } = useData();
+  const { products, addProduct, updateProduct, deleteProduct, refresh } = useData();
   const { logout } = useAuth();
   const { locale, setLocale } = useLocale();
   const rawCopy =
@@ -236,7 +587,7 @@ const AdminInventory: React.FC = () => {
           globalCategory: 'Global Category',
           subCategoryLabel: 'Sub-Category',
           subCategoryPlaceholder: 'e.g. Premium & Fragrant Rice',
-          shortDescriptionLabel: 'Short Commercial Description',
+          shortDescriptionLabel: 'Short Description',
           shortDescriptionPlaceholder: 'Brief hook for catalog browsing...',
           descriptionLabel: 'Technical Portfolio Description',
           descriptionPlaceholder: 'Comprehensive variety details and processing standards...',
@@ -262,8 +613,64 @@ const AdminInventory: React.FC = () => {
           zhSpecsLabelPlaceholder: 'Label (e.g. Moisture)',
           zhSpecsValuePlaceholder: 'Value (e.g. 14.0% Max)'
         };
-  const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
   const zh = repairMojibakeText;
+  const baseCopy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
+  const copy = {
+    ...baseCopy,
+    ...(locale === 'zh'
+      ? {
+          packagingTitle: zh('\u5305\u88c5\u4e0e\u88c5\u8fd0'),
+          packagingDesc: zh('\u5305\u88c5\u89c4\u683c\u3001\u5185\u886c\u3001\u88c5\u67dc\u4e0e\u50a8\u5b58\u8bf4\u660e'),
+          addPackagingAttribute: zh('\u6dfb\u52a0\u5305\u88c5\u5c5e\u6027'),
+          noPackaging: zh('\u5c1a\u672a\u5b9a\u4e49\u5305\u88c5\u4e0e\u88c5\u8fd0'),
+          packagingLabelPlaceholder: zh('\u6807\u7b7e\uff08\u5982\uff1aPackaging Details\uff09'),
+          packagingValuePlaceholder: zh('\u6570\u503c\uff08\u5982\uff1a25kg / 50kg new PP bags\uff09'),
+          paymentTitle: zh('\u4ed8\u6b3e\u4e0e\u4ea4\u4ed8'),
+          paymentDesc: zh('\u8d38\u6613\u6761\u6b3e\u3001\u4ed8\u6b3e\u65b9\u5f0f\u4e0e\u4ea4\u671f'),
+          addPaymentAttribute: zh('\u6dfb\u52a0\u4ed8\u6b3e\u5c5e\u6027'),
+          noPayment: zh('\u5c1a\u672a\u5b9a\u4e49\u4ed8\u6b3e\u4e0e\u4ea4\u4ed8'),
+          paymentLabelPlaceholder: zh('\u6807\u7b7e\uff08\u5982\uff1aIncoterms\uff09'),
+          paymentValuePlaceholder: zh('\u6570\u503c\uff08\u5982\uff1aFOB Ho Chi Minh / CIF / CFR\uff09'),
+          zhPackagingTitle: zh('\u4e2d\u6587\u5305\u88c5\u4e0e\u88c5\u8fd0'),
+          zhPackagingDesc: zh('\u7528\u4e8e\u4e2d\u6587\u76ee\u5f55\u7684\u5305\u88c5\u4e0e\u88c5\u8fd0\u6807\u7b7e'),
+          addZhPackagingAttribute: zh('\u6dfb\u52a0\u4e2d\u6587\u5305\u88c5\u5c5e\u6027'),
+          noZhPackaging: zh('\u5c1a\u672a\u5b9a\u4e49\u4e2d\u6587\u5305\u88c5\u4e0e\u88c5\u8fd0'),
+          zhPackagingLabelPlaceholder: zh('\u6807\u7b7e\uff08\u5982\uff1a\u5305\u88c5\u8be6\u60c5\uff09'),
+          zhPackagingValuePlaceholder: zh('\u6570\u503c'),
+          zhPaymentTitle: zh('\u4e2d\u6587\u4ed8\u6b3e\u4e0e\u4ea4\u4ed8'),
+          zhPaymentDesc: zh('\u7528\u4e8e\u4e2d\u6587\u76ee\u5f55\u7684\u4ed8\u6b3e\u4e0e\u4ea4\u4ed8\u6807\u7b7e'),
+          addZhPaymentAttribute: zh('\u6dfb\u52a0\u4e2d\u6587\u4ed8\u6b3e\u5c5e\u6027'),
+          noZhPayment: zh('\u5c1a\u672a\u5b9a\u4e49\u4e2d\u6587\u4ed8\u6b3e\u4e0e\u4ea4\u4ed8'),
+          zhPaymentLabelPlaceholder: zh('\u6807\u7b7e\uff08\u5982\uff1a\u4ed8\u6b3e\u6761\u6b3e\uff09'),
+          zhPaymentValuePlaceholder: zh('\u6570\u503c')
+        }
+      : {
+          packagingTitle: 'Packaging & Loading',
+          packagingDesc: 'Bagging, liner, container loading, and storage notes',
+          addPackagingAttribute: 'Add Packaging Attribute',
+          noPackaging: 'No packaging or loading details defined',
+          packagingLabelPlaceholder: 'Label (e.g. Packaging Details)',
+          packagingValuePlaceholder: 'Value (e.g. 25kg / 50kg new PP bags)',
+          paymentTitle: 'Payment & Delivery',
+          paymentDesc: 'Incoterms, payment terms, and lead time',
+          addPaymentAttribute: 'Add Payment Attribute',
+          noPayment: 'No payment or delivery details defined',
+          paymentLabelPlaceholder: 'Label (e.g. Incoterms)',
+          paymentValuePlaceholder: 'Value (e.g. FOB Ho Chi Minh / CIF / CFR)',
+          zhPackagingTitle: 'Chinese Packaging & Loading',
+          zhPackagingDesc: 'Localized packaging and loading labels for zh catalog output',
+          addZhPackagingAttribute: 'Add Chinese Packaging Attribute',
+          noZhPackaging: 'No Chinese packaging or loading details defined',
+          zhPackagingLabelPlaceholder: 'Label (e.g. Packaging Details)',
+          zhPackagingValuePlaceholder: 'Value',
+          zhPaymentTitle: 'Chinese Payment & Delivery',
+          zhPaymentDesc: 'Localized payment and delivery labels for zh catalog output',
+          addZhPaymentAttribute: 'Add Chinese Payment Attribute',
+          noZhPayment: 'No Chinese payment or delivery details defined',
+          zhPaymentLabelPlaceholder: 'Label (e.g. Payment Terms)',
+          zhPaymentValuePlaceholder: 'Value'
+        })
+  };
   const activeStatusLabel = locale === 'zh' ? zh('\u542f\u7528') : 'Active';
   const inactiveStatusLabel = locale === 'zh' ? zh('\u505c\u7528') : 'Inactive';
   const statusHelpText =
@@ -285,6 +692,31 @@ const AdminInventory: React.FC = () => {
     locale === 'zh'
       ? zh('\u8bf7\u5148\u586b\u5199\u82f1\u6587\u4ea7\u54c1\u540d\u79f0\uff0c\u518d\u6267\u884c\u7ffb\u8bd1\u3002')
       : 'Fill in the English product name before translating.';
+  const reloadButtonLabel = locale === 'zh' ? zh('\u91cd\u65b0\u52a0\u8f7d') : 'Reload';
+  const reloadingButtonLabel = locale === 'zh' ? zh('\u52a0\u8f7d\u4e2d...') : 'Reloading...';
+  const reloadSuccessMessage = locale === 'zh' ? zh('\u5df2\u91cd\u65b0\u52a0\u8f7d\u4ea7\u54c1\u6570\u636e\u3002') : 'Inventory reloaded from Supabase.';
+  const bulkTranslateButtonLabel = locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u5f53\u524d\u5217\u8868') : 'Bulk Translate List';
+  const bulkTranslatingButtonLabel = locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u4e2d') : 'Bulk Translating';
+  const bulkTranslateEmptyMessage =
+    locale === 'zh' ? zh('\u5f53\u524d\u7b5b\u9009\u7ed3\u679c\u4e2d\u6ca1\u6709\u53ef\u7ffb\u8bd1\u7684\u4ea7\u54c1\u3002') : 'No products match the current list filters.';
+  const bulkTranslateConfirmMessage = (count: number) =>
+    locale === 'zh'
+      ? zh(`\u8981\u5c06\u5f53\u524d\u5217\u8868\u4e2d\u7684 ${count} \u4e2a\u4ea7\u54c1\u6279\u91cf\u7ffb\u8bd1\u6210\u4e2d\u6587\u5417\uff1f\u8fd9\u4f1a\u8986\u76d6\u5df2\u6709\u7684\u4e2d\u6587\u5b57\u6bb5\u3002`)
+      : `Translate the ${count} products in the current list to Chinese? This will overwrite existing Chinese fields.`;
+  const bulkTranslateSuccessMessage = (successCount: number) =>
+    locale === 'zh'
+      ? zh(`\u5df2\u5b8c\u6210 ${successCount} \u4e2a\u4ea7\u54c1\u7684\u4e2d\u6587\u6279\u91cf\u7ffb\u8bd1\u3002`)
+      : `Chinese translations completed for ${successCount} products.`;
+  const bulkTranslatePartialMessage = (successCount: number, failureCount: number) =>
+    locale === 'zh'
+      ? zh(`\u6279\u91cf\u7ffb\u8bd1\u5b8c\u6210\uff0c\u6210\u529f ${successCount} \u4e2a\uff0c\u5931\u8d25 ${failureCount} \u4e2a\u3002`)
+      : `Bulk translation finished with ${successCount} success and ${failureCount} failure(s).`;
+  const exportPdfEnButtonLabel = locale === 'zh' ? zh('\u82f1\u6587 PDF') : 'EN PDF';
+  const exportPdfCnButtonLabel = locale === 'zh' ? zh('\u4e2d\u6587 PDF') : 'CN PDF';
+  const exportPdfBlockedMessage =
+    locale === 'zh'
+      ? zh('\u65e0\u6cd5\u6253\u5f00 PDF \u7a97\u53e3\uff0c\u8bf7\u5141\u8bb8\u6d4f\u89c8\u5668\u5f39\u7a97\u540e\u518d\u8bd5\u3002')
+      : 'Unable to open the PDF window. Allow browser pop-ups and try again.';
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -305,6 +737,9 @@ const AdminInventory: React.FC = () => {
   const [primaryImageUploadError, setPrimaryImageUploadError] = useState<string | null>(null);
   const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
+  const [isReloadingInventory, setIsReloadingInventory] = useState(false);
+  const [isBulkTranslating, setIsBulkTranslating] = useState(false);
+  const [bulkTranslateProgress, setBulkTranslateProgress] = useState({ current: 0, total: 0 });
 
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -319,6 +754,8 @@ const AdminInventory: React.FC = () => {
     pdfUrl: '',
     gallery: [],
     specifications: {},
+    packaging: {},
+    payment: {},
     filters: {}
   });
   const hasInvalidPdfUrl = Boolean(formData.pdfUrl?.trim()) && !isValidPdfUrl(formData.pdfUrl || '');
@@ -366,6 +803,7 @@ const AdminInventory: React.FC = () => {
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+  const bulkTranslateTargets = useMemo(() => filteredProducts.slice(), [filteredProducts]);
 
   const openModal = (product?: Product) => {
     setPrimaryImageUploadError(null);
@@ -377,6 +815,8 @@ const AdminInventory: React.FC = () => {
         pdfUrl: product.pdfUrl || '',
         gallery: product.gallery || [],
         specifications: { ...product.specifications },
+        packaging: { ...(product.packaging || {}) },
+        payment: { ...(product.payment || {}) },
         translations: cloneProductTranslations(product)
       });
     } else {
@@ -393,8 +833,20 @@ const AdminInventory: React.FC = () => {
         pdfUrl: '',
         gallery: [],
         specifications: { 'Broken': '5.0% Max', 'Moisture': '14.0% Max' },
+        packaging: {},
+        payment: {},
         filters: { type: 'Standard' },
-        translations: { zh: { name: '', subCategory: '', shortDescription: '', description: '', specifications: {} } }
+        translations: {
+          zh: {
+            name: '',
+            subCategory: '',
+            shortDescription: '',
+            description: '',
+            specifications: {},
+            packaging: {},
+            payment: {}
+          }
+        }
       });
     }
     setNewGalleryUrl('');
@@ -462,6 +914,9 @@ const AdminInventory: React.FC = () => {
     shortDescription: string;
     description: string;
     specifications: Record<string, string>;
+    packaging: Record<string, string>;
+    payment: Record<string, string>;
+    filters: Record<string, string>;
   }) => {
     if (!canTranslateCmsContent) {
       throw new Error(translateMissingKeyMessage);
@@ -478,7 +933,10 @@ const AdminInventory: React.FC = () => {
       subCategory: (formData.subCategory || '').trim(),
       shortDescription: (formData.shortDescription || '').trim(),
       description: (formData.description || '').trim(),
-      specifications: normalizeSpecificationRecord(formData.specifications)
+      specifications: normalizeRecordSection(formData.specifications),
+      packaging: normalizeRecordSection(formData.packaging),
+      payment: normalizeRecordSection(formData.payment),
+      filters: normalizeRecordSection(formData.filters as Record<string, string>)
     };
 
     if (!source.name) {
@@ -499,7 +957,10 @@ const AdminInventory: React.FC = () => {
             subCategory: translated.subCategory || prev.translations?.zh?.subCategory || '',
             shortDescription: translated.shortDescription || prev.translations?.zh?.shortDescription || '',
             description: translated.description || prev.translations?.zh?.description || '',
-            specifications: translated.specifications || prev.translations?.zh?.specifications || {}
+            specifications: translated.specifications || prev.translations?.zh?.specifications || {},
+            packaging: translated.packaging || prev.translations?.zh?.packaging || {},
+            payment: translated.payment || prev.translations?.zh?.payment || {},
+            filters: translated.filters || prev.translations?.zh?.filters || {}
           }
         }
       }));
@@ -521,7 +982,10 @@ const AdminInventory: React.FC = () => {
         subCategory: product.subCategory.trim(),
         shortDescription: product.shortDescription.trim(),
         description: product.description.trim(),
-        specifications: normalizeSpecificationRecord(product.specifications)
+        specifications: normalizeRecordSection(product.specifications),
+        packaging: normalizeRecordSection(product.packaging),
+        payment: normalizeRecordSection(product.payment),
+        filters: normalizeRecordSection(product.filters as Record<string, string>)
       });
 
       await updateProduct({
@@ -535,7 +999,10 @@ const AdminInventory: React.FC = () => {
             subCategory: translated.subCategory || product.translations?.zh?.subCategory || '',
             shortDescription: translated.shortDescription || product.translations?.zh?.shortDescription || '',
             description: translated.description || product.translations?.zh?.description || '',
-            specifications: translated.specifications || product.translations?.zh?.specifications || {}
+            specifications: translated.specifications || product.translations?.zh?.specifications || {},
+            packaging: translated.packaging || product.translations?.zh?.packaging || {},
+            payment: translated.payment || product.translations?.zh?.payment || {},
+            filters: translated.filters || product.translations?.zh?.filters || {}
           }
         }
       });
@@ -572,6 +1039,56 @@ const AdminInventory: React.FC = () => {
     const newSpecs = { ...formData.specifications };
     delete newSpecs[key];
     setFormData({ ...formData, specifications: newSpecs });
+  };
+
+  const handleAddPackaging = () => {
+    setFormData({
+      ...formData,
+      packaging: {
+        ...(formData.packaging || {}),
+        [`Packaging ${Object.keys(formData.packaging || {}).length + 1}`]: 'Value'
+      }
+    });
+  };
+
+  const handleUpdatePackaging = (oldKey: string, newKey: string, value: string) => {
+    const nextPackaging = { ...(formData.packaging || {}) };
+    if (oldKey !== newKey) {
+      delete nextPackaging[oldKey];
+    }
+    nextPackaging[newKey] = value;
+    setFormData({ ...formData, packaging: nextPackaging });
+  };
+
+  const handleRemovePackaging = (key: string) => {
+    const nextPackaging = { ...(formData.packaging || {}) };
+    delete nextPackaging[key];
+    setFormData({ ...formData, packaging: nextPackaging });
+  };
+
+  const handleAddPayment = () => {
+    setFormData({
+      ...formData,
+      payment: {
+        ...(formData.payment || {}),
+        [`Payment ${Object.keys(formData.payment || {}).length + 1}`]: 'Value'
+      }
+    });
+  };
+
+  const handleUpdatePayment = (oldKey: string, newKey: string, value: string) => {
+    const nextPayment = { ...(formData.payment || {}) };
+    if (oldKey !== newKey) {
+      delete nextPayment[oldKey];
+    }
+    nextPayment[newKey] = value;
+    setFormData({ ...formData, payment: nextPayment });
+  };
+
+  const handleRemovePayment = (key: string) => {
+    const nextPayment = { ...(formData.payment || {}) };
+    delete nextPayment[key];
+    setFormData({ ...formData, payment: nextPayment });
   };
 
   const updateZhTranslation = (field: 'name' | 'subCategory' | 'shortDescription' | 'description', value: string) => {
@@ -637,6 +1154,106 @@ const AdminInventory: React.FC = () => {
     }));
   };
 
+  const handleAddZhPackaging = () => {
+    const nextPackaging = {
+      ...(formData.translations?.zh?.packaging || {}),
+      [`${zh('包装')} ${Object.keys(formData.translations?.zh?.packaging || {}).length + 1}`]: zh('数值')
+    };
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          packaging: nextPackaging
+        }
+      }
+    }));
+  };
+
+  const handleUpdateZhPackaging = (oldKey: string, newKey: string, value: string) => {
+    const nextPackaging = { ...(formData.translations?.zh?.packaging || {}) };
+    if (oldKey !== newKey) {
+      delete nextPackaging[oldKey];
+    }
+    nextPackaging[newKey] = value;
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          packaging: nextPackaging
+        }
+      }
+    }));
+  };
+
+  const handleRemoveZhPackaging = (key: string) => {
+    const nextPackaging = { ...(formData.translations?.zh?.packaging || {}) };
+    delete nextPackaging[key];
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          packaging: nextPackaging
+        }
+      }
+    }));
+  };
+
+  const handleAddZhPayment = () => {
+    const nextPayment = {
+      ...(formData.translations?.zh?.payment || {}),
+      [`${zh('付款')} ${Object.keys(formData.translations?.zh?.payment || {}).length + 1}`]: zh('数值')
+    };
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          payment: nextPayment
+        }
+      }
+    }));
+  };
+
+  const handleUpdateZhPayment = (oldKey: string, newKey: string, value: string) => {
+    const nextPayment = { ...(formData.translations?.zh?.payment || {}) };
+    if (oldKey !== newKey) {
+      delete nextPayment[oldKey];
+    }
+    nextPayment[newKey] = value;
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          payment: nextPayment
+        }
+      }
+    }));
+  };
+
+  const handleRemoveZhPayment = (key: string) => {
+    const nextPayment = { ...(formData.translations?.zh?.payment || {}) };
+    delete nextPayment[key];
+    setFormData((prev) => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        zh: {
+          ...prev.translations?.zh,
+          payment: nextPayment
+        }
+      }
+    }));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -675,7 +1292,21 @@ const AdminInventory: React.FC = () => {
     const nextProduct = {
       ...formData,
       isActive: formData.isActive !== false,
-      id: resolvedId
+      id: resolvedId,
+      specifications: normalizeRecordSection(formData.specifications),
+      packaging: normalizeRecordSection(formData.packaging),
+      payment: normalizeRecordSection(formData.payment),
+      translations: {
+        ...formData.translations,
+        zh: formData.translations?.zh
+          ? {
+              ...formData.translations.zh,
+              specifications: normalizeRecordSection(formData.translations.zh.specifications),
+              packaging: normalizeRecordSection(formData.translations.zh.packaging),
+              payment: normalizeRecordSection(formData.translations.zh.payment)
+            }
+          : undefined
+      }
     } as Product;
 
     try {
@@ -802,6 +1433,120 @@ const AdminInventory: React.FC = () => {
     }
   };
 
+  const handleReloadInventory = async () => {
+    if (isReloadingInventory || isBulkTranslating) return;
+
+    setIsReloadingInventory(true);
+    setTranslationStatus({ type: null, message: '' });
+    try {
+      await refresh();
+      pushTranslationStatus('success', reloadSuccessMessage);
+    } catch (error: any) {
+      pushTranslationStatus('error', error?.message || copy.saveFailed);
+    } finally {
+      setIsReloadingInventory(false);
+    }
+  };
+
+  const handleBulkTranslateFiltered = async () => {
+    if (isBulkTranslating || isReloadingInventory) return;
+
+    if (!canTranslateCmsContent) {
+      pushTranslationStatus('error', translateMissingKeyMessage);
+      return;
+    }
+
+    if (bulkTranslateTargets.length === 0) {
+      pushTranslationStatus('error', bulkTranslateEmptyMessage);
+      return;
+    }
+
+    if (!window.confirm(bulkTranslateConfirmMessage(bulkTranslateTargets.length))) {
+      return;
+    }
+
+    setIsBulkTranslating(true);
+    setBulkTranslateProgress({ current: 0, total: bulkTranslateTargets.length });
+    setTranslationStatus({ type: null, message: '' });
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    try {
+      for (let index = 0; index < bulkTranslateTargets.length; index += 1) {
+        const product = bulkTranslateTargets[index];
+        setBulkTranslateProgress({ current: index + 1, total: bulkTranslateTargets.length });
+
+        try {
+          const translated = await translateProductSource({
+            name: product.name.trim(),
+            subCategory: product.subCategory.trim(),
+            shortDescription: product.shortDescription.trim(),
+            description: product.description.trim(),
+            specifications: normalizeRecordSection(product.specifications),
+            packaging: normalizeRecordSection(product.packaging),
+            payment: normalizeRecordSection(product.payment),
+            filters: normalizeRecordSection(product.filters as Record<string, string>)
+          });
+
+          await updateProduct({
+            ...product,
+            isActive: product.isActive !== false,
+            translations: {
+              ...product.translations,
+              zh: {
+                ...(product.translations?.zh || {}),
+                name: translated.name || product.translations?.zh?.name || '',
+                subCategory: translated.subCategory || product.translations?.zh?.subCategory || '',
+                shortDescription: translated.shortDescription || product.translations?.zh?.shortDescription || '',
+                description: translated.description || product.translations?.zh?.description || '',
+                specifications: translated.specifications || product.translations?.zh?.specifications || {},
+                packaging: translated.packaging || product.translations?.zh?.packaging || {},
+                payment: translated.payment || product.translations?.zh?.payment || {},
+                filters: translated.filters || product.translations?.zh?.filters || {}
+              }
+            }
+          });
+
+          successCount += 1;
+        } catch (error) {
+          failureCount += 1;
+          // eslint-disable-next-line no-console
+          console.error(`Bulk translation failed for ${product.id}:`, error);
+        }
+      }
+
+      await refresh();
+
+      if (failureCount > 0) {
+        pushTranslationStatus('error', bulkTranslatePartialMessage(successCount, failureCount));
+        return;
+      }
+
+      pushTranslationStatus('success', bulkTranslateSuccessMessage(successCount));
+    } finally {
+      setIsBulkTranslating(false);
+      setBulkTranslateProgress({ current: 0, total: 0 });
+    }
+  };
+
+  const handleExportProductPdf = (product: Product, exportLocale: SupportedLocale) => {
+    const popup = window.open('', '_blank', 'width=980,height=1180');
+    if (!popup) {
+      pushTranslationStatus('error', exportPdfBlockedMessage);
+      return;
+    }
+
+    popup.document.open();
+    popup.document.write(
+      buildProductPdfTemplateHtml(product, exportLocale, {
+        headerImageSrc: pdfHeaderImage,
+        footerImageSrc: pdfFooterImage
+      })
+    );
+    popup.document.close();
+  };
+
   const handleExit = () => {
     logout();
   };
@@ -845,13 +1590,13 @@ const AdminInventory: React.FC = () => {
         {/* ... (Existing main content remains identical) */}
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <div className="mb-12 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.inventoryTitle}</h1>
               <p className="text-gray-500 font-medium">{copy.manageDesc}</p>
             </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+            <div className="flex w-full flex-wrap items-center gap-3 md:flex-nowrap xl:w-auto xl:flex-nowrap">
+              <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
                 <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
                   EN
@@ -861,9 +1606,31 @@ const AdminInventory: React.FC = () => {
                   {'\u4e2d\u6587'}
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={handleReloadInventory}
+                disabled={isReloadingInventory || isBulkTranslating}
+                className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600 shadow-sm transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:opacity-50"
+              >
+                {isReloadingInventory ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                <span className="whitespace-nowrap">{isReloadingInventory ? reloadingButtonLabel : reloadButtonLabel}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkTranslateFiltered}
+                disabled={isBulkTranslating || isReloadingInventory}
+                className="flex min-w-0 flex-1 items-center justify-center gap-3 rounded-2xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-4 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-foodmax-forest shadow-sm transition-all hover:bg-foodmax-forest hover:text-white disabled:opacity-50"
+              >
+                {isBulkTranslating ? <Loader2 size={16} className="animate-spin" /> : <Languages size={16} />}
+                <span className="truncate">
+                  {isBulkTranslating
+                    ? `${bulkTranslatingButtonLabel} ${bulkTranslateProgress.current}/${bulkTranslateProgress.total}`
+                    : `${bulkTranslateButtonLabel} (${bulkTranslateTargets.length})`}
+                </span>
+              </button>
               <button 
                 onClick={() => openModal()}
-                className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                className="flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-foodmax-forest px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl transition-all hover:bg-foodmax-lime hover:text-foodmax-forest"
               >
                 <Plus size={20} /> {copy.addCommodity}
               </button>
@@ -907,8 +1674,8 @@ const AdminInventory: React.FC = () => {
             </div>
             <p className="text-[11px] text-gray-500 font-medium">
               {locale === 'zh'
-                ? '支持的产品列：id、name、category、subCategory、shortDescription、description、image、pdfUrl、gallery、specifications/spec_* 以及 filters/filter_*。'
-                : 'Supported product columns: id, name, category, subCategory, shortDescription, description, image, pdfUrl, gallery, specifications/spec_* and filters/filter_*.'}
+                ? '支持的产品列：id、name、category、subCategory、shortDescription、description、image、pdfUrl、gallery、specifications/spec_*、packaging/pack_*、payment/payment_* 以及 filters/filter_*。'
+                : 'Supported product columns: id, name, category, subCategory, shortDescription, description, image, pdfUrl, gallery, specifications/spec_*, packaging/pack_*, payment/payment_* and filters/filter_*.'}
             </p>
             {csvImportStatus.type && (
               <div
@@ -997,7 +1764,7 @@ const AdminInventory: React.FC = () => {
                       <p className="text-xs text-gray-400 font-bold mt-1">{localized.subCategory}</p>
                     </td>
                     <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {p.isActive !== false ? (
                           <CheckCircle size={14} className="text-green-500" />
                         ) : (
@@ -1009,7 +1776,25 @@ const AdminInventory: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleExportProductPdf(p, 'en')}
+                          className="inline-flex items-center gap-2 rounded-xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-foodmax-forest transition-all hover:bg-foodmax-forest hover:text-white"
+                          title={exportPdfEnButtonLabel}
+                        >
+                          <FileDown size={14} />
+                          <span>{exportPdfEnButtonLabel}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleExportProductPdf(p, 'zh')}
+                          className="inline-flex items-center gap-2 rounded-xl border border-foodmax-lime/30 bg-foodmax-lime/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-foodmax-forest transition-all hover:bg-foodmax-lime hover:text-foodmax-forest"
+                          title={exportPdfCnButtonLabel}
+                        >
+                          <FileDown size={14} />
+                          <span>{exportPdfCnButtonLabel}</span>
+                        </button>
                         <button 
                           onClick={() => openModal(p)}
                           className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm"
@@ -1413,6 +2198,116 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Tag size={14} className="text-foodmax-forest" /> {copy.packagingTitle}
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.packagingDesc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddPackaging}
+                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                  >
+                    <PlusCircle size={16} /> {copy.addPackagingAttribute}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(formData.packaging || {}).map(([key, value], idx) => (
+                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex-[2]">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleUpdatePackaging(key, e.target.value, value as string)}
+                          placeholder={copy.packagingLabelPlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <div className="flex-[3]">
+                        <input
+                          type="text"
+                          value={value as string}
+                          onChange={(e) => handleUpdatePackaging(key, key, e.target.value)}
+                          placeholder={copy.packagingValuePlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePackaging(key)}
+                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  {Object.keys(formData.packaging || {}).length === 0 && (
+                    <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{copy.noPackaging}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Tag size={14} className="text-foodmax-forest" /> {copy.paymentTitle}
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.paymentDesc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddPayment}
+                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                  >
+                    <PlusCircle size={16} /> {copy.addPaymentAttribute}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(formData.payment || {}).map(([key, value], idx) => (
+                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex-[2]">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleUpdatePayment(key, e.target.value, value as string)}
+                          placeholder={copy.paymentLabelPlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <div className="flex-[3]">
+                        <input
+                          type="text"
+                          value={value as string}
+                          onChange={(e) => handleUpdatePayment(key, key, e.target.value)}
+                          placeholder={copy.paymentValuePlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePayment(key)}
+                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  {Object.keys(formData.payment || {}).length === 0 && (
+                    <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{copy.noPayment}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
                       <Hash size={14} className="text-foodmax-forest" /> {copy.zhSpecsTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.zhSpecsDesc}</p>
@@ -1459,6 +2354,116 @@ const AdminInventory: React.FC = () => {
                   {Object.keys(formData.translations?.zh?.specifications || {}).length === 0 && (
                     <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl">
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{copy.noZhSpecs}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Tag size={14} className="text-foodmax-forest" /> {copy.zhPackagingTitle}
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.zhPackagingDesc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddZhPackaging}
+                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                  >
+                    <PlusCircle size={16} /> {copy.addZhPackagingAttribute}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(formData.translations?.zh?.packaging || {}).map(([key, value], idx) => (
+                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex-[2]">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleUpdateZhPackaging(key, e.target.value, value as string)}
+                          placeholder={copy.zhPackagingLabelPlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <div className="flex-[3]">
+                        <input
+                          type="text"
+                          value={value as string}
+                          onChange={(e) => handleUpdateZhPackaging(key, key, e.target.value)}
+                          placeholder={copy.zhPackagingValuePlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveZhPackaging(key)}
+                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  {Object.keys(formData.translations?.zh?.packaging || {}).length === 0 && (
+                    <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{copy.noZhPackaging}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Tag size={14} className="text-foodmax-forest" /> {copy.zhPaymentTitle}
+                    </h4>
+                    <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.zhPaymentDesc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddZhPayment}
+                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                  >
+                    <PlusCircle size={16} /> {copy.addZhPaymentAttribute}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(formData.translations?.zh?.payment || {}).map(([key, value], idx) => (
+                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex-[2]">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleUpdateZhPayment(key, e.target.value, value as string)}
+                          placeholder={copy.zhPaymentLabelPlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <div className="flex-[3]">
+                        <input
+                          type="text"
+                          value={value as string}
+                          onChange={(e) => handleUpdateZhPayment(key, key, e.target.value)}
+                          placeholder={copy.zhPaymentValuePlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveZhPayment(key)}
+                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  {Object.keys(formData.translations?.zh?.payment || {}).length === 0 && (
+                    <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{copy.noZhPayment}</p>
                     </div>
                   )}
                 </div>

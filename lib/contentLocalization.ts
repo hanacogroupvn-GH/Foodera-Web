@@ -5,6 +5,7 @@ import {
   Product,
   SupportedLocale
 } from '../types';
+import { translateFilterValue, translateProductFilters } from './filterLocalization';
 import { preserveVietnamesePlaceNamesDeep } from './preserveVietnamesePlaceNames';
 
 const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
@@ -15,10 +16,10 @@ const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
     Agriculture: 'Agriculture'
   },
   zh: {
-    Rice: '大米',
-    Coffee: '咖啡',
-    Cashew: '腰果',
-    Agriculture: '农产品'
+    Rice: '\u5927\u7c73',
+    Coffee: '\u5496\u5561',
+    Cashew: '\u8170\u679c',
+    Agriculture: '\u519c\u4ea7\u54c1'
   }
 };
 
@@ -30,43 +31,16 @@ const NEWS_CATEGORY_LABELS: Record<SupportedLocale, Record<NewsCategory, string>
     Events: 'Events'
   },
   zh: {
-    'Market Insights': '市场洞察',
-    'Company Updates': '公司动态',
-    Sustainability: '可持续发展',
-    Events: '活动'
+    'Market Insights': '\u5e02\u573a\u6d1e\u5bdf',
+    'Company Updates': '\u516c\u53f8\u52a8\u6001',
+    Sustainability: '\u53ef\u6301\u7eed\u53d1\u5c55',
+    Events: '\u6d3b\u52a8'
   }
 };
 
-const FILTER_VALUE_LABELS: Partial<Record<SupportedLocale, Record<string, string>>> = {
-  zh: {
-    'Long Grain': '长粒',
-    Fragrant: '香米',
-    Arabica: '阿拉比卡',
-    Robusta: '罗布斯塔',
-    Cashew: '腰果',
-    '5%': '5%碎米',
-    Long: '长粒',
-    Standard: '标准',
-    Soft: '软质',
-    Premium: '优选',
-    Luxury: '高端',
-    Specialty: '精品',
-    'Fully Washed': '全水洗',
-    Dried: '干燥',
-    'Wet Polished': '湿抛光',
-    'Semi Washed': '半水洗',
-    Cleaned: '净选',
-    'Dry Processed': '日晒',
-    'White-Label / OEM Supply': '白牌 / OEM供应'
-  }
-};
-
-const renderLocalizedFilterValue = (value: string, locale: SupportedLocale): string => {
-  if (locale === 'en') {
-    return value;
-  }
-  return FILTER_VALUE_LABELS[locale]?.[value] || value;
-};
+const hasRecordEntries = (record?: Record<string, string>) => Boolean(record && Object.keys(record).length > 0);
+const hasFilterEntries = (record?: Record<string, string>) =>
+  Boolean(record && Object.values(record).some((value) => String(value || '').trim()));
 
 export const localizeProduct = (product: Product, locale: SupportedLocale): Product => {
   if (locale === 'en' || !product.translations?.zh) {
@@ -74,13 +48,19 @@ export const localizeProduct = (product: Product, locale: SupportedLocale): Prod
   }
 
   const translation = preserveVietnamesePlaceNamesDeep(product.translations.zh);
+
   return {
     ...product,
     name: translation.name || product.name,
     subCategory: translation.subCategory || product.subCategory,
     description: translation.description || product.description,
     shortDescription: translation.shortDescription || product.shortDescription,
-    specifications: translation.specifications || product.specifications
+    specifications: hasRecordEntries(translation.specifications) ? translation.specifications : product.specifications,
+    packaging: hasRecordEntries(translation.packaging) ? translation.packaging : product.packaging,
+    payment: hasRecordEntries(translation.payment) ? translation.payment : product.payment,
+    filters: hasFilterEntries(translation.filters)
+      ? translateProductFilters(product.filters, 'zh', translation.filters) || product.filters
+      : product.filters
   };
 };
 
@@ -90,6 +70,7 @@ export const localizeNewsItem = (item: NewsItem, locale: SupportedLocale): NewsI
   }
 
   const translation = preserveVietnamesePlaceNamesDeep(item.translations.zh);
+
   return {
     ...item,
     title: translation.title || item.title,
@@ -105,7 +86,7 @@ export const getNewsCategoryLabel = (category: NewsCategory, locale: SupportedLo
   NEWS_CATEGORY_LABELS[locale][category];
 
 export const getLocalizedFilterValue = (value: string, locale: SupportedLocale): string =>
-  renderLocalizedFilterValue(value, locale);
+  translateFilterValue(value, locale);
 
 export const formatDisplayDate = (rawDate: string, locale: SupportedLocale): string => {
   if (locale === 'en') {

@@ -14,6 +14,8 @@ create table if not exists public.products (
   pdf_url text,
   gallery jsonb,
   specifications jsonb not null default '{}'::jsonb,
+  packaging jsonb not null default '{}'::jsonb,
+  payment jsonb not null default '{}'::jsonb,
   filters jsonb not null default '{}'::jsonb,
   translations jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
