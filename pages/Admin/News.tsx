@@ -211,6 +211,10 @@ const AdminNews: React.FC = () => {
   const translateDraftSuccessMessage =
     locale === 'zh' ? zh('\u5df2\u586b\u5145\u4e2d\u6587\u7ffb\u8bd1\u8349\u7a3f\u3002') : 'Chinese translation draft populated.';
   const translateFailedPrefix = locale === 'zh' ? zh('\u7ffb\u8bd1\u5931\u8d25\uff1a') : 'Translation failed: ';
+  const translateDraftRequirementMessage =
+    locale === 'zh'
+      ? zh('\u8bf7\u5148\u586b\u5199\u82f1\u6587\u6807\u9898\u548c\u6b63\u6587\uff0c\u518d\u6267\u884c\u7ffb\u8bd1\u3002')
+      : 'Fill in the English title and content before translating.';
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
@@ -369,6 +373,27 @@ const AdminNews: React.FC = () => {
     }, 4000);
   };
 
+  const normalizeTranslationContent = (value: string | string[] | undefined) =>
+    (Array.isArray(value) ? value : (value || '').split('\n'))
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+  const buildNewsTranslationSource = (source: {
+    title?: string;
+    excerpt?: string;
+    content?: string | string[];
+  }) => {
+    const title = (source.title || '').trim();
+    const content = normalizeTranslationContent(source.content);
+    const excerpt = (source.excerpt || '').trim() || content[0] || title;
+
+    return {
+      title,
+      excerpt,
+      content
+    };
+  };
+
   const translateDraftSource = async (source: { title: string; excerpt: string; content: string[] }) => {
     if (!canTranslateCmsContent) {
       throw new Error(translateMissingKeyMessage);
@@ -380,11 +405,16 @@ const AdminNews: React.FC = () => {
   const handleTranslateDraft = async () => {
     if (isTranslatingDraft) return;
 
-    const source = {
-      title: (formData.title || '').trim(),
-      excerpt: (formData.excerpt || '').trim(),
-      content: contentString.split('\n').map((part) => part.trim()).filter(Boolean)
-    };
+    const source = buildNewsTranslationSource({
+      title: formData.title,
+      excerpt: formData.excerpt,
+      content: contentString
+    });
+
+    if (!source.title || source.content.length === 0) {
+      pushTranslationStatus('error', translateDraftRequirementMessage);
+      return;
+    }
 
     if (!source.title || !source.excerpt || source.content.length === 0) {
       pushTranslationStatus(
@@ -405,12 +435,12 @@ const AdminNews: React.FC = () => {
           ...prev.translations,
           zh: {
             ...prev.translations?.zh,
-            title: translated.title || '',
-            excerpt: translated.excerpt || ''
+            title: translated.title || prev.translations?.zh?.title || '',
+            excerpt: translated.excerpt || prev.translations?.zh?.excerpt || ''
           }
         }
       }));
-      setZhContentString((translated.content || []).join('\n\n'));
+      setZhContentString((translated.content?.length ? translated.content : normalizeTranslationContent(zhContentString)).join('\n\n'));
       pushTranslationStatus('success', translateDraftSuccessMessage);
     } catch (error: any) {
       pushTranslationStatus('error', `${translateFailedPrefix}${error?.message || ''}`);
@@ -424,11 +454,7 @@ const AdminNews: React.FC = () => {
 
     setTranslatingItemId(item.id);
     try {
-      const translated = await translateDraftSource({
-        title: item.title.trim(),
-        excerpt: item.excerpt.trim(),
-        content: item.content.map((part) => part.trim()).filter(Boolean)
-      });
+      const translated = await translateDraftSource(buildNewsTranslationSource(item));
 
       await updateNews({
         ...item,
