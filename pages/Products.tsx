@@ -1,27 +1,33 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import SectionHeading from '../components/SectionHeading';
 import ProductCard from '../components/ProductCard';
 import AppShellLoader from '../components/AppShellLoader';
 import { Filter, X, ChevronDown, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { PRODUCT_CATEGORIES } from '../lib/productCategories';
+import { findProductCategoryBySlug, normalizeProductCategorySlug, PRODUCT_CATEGORIES } from '../lib/productCategories';
 import { useLocale } from '../context/LocaleContext';
 import { getCategoryLabel, getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
+import { appRoutes } from '../lib/routes';
 
 const ITEMS_PER_PAGE = 9;
 
-const Products: React.FC = () => {
+interface ProductsProps {
+  categorySlug?: string;
+}
+
+const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
   const { activeProducts: products, isLoading } = useData();
   const { locale } = useLocale();
+  const navigate = useNavigate();
   const { category } = useParams<{ category?: string }>();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subCategoryParam = searchParams.get('sub');
-
-  const [filterCategory, setFilterCategory] = useState<string>(category || 'all');
-  const [filterSub, setFilterSub] = useState<string>(subCategoryParam || 'all');
+  const activeCategory = findProductCategoryBySlug(categorySlug || category);
+  const filterCategory = activeCategory ? normalizeProductCategorySlug(activeCategory) : 'all';
+  const filterSub = (subCategoryParam || 'all').toLowerCase();
   const [filterProcessing, setFilterProcessing] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,19 +79,37 @@ const Products: React.FC = () => {
       };
 
   useEffect(() => {
-    setFilterCategory(category || 'all');
-    setFilterSub(subCategoryParam || 'all');
     setFilterProcessing('all');
-  }, [category, subCategoryParam]);
+  }, [filterCategory, filterSub]);
 
   const handleCategoryChange = (newCat: string) => {
-    setFilterCategory(newCat.toLowerCase());
-    setFilterSub('all');
+    if (newCat === copy.all) {
+      navigate(appRoutes.products);
+      setShowFilters(false);
+      return;
+    }
+
+    navigate(appRoutes.productsByCategory(newCat));
+    setShowFilters(false);
+  };
+
+  const handleSubCategoryChange = (newSub: string) => {
+    if (!activeCategory) {
+      return;
+    }
+
+    navigate(newSub === 'all' ? appRoutes.productsByCategory(activeCategory) : appRoutes.productLine(activeCategory, newSub));
+    setShowFilters(false);
+  };
+
+  const handleClearFilters = () => {
+    navigate(appRoutes.products);
     setFilterProcessing('all');
+    setShowFilters(false);
   };
 
   const filteredProducts = products.filter(p => {
-    const catMatch = filterCategory === 'all' || p.category.toLowerCase() === filterCategory.toLowerCase();
+    const catMatch = !activeCategory || p.category === activeCategory;
     const subMatch = filterSub === 'all' || p.subCategory.toLowerCase() === filterSub.toLowerCase();
     const procMatch = filterProcessing === 'all' || (p.filters.processing && p.filters.processing.toLowerCase() === filterProcessing.toLowerCase());
     return catMatch && subMatch && procMatch;
@@ -118,8 +142,8 @@ const Products: React.FC = () => {
     [products]
   );
 
-  const activeCategory = PRODUCT_CATEGORIES.find((item) => item.toLowerCase() === filterCategory);
   const activeSubCategories = activeCategory ? subs[activeCategory] || [] : [];
+  const activeCategoryKey = activeCategory ? normalizeProductCategorySlug(activeCategory) : 'all';
 
   const processingMethods = {
     'rice': ['Standard', 'Soft', 'Premium', 'Luxury'],
@@ -128,8 +152,7 @@ const Products: React.FC = () => {
 
   // Capitalize category for display in the heading
   const displayCategory = (() => {
-    const matched = PRODUCT_CATEGORIES.find((item) => item.toLowerCase() === filterCategory);
-    return matched ? getCategoryLabel(matched, locale) : filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1);
+    return activeCategory ? getCategoryLabel(activeCategory, locale) : filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1);
   })();
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -179,7 +202,9 @@ const Products: React.FC = () => {
                         key={cat}
                         onClick={() => handleCategoryChange(cat)}
                         className={`px-5 py-2.5 text-left rounded-xl text-xs font-black transition-all ${
-                          filterCategory === cat.toLowerCase() ? 'bg-foodmax-forest text-white shadow-lg' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                          (cat === copy.all ? filterCategory === 'all' : filterCategory === normalizeProductCategorySlug(cat))
+                            ? 'bg-foodmax-forest text-white shadow-lg'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                         }`}
                       >
                         {cat === copy.all ? copy.all : getCategoryLabel(cat as any, locale)}
@@ -188,12 +213,12 @@ const Products: React.FC = () => {
                   </div>
                 </div>
 
-                {(filterCategory !== 'all') && (
+                        {(filterCategory !== 'all') && (
                    <div>
                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4">{copy.productLines}</h4>
                       <div className="flex flex-col gap-1">
                         <button 
-                          onClick={() => setFilterSub('all')}
+                          onClick={() => handleSubCategoryChange('all')}
                           className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterSub === 'all' ? 'text-foodmax-forest font-black bg-foodmax-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
                         >
                           {copy.allVarieties}
@@ -202,7 +227,7 @@ const Products: React.FC = () => {
                           {activeSubCategories.map(line => (
                             <button
                               key={line}
-                              onClick={() => setFilterSub(line.toLowerCase())}
+                              onClick={() => handleSubCategoryChange(line)}
                               className={`block w-full text-xs text-left px-3 py-2 rounded-lg transition-all ${
                                 filterSub === line.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
                               }`}
@@ -225,7 +250,7 @@ const Products: React.FC = () => {
                    </div>
                 )}
 
-                {(filterCategory === 'rice' || filterCategory === 'coffee') && (
+                {(activeCategoryKey === 'rice' || activeCategoryKey === 'coffee') && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4 flex items-center gap-2">
                       <Settings2 size={12} className="text-foodmax-lime" /> {copy.processingMethod}
@@ -237,7 +262,7 @@ const Products: React.FC = () => {
                         >
                           {copy.allProcesses}
                         </button>
-                        {processingMethods[filterCategory as keyof typeof processingMethods].map(method => (
+                        {processingMethods[activeCategoryKey as keyof typeof processingMethods].map(method => (
                           <button
                             key={method}
                             onClick={() => setFilterProcessing(method.toLowerCase())}
@@ -316,7 +341,7 @@ const Products: React.FC = () => {
                 <h3 className="text-2xl font-black text-gray-900 mb-2">{copy.emptyTitle}</h3>
                 <p className="text-gray-500 mb-10">{copy.emptyDesc}</p>
                 <button 
-                  onClick={() => { setFilterCategory('all'); setFilterSub('all'); setFilterProcessing('all'); }}
+                  onClick={handleClearFilters}
                   className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-colors shadow-lg"
                 >
                   {copy.clearAllFilters}

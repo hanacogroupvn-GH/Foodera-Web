@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useParams, Navigate, Outlet } from 'react-router-dom';
 import { DataProvider } from './context/DataContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider, useLocale } from './context/LocaleContext';
@@ -15,6 +15,7 @@ import { appRoutes } from './lib/routes';
 const Home = lazy(() => import('./pages/Home'));
 const Products = lazy(() => import('./pages/Products'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const ProductRouteResolver = lazy(() => import('./pages/ProductRouteResolver'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const Contact = lazy(() => import('./pages/Contact'));
 const News = lazy(() => import('./pages/News'));
@@ -72,6 +73,22 @@ const LocalizedAppBoundary: React.FC<{ children: React.ReactNode }> = ({ childre
   return <AppErrorBoundary locale={locale}>{children}</AppErrorBoundary>;
 };
 
+const LegacyProductCategoryRedirect: React.FC = () => {
+  const { category } = useParams<{ category?: string }>();
+  const location = useLocation();
+
+  if (!category) {
+    return <Navigate to={appRoutes.products} replace />;
+  }
+
+  return <Navigate to={`${appRoutes.products}/${category}${location.search}`} replace />;
+};
+
+const LegacyProductsRedirect: React.FC = () => {
+  const location = useLocation();
+  return <Navigate to={`${appRoutes.products}${location.search}`} replace />;
+};
+
 const AppRoutes: React.FC = () => {
   const { locale } = useLocale();
 
@@ -125,8 +142,10 @@ const AppRoutes: React.FC = () => {
                 <Route element={<PublicLayout />}>
                   <Route path={appRoutes.home} element={<Home />} />
                   <Route path={appRoutes.products} element={<Products />} />
-                  <Route path={`${appRoutes.products}/:category`} element={<Products />} />
                   <Route path={`${appRoutes.productBase}/:id`} element={<ProductDetail />} />
+                  <Route path={`${appRoutes.products}/:slug`} element={<ProductRouteResolver />} />
+                  <Route path={appRoutes.legacyProducts} element={<LegacyProductsRedirect />} />
+                  <Route path={`${appRoutes.legacyProducts}/:category`} element={<LegacyProductCategoryRedirect />} />
                   <Route path={appRoutes.about} element={<AboutUs />} />
                   <Route path={appRoutes.news} element={<News />} />
                   <Route path={`${appRoutes.news}/:slug`} element={<NewsDetail />} />
