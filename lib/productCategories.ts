@@ -11,6 +11,21 @@ type ProductCategoryInput = {
 
 export const PRODUCT_CATEGORIES: CategoryType[] = ['Rice', 'Coffee', 'Cashew', 'Agriculture'];
 
+export const normalizeProductCategorySlug = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_/]+/g, '-');
+
+export const findProductCategoryBySlug = (slug?: string | null): CategoryType | undefined => {
+  if (!slug) {
+    return undefined;
+  }
+
+  const normalizedSlug = normalizeProductCategorySlug(slug);
+  return PRODUCT_CATEGORIES.find((category) => normalizeProductCategorySlug(category) === normalizedSlug);
+};
+
 const hasCashewSignal = (value?: string | null): boolean =>
   typeof value === 'string' && value.toLowerCase().includes('cashew');
 
