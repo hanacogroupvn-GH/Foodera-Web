@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Globe, Handshake, Leaf, Wheat, Coffee, Users } from 'lucide-react';
+import { ShieldCheck, Globe, Handshake, Leaf, Wheat, Coffee } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
 
 const AboutUs: React.FC = () => {
@@ -46,36 +46,6 @@ const AboutUs: React.FC = () => {
             {
               title: '全球市场适配',
               desc: '可根据进口商、分销商和食品制造商需求定制规格。'
-            }
-          ],
-          teamEyebrow: '核心团队',
-          teamTitle: '出口业务领导团队',
-          teamDesc: '他们共同推动越南农业价值以更专业的方式进入全球市场。',
-          teamMembers: [
-            {
-              name: 'Mr. Ngoc Dao',
-              title: '董事长',
-              highlight: '拥有 20 余年越南农业战略发展与全球贸易政策经验。'
-            },
-            {
-              name: 'Mr. Brian Ho',
-              title: '业务总监',
-              highlight: '擅长国际市场拓展，熟悉 ASEAN 与中东 B2B 合作模式。'
-            },
-            {
-              name: 'Mr. Frederic Gines',
-              title: '国际商务总监',
-              highlight: '在欧洲大宗商品贸易与全球供应链优化方面经验丰富。'
-            },
-            {
-              name: 'Ms. Mai Nguyen',
-              title: '商务助理',
-              highlight: '专注国际贸易单证与客户协同，保障沟通和执行效率。'
-            },
-            {
-              name: 'Ms. Tu Phuong',
-              title: '运营经理',
-              highlight: '负责上游供应链与工厂标准，确保出口质量稳定可靠。'
             }
           ],
           commitmentEyebrow: '我们的承诺',
@@ -144,36 +114,6 @@ const AboutUs: React.FC = () => {
             {
               title: 'Global Market Fit',
               desc: 'Specifications tailored for importers, distributors, and manufacturers.'
-            }
-          ],
-          teamEyebrow: 'Key Members',
-          teamTitle: 'The Export Leadership Team',
-          teamDesc: 'Meet the leaders shaping Vietnam’s agricultural presence in global trade.',
-          teamMembers: [
-            {
-              name: 'Mr. Ngoc Dao',
-              title: 'Chairman',
-              highlight: '20+ years of leadership in Vietnam’s agricultural strategy and trade development.'
-            },
-            {
-              name: 'Mr. Brian Ho',
-              title: 'Business Director',
-              highlight: 'Expert in international market expansion across ASEAN and Middle East B2B channels.'
-            },
-            {
-              name: 'Mr. Frederic Gines',
-              title: 'International Commercial Director',
-              highlight: 'Extensive background in European commodity trading and global logistics optimization.'
-            },
-            {
-              name: 'Ms. Mai Nguyen',
-              title: 'Commercial Assistant',
-              highlight: 'Specialist in trade documentation, client coordination, and execution accuracy.'
-            },
-            {
-              name: 'Ms. Tu Phuong',
-              title: 'Operation Manager',
-              highlight: 'Leads upstream supply chain operations and factory processing standards.'
             }
           ],
           commitmentEyebrow: 'Our Commitment',
@@ -287,37 +227,6 @@ const AboutUs: React.FC = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 md:py-24 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 flex items-center justify-center gap-2">
-              <Users size={14} className="text-foodmax-lime" /> {copy.teamEyebrow}
-            </h2>
-            <h3 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">{copy.teamTitle}</h3>
-            <p className="text-base md:text-lg text-gray-500 mt-4 max-w-2xl mx-auto font-medium">{copy.teamDesc}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {copy.teamMembers.map((member) => (
-              <div
-                key={`${member.name}-${member.title}`}
-                className="group relative bg-white rounded-[2rem] overflow-hidden border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500"
-              >
-                <div className="p-7">
-                  <h4 className="text-2xl font-black text-gray-900 mb-1 group-hover:text-foodmax-forest transition-colors">
-                    {member.name}
-                  </h4>
-                  <p className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] mb-3">{member.title}</p>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed line-clamp-3 group-hover:text-gray-700 transition-colors">
-                    {member.highlight}
-                  </p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
