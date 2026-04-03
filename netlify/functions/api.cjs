@@ -1,25 +1,30 @@
-import serverless from 'serverless-http';
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-import { createApp } from '../../server/index.mjs';
+const serverless = require('serverless-http');
 
 let cachedHandlerPromise;
 
 const getHandler = async () => {
   if (!cachedHandlerPromise) {
-    cachedHandlerPromise = createApp({
-      serveStatic: false,
-      enableLocalUploads: false
-    }).then((app) =>
-      serverless(app, {
+    cachedHandlerPromise = (async () => {
+      const entryUrl = pathToFileURL(path.join(__dirname, '../../server/index.mjs')).href;
+      const { createApp } = await import(entryUrl);
+      const app = await createApp({
+        serveStatic: false,
+        enableLocalUploads: false
+      });
+
+      return serverless(app, {
         provider: 'aws'
-      })
-    );
+      });
+    })();
   }
 
   return cachedHandlerPromise;
 };
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   try {
     const runtimeHandler = await getHandler();
     return await runtimeHandler(event, context);

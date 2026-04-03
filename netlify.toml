@@ -6,6 +6,7 @@
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["express", "serverless-http", "@libsql/client", "@google/genai"]
+  included_files = ["server/**"]
 
 [[redirects]]
   from = "/api/*"
