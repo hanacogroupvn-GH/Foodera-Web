@@ -536,335 +536,377 @@ const requireAdmin = async (request, response, next) => {
   next();
 };
 
-const app = express();
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+const APP_CACHE = new Map();
 
-const db = createTursoConnection(process.env);
-await ensureDatabaseSchema(db);
-await ensureBootstrapAdmin(db);
+export const createApp = async ({ serveStatic = true, enableLocalUploads = serveStatic } = {}) => {
+  const cacheKey = JSON.stringify({ serveStatic, enableLocalUploads });
+  if (APP_CACHE.has(cacheKey)) {
+    return APP_CACHE.get(cacheKey);
+  }
 
-app.locals.db = db;
-
-app.get('/api/health', async (_request, response) => {
-  response.json({
-    ok: true,
-    backend: 'turso'
-  });
-});
-
-app.get('/api/content', async (request, response) => {
-  try {
-    const snapshot = await getContentSnapshot(request.app.locals.db);
-    response.json({
-      backend: 'turso',
-      ...snapshot
+  const appPromise = (async () => {
+    const app = express();
+    app.use(express.json({ limit: '25mb' }));
+    app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+    app.use((request, _response, next) => {
+      const functionPrefix = '/.netlify/functions/api';
+      if (
+        request.url === functionPrefix ||
+        request.url.startsWith(`${functionPrefix}/`) ||
+        request.url.startsWith(`${functionPrefix}?`)
+      ) {
+        const normalizedPath = request.url.slice(functionPrefix.length) || '';
+        request.url = `/api${normalizedPath}`;
+      }
+      next();
     });
-  } catch (error) {
-    response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load content.' });
-  }
-});
 
-app.get('/api/map-profiles', async (request, response) => {
-  try {
-    const profiles = await listProvinceMapProfiles(request.app.locals.db);
-    response.json({ profiles });
-  } catch (error) {
-    response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load map profiles.' });
-  }
-});
+    const db = createTursoConnection(process.env);
+    await ensureDatabaseSchema(db);
+    await ensureBootstrapAdmin(db);
 
-app.get('/api/auth/session', async (request, response) => {
-  try {
-    const session = getRequestSession(request);
-    if (!session?.email) {
-      response.json({ isAuthenticated: false, isAdmin: false, user: null });
-      return;
-    }
+    app.locals.db = db;
 
-    const adminUser = await findAdminByEmail(request.app.locals.db, session.email);
-    if (!adminUser) {
+    app.get('/api/health', async (_request, response) => {
+      response.json({
+        ok: true,
+        backend: 'turso'
+      });
+    });
+
+    app.get('/api/content', async (request, response) => {
+      try {
+        const snapshot = await getContentSnapshot(request.app.locals.db);
+        response.json({
+          backend: 'turso',
+          ...snapshot
+        });
+      } catch (error) {
+        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load content.' });
+      }
+    });
+
+    app.get('/api/map-profiles', async (request, response) => {
+      try {
+        const profiles = await listProvinceMapProfiles(request.app.locals.db);
+        response.json({ profiles });
+      } catch (error) {
+        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load map profiles.' });
+      }
+    });
+
+    app.get('/api/auth/session', async (request, response) => {
+      try {
+        const session = getRequestSession(request);
+        if (!session?.email) {
+          response.json({ isAuthenticated: false, isAdmin: false, user: null });
+          return;
+        }
+
+        const adminUser = await findAdminByEmail(request.app.locals.db, session.email);
+        if (!adminUser) {
+          clearSessionCookie(response);
+          response.json({ isAuthenticated: false, isAdmin: false, user: null });
+          return;
+        }
+
+        response.json({
+          isAuthenticated: true,
+          isAdmin: true,
+          user: {
+            email: adminUser.email
+          }
+        });
+      } catch (error) {
+        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to read session.' });
+      }
+    });
+
+    app.post('/api/auth/login', async (request, response) => {
+      try {
+        const email = String(request.body?.email ?? '').trim().toLowerCase();
+        const password = String(request.body?.password ?? '');
+
+        if (!email || !password) {
+          response.status(400).json({ error: 'Email and password are required.' });
+          return;
+        }
+
+        const adminUser = await findAdminByEmail(request.app.locals.db, email);
+        if (!adminUser || !verifyPassword(password, adminUser.passwordHash)) {
+          response.status(401).json({ error: 'Invalid email or password.' });
+          return;
+        }
+
+        setSessionCookie(response, adminUser.email);
+        response.json({
+          ok: true,
+          user: {
+            email: adminUser.email
+          }
+        });
+      } catch (error) {
+        response.status(500).json({ error: error instanceof Error ? error.message : 'Login failed.' });
+      }
+    });
+
+    app.post('/api/auth/logout', async (_request, response) => {
       clearSessionCookie(response);
-      response.json({ isAuthenticated: false, isAdmin: false, user: null });
-      return;
-    }
+      response.json({ ok: true });
+    });
 
-    response.json({
-      isAuthenticated: true,
-      isAdmin: true,
-      user: {
-        email: adminUser.email
+    app.post('/api/contact-inquiries', async (request, response) => {
+      try {
+        await insertContactInquiry(request.app.locals.db, request.body ?? {});
+        response.status(201).json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to submit inquiry.' });
       }
     });
-  } catch (error) {
-    response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to read session.' });
-  }
-});
 
-app.post('/api/auth/login', async (request, response) => {
-  try {
-    const email = String(request.body?.email ?? '').trim().toLowerCase();
-    const password = String(request.body?.password ?? '');
-
-    if (!email || !password) {
-      response.status(400).json({ error: 'Email and password are required.' });
-      return;
-    }
-
-    const adminUser = await findAdminByEmail(request.app.locals.db, email);
-    if (!adminUser || !verifyPassword(password, adminUser.passwordHash)) {
-      response.status(401).json({ error: 'Invalid email or password.' });
-      return;
-    }
-
-    setSessionCookie(response, adminUser.email);
-    response.json({
-      ok: true,
-      user: {
-        email: adminUser.email
+    app.post('/api/quotation-requests', async (request, response) => {
+      try {
+        await insertQuotationRequest(request.app.locals.db, request.body ?? {});
+        response.status(201).json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to submit quotation request.' });
       }
     });
-  } catch (error) {
-    response.status(500).json({ error: error instanceof Error ? error.message : 'Login failed.' });
-  }
-});
 
-app.post('/api/auth/logout', async (_request, response) => {
-  clearSessionCookie(response);
-  response.json({ ok: true });
-});
-
-app.post('/api/contact-inquiries', async (request, response) => {
-  try {
-    await insertContactInquiry(request.app.locals.db, request.body ?? {});
-    response.status(201).json({ ok: true });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to submit inquiry.' });
-  }
-});
-
-app.post('/api/quotation-requests', async (request, response) => {
-  try {
-    await insertQuotationRequest(request.app.locals.db, request.body ?? {});
-    response.status(201).json({ ok: true });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to submit quotation request.' });
-  }
-});
-
-app.post('/api/admin/import', requireAdmin, async (request, response) => {
-  try {
-    await importContentSnapshot(request.app.locals.db, request.body ?? {});
-    const snapshot = await getContentSnapshot(request.app.locals.db);
-    response.json({
-      ok: true,
-      ...snapshot
-    });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Import failed.' });
-  }
-});
-
-app.post('/api/admin/products/upsert', requireAdmin, async (request, response) => {
-  try {
-    const product = request.body?.product;
-    const oldId = request.body?.oldId;
-    const savedProduct = await updateProductRecord(request.app.locals.db, product, oldId);
-    response.json({ ok: true, product: savedProduct });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save product.' });
-  }
-});
-
-app.delete('/api/admin/products/:id', requireAdmin, async (request, response) => {
-  try {
-    await deleteProductById(request.app.locals.db, request.params.id);
-    response.json({ ok: true });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete product.' });
-  }
-});
-
-app.post('/api/admin/news/upsert', requireAdmin, async (request, response) => {
-  try {
-    const item = request.body?.item;
-    const savedNews = await upsertNews(request.app.locals.db, item);
-    response.json({ ok: true, item: savedNews });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save article.' });
-  }
-});
-
-app.delete('/api/admin/news/:id', requireAdmin, async (request, response) => {
-  try {
-    await deleteNewsById(request.app.locals.db, request.params.id);
-    response.json({ ok: true });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete article.' });
-  }
-});
-
-app.post('/api/admin/map-profiles/upsert', requireAdmin, async (request, response) => {
-  try {
-    const profile = request.body?.profile;
-    const savedProfile = await upsertProvinceMapProfile(request.app.locals.db, profile);
-    response.json({ ok: true, profile: savedProfile });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save map profile.' });
-  }
-});
-
-app.delete('/api/admin/map-profiles/:provinceId', requireAdmin, async (request, response) => {
-  try {
-    await deleteProvinceMapProfileById(request.app.locals.db, request.params.provinceId);
-    response.json({ ok: true });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to reset map profile.' });
-  }
-});
-
-app.post('/api/admin/map-profiles/ai-suggest', requireAdmin, async (request, response) => {
-  try {
-    const provinceId = String(request.body?.provinceId ?? '').trim();
-    const provinceName = String(request.body?.provinceName ?? '').trim();
-    const provinceType = String(request.body?.provinceType ?? '').trim() || 'Province';
-    const regionLabel = String(request.body?.regionLabel ?? '').trim();
-    const categoryScope = normalizeMapAiScope(request.body?.categoryScope);
-
-    if (!provinceId || !provinceName || !regionLabel) {
-      response.status(400).json({ error: 'Province context is required for AI suggestions.' });
-      return;
-    }
-
-    const snapshot = await getContentSnapshot(request.app.locals.db);
-    const allProducts = Array.isArray(snapshot?.products) ? snapshot.products.filter((item) => item?.isActive !== false) : [];
-    const existingProfiles = await listProvinceMapProfiles(request.app.locals.db);
-    const currentProfile =
-      existingProfiles.find((item) => String(item?.provinceId ?? '') === provinceId) ?? null;
-    const baseScopedProducts =
-      categoryScope === 'auto' ? allProducts : allProducts.filter((item) => String(item?.category ?? '') === categoryScope);
-    const currentProfileProductNames = new Set(
-      Array.isArray(currentProfile?.products)
-        ? currentProfile.products.map((item) => String(item?.name ?? '').trim().toLowerCase()).filter(Boolean)
-        : []
-    );
-    const scopedProducts =
-      categoryScope === 'auto' && currentProfileProductNames.size > 0
-        ? baseScopedProducts.filter((item) => currentProfileProductNames.has(String(item?.name ?? '').trim().toLowerCase()))
-        : baseScopedProducts;
-
-    if (scopedProducts.length === 0) {
-      response.status(400).json({ error: 'No active products are available for the selected AI scope.' });
-      return;
-    }
-
-    const prompt = buildMapProfileSuggestionPrompt({
-      provinceId,
-      provinceName,
-      provinceType,
-      regionLabel,
-      categoryScope,
-      currentProfile,
-      otherProfiles: existingProfiles,
-      scopedProducts
+    app.post('/api/admin/import', requireAdmin, async (request, response) => {
+      try {
+        await importContentSnapshot(request.app.locals.db, request.body ?? {});
+        const snapshot = await getContentSnapshot(request.app.locals.db);
+        response.json({
+          ok: true,
+          ...snapshot
+        });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Import failed.' });
+      }
     });
 
-    const aiResult = await callMapProfileAgent(prompt);
-    const profile = sanitizeSuggestedMapProfile({
-      provinceId,
-      provinceName,
-      draft: aiResult.payload,
-      scopedProducts,
-      anchoredProducts: categoryScope === 'auto' && Array.isArray(currentProfile?.products) ? currentProfile.products : []
+    app.post('/api/admin/products/upsert', requireAdmin, async (request, response) => {
+      try {
+        const product = request.body?.product;
+        const oldId = request.body?.oldId;
+        const savedProduct = await updateProductRecord(request.app.locals.db, product, oldId);
+        response.json({ ok: true, product: savedProduct });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save product.' });
+      }
     });
 
-    response.json({
-      ok: true,
-      profile,
-      provider: aiResult.provider,
-      sources: aiResult.sources
+    app.delete('/api/admin/products/:id', requireAdmin, async (request, response) => {
+      try {
+        await deleteProductById(request.app.locals.db, request.params.id);
+        response.json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete product.' });
+      }
     });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to generate AI map suggestion.' });
-  }
-});
 
-app.post('/api/admin/uploads/images', requireAdmin, async (request, response) => {
-  try {
-    const { dataUrl, contentType, fileName, folderSegments } = request.body ?? {};
-    const { buffer, mimeType } = parseDataUrl(dataUrl);
-    const resolvedContentType = String(contentType || mimeType || '').trim();
-
-    if (!resolvedContentType.startsWith('image/')) {
-      throw new Error('Please choose a valid image file.');
-    }
-
-    if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
-      throw new Error('Image size must be 10MB or smaller.');
-    }
-
-    const safeSegments = sanitizeUploadSegments(folderSegments);
-    const extension = getFileExtension(fileName, resolvedContentType);
-    const fileId = crypto.randomUUID();
-    const relativeDir = path.join(...safeSegments);
-    const absoluteDir = path.join(uploadsRoot, relativeDir);
-
-    await fs.mkdir(absoluteDir, { recursive: true });
-
-    const savedFileName = `${fileId}.${extension}`;
-    await fs.writeFile(path.join(absoluteDir, savedFileName), buffer);
-
-    response.status(201).json({
-      ok: true,
-      publicUrl: `/uploads/cms/${safeSegments.join('/')}/${savedFileName}`
+    app.post('/api/admin/news/upsert', requireAdmin, async (request, response) => {
+      try {
+        const item = request.body?.item;
+        const savedNews = await upsertNews(request.app.locals.db, item);
+        response.json({ ok: true, item: savedNews });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save article.' });
+      }
     });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Image upload failed.' });
-  }
-});
 
-app.post('/api/admin/translate', requireAdmin, async (request, response) => {
-  try {
-    const prompt = String(request.body?.prompt ?? '').trim();
-    if (!prompt) {
-      response.status(400).json({ error: 'Prompt is required.' });
-      return;
+    app.delete('/api/admin/news/:id', requireAdmin, async (request, response) => {
+      try {
+        await deleteNewsById(request.app.locals.db, request.params.id);
+        response.json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete article.' });
+      }
+    });
+
+    app.post('/api/admin/map-profiles/upsert', requireAdmin, async (request, response) => {
+      try {
+        const profile = request.body?.profile;
+        const savedProfile = await upsertProvinceMapProfile(request.app.locals.db, profile);
+        response.json({ ok: true, profile: savedProfile });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save map profile.' });
+      }
+    });
+
+    app.delete('/api/admin/map-profiles/:provinceId', requireAdmin, async (request, response) => {
+      try {
+        await deleteProvinceMapProfileById(request.app.locals.db, request.params.provinceId);
+        response.json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to reset map profile.' });
+      }
+    });
+
+    app.post('/api/admin/map-profiles/ai-suggest', requireAdmin, async (request, response) => {
+      try {
+        const provinceId = String(request.body?.provinceId ?? '').trim();
+        const provinceName = String(request.body?.provinceName ?? '').trim();
+        const provinceType = String(request.body?.provinceType ?? '').trim() || 'Province';
+        const regionLabel = String(request.body?.regionLabel ?? '').trim();
+        const categoryScope = normalizeMapAiScope(request.body?.categoryScope);
+
+        if (!provinceId || !provinceName || !regionLabel) {
+          response.status(400).json({ error: 'Province context is required for AI suggestions.' });
+          return;
+        }
+
+        const snapshot = await getContentSnapshot(request.app.locals.db);
+        const allProducts = Array.isArray(snapshot?.products) ? snapshot.products.filter((item) => item?.isActive !== false) : [];
+        const existingProfiles = await listProvinceMapProfiles(request.app.locals.db);
+        const currentProfile =
+          existingProfiles.find((item) => String(item?.provinceId ?? '') === provinceId) ?? null;
+        const baseScopedProducts =
+          categoryScope === 'auto' ? allProducts : allProducts.filter((item) => String(item?.category ?? '') === categoryScope);
+        const currentProfileProductNames = new Set(
+          Array.isArray(currentProfile?.products)
+            ? currentProfile.products.map((item) => String(item?.name ?? '').trim().toLowerCase()).filter(Boolean)
+            : []
+        );
+        const scopedProducts =
+          categoryScope === 'auto' && currentProfileProductNames.size > 0
+            ? baseScopedProducts.filter((item) => currentProfileProductNames.has(String(item?.name ?? '').trim().toLowerCase()))
+            : baseScopedProducts;
+
+        if (scopedProducts.length === 0) {
+          response.status(400).json({ error: 'No active products are available for the selected AI scope.' });
+          return;
+        }
+
+        const prompt = buildMapProfileSuggestionPrompt({
+          provinceId,
+          provinceName,
+          provinceType,
+          regionLabel,
+          categoryScope,
+          currentProfile,
+          otherProfiles: existingProfiles,
+          scopedProducts
+        });
+
+        const aiResult = await callMapProfileAgent(prompt);
+        const profile = sanitizeSuggestedMapProfile({
+          provinceId,
+          provinceName,
+          draft: aiResult.payload,
+          scopedProducts,
+          anchoredProducts: categoryScope === 'auto' && Array.isArray(currentProfile?.products) ? currentProfile.products : []
+        });
+
+        response.json({
+          ok: true,
+          profile,
+          provider: aiResult.provider,
+          sources: aiResult.sources
+        });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to generate AI map suggestion.' });
+      }
+    });
+
+    app.post('/api/admin/uploads/images', requireAdmin, async (request, response) => {
+      try {
+        if (!enableLocalUploads) {
+          response.status(501).json({
+            error: 'Local image uploads are disabled in the serverless runtime. Use external object storage instead.'
+          });
+          return;
+        }
+
+        const { dataUrl, contentType, fileName, folderSegments } = request.body ?? {};
+        const { buffer, mimeType } = parseDataUrl(dataUrl);
+        const resolvedContentType = String(contentType || mimeType || '').trim();
+
+        if (!resolvedContentType.startsWith('image/')) {
+          throw new Error('Please choose a valid image file.');
+        }
+
+        if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
+          throw new Error('Image size must be 10MB or smaller.');
+        }
+
+        const safeSegments = sanitizeUploadSegments(folderSegments);
+        const extension = getFileExtension(fileName, resolvedContentType);
+        const fileId = crypto.randomUUID();
+        const relativeDir = path.join(...safeSegments);
+        const absoluteDir = path.join(uploadsRoot, relativeDir);
+
+        await fs.mkdir(absoluteDir, { recursive: true });
+
+        const savedFileName = `${fileId}.${extension}`;
+        await fs.writeFile(path.join(absoluteDir, savedFileName), buffer);
+
+        response.status(201).json({
+          ok: true,
+          publicUrl: `/uploads/cms/${safeSegments.join('/')}/${savedFileName}`
+        });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Image upload failed.' });
+      }
+    });
+
+    app.post('/api/admin/translate', requireAdmin, async (request, response) => {
+      try {
+        const prompt = String(request.body?.prompt ?? '').trim();
+        if (!prompt) {
+          response.status(400).json({ error: 'Prompt is required.' });
+          return;
+        }
+
+        const translation = await callOllama(prompt);
+        response.json({ translation });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Translation failed.' });
+      }
+    });
+
+    if (serveStatic) {
+      app.use(express.static(publicRoot, { index: false }));
+      if (existsSync(distRoot)) {
+        app.use(express.static(distRoot, { index: false }));
+      }
+
+      app.get(/.*/, async (request, response, next) => {
+        if (request.path.startsWith('/api')) {
+          next();
+          return;
+        }
+
+        const indexPath = path.join(distRoot, 'index.html');
+        if (!existsSync(indexPath)) {
+          response.status(404).send('Build output not found. Run npm run build first.');
+          return;
+        }
+
+        response.sendFile(indexPath);
+      });
     }
 
-    const translation = await callOllama(prompt);
-    response.json({ translation });
-  } catch (error) {
-    response.status(400).json({ error: error instanceof Error ? error.message : 'Translation failed.' });
-  }
-});
+    app.use((error, _request, response, _next) => {
+      response.status(500).json({
+        error: error instanceof Error ? error.message : 'Unexpected server error.'
+      });
+    });
 
-app.use(express.static(publicRoot, { index: false }));
-if (existsSync(distRoot)) {
-  app.use(express.static(distRoot, { index: false }));
-}
+    return app;
+  })();
 
-app.get(/.*/, async (request, response, next) => {
-  if (request.path.startsWith('/api')) {
-    next();
-    return;
-  }
+  APP_CACHE.set(cacheKey, appPromise);
+  return appPromise;
+};
 
-  const indexPath = path.join(distRoot, 'index.html');
-  if (!existsSync(indexPath)) {
-    response.status(404).send('Build output not found. Run npm run build first.');
-    return;
-  }
+const isDirectExecution = process.argv[1] ? path.resolve(process.argv[1]) === __filename : false;
 
-  response.sendFile(indexPath);
-});
-
-app.use((error, _request, response, _next) => {
-  response.status(500).json({
-    error: error instanceof Error ? error.message : 'Unexpected server error.'
+if (isDirectExecution) {
+  const app = await createApp({ serveStatic: true, enableLocalUploads: true });
+  app.listen(PORT, 'localhost', () => {
+    // eslint-disable-next-line no-console
+    console.log(`Foodmax Turso API listening on http://localhost:${PORT}`);
   });
-});
-
-app.listen(PORT, 'localhost', () => {
-  // eslint-disable-next-line no-console
-  console.log(`Foodmax Turso API listening on http://localhost:${PORT}`);
-});
+}
