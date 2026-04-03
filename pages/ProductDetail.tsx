@@ -178,7 +178,7 @@ const ProductDetail: React.FC = () => {
   const isCoffee = product.category === 'Coffee';
   const hasProductPdf = Boolean(product.pdfUrl?.trim());
 
-  // ✅ SUBMIT TO SUPABASE (NEW)
+  // Submit quotation requests through the app backend.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product?.id) return;

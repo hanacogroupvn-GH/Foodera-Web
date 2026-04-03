@@ -9,17 +9,11 @@
     "dev:server": "node server/index.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server/index.mjs",
-    "migrate:turso": "node scripts/migrate-supabase-to-turso.mjs",
-    "deploy:cms-translate": "node deploy-cms-translate-function.mjs",
-    "backfill:zh:dry": "node scripts/backfill-zh-translations-cli.mjs --dry-run",
-    "backfill:zh:sql": "node scripts/backfill-zh-translations-cli.mjs --write sql",
-    "backfill:zh:supabase": "node scripts/backfill-zh-translations-cli.mjs --write supabase"
+    "start": "node server/index.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.38.0",
     "@libsql/client": "^0.17.2",
-    "@supabase/supabase-js": "^2.98.0",
     "express": "^5.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",

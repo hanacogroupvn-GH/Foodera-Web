@@ -123,6 +123,14 @@ const normalizeNullableNumber = (value) => {
 };
 
 const normalizeTextColumn = (value) => String(value ?? '').trim();
+const normalizeNonNegativeInteger = (value, fallback = 0) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.round(parsed));
+};
 
 const PROVINCE_MAP_PROFILE_COLUMNS = [
   ['gps_latitude', 'real'],
@@ -485,8 +493,28 @@ export const listProvinceMapProfiles = async (client) => {
 };
 
 export const upsertProvinceMapProfile = async (client, profile) => {
+  const provinceId = String(profile?.provinceId ?? '').trim();
+  const existingResult = provinceId
+    ? await client.execute({
+        sql: `
+          select headline, overview, export_produce_count, growing_zones
+          from province_map_profiles
+          where province_id = ?
+          limit 1
+        `,
+        args: [provinceId]
+      })
+    : { rows: [] };
+  const existingRow = existingResult.rows[0] ?? {};
   const normalizedProfile = {
-    provinceId: String(profile?.provinceId ?? ''),
+    provinceId,
+    headline: normalizeTextColumn(profile?.headline ?? existingRow.headline),
+    overview: normalizeTextColumn(profile?.overview ?? existingRow.overview),
+    exportProduceCount: normalizeNonNegativeInteger(
+      profile?.exportProduceCount ?? existingRow.export_produce_count,
+      0
+    ),
+    growingZones: normalizeNonNegativeInteger(profile?.growingZones ?? existingRow.growing_zones, 0),
     gpsLatitude: normalizeNullableNumber(profile?.gpsLatitude),
     gpsLongitude: normalizeNullableNumber(profile?.gpsLongitude),
     cultivatedAreaHectares: normalizeNullableNumber(profile?.cultivatedAreaHectares),
@@ -525,10 +553,10 @@ export const upsertProvinceMapProfile = async (client, profile) => {
     `,
     args: [
       normalizedProfile.provinceId,
-      '',
-      '',
-      0,
-      0,
+      normalizedProfile.headline,
+      normalizedProfile.overview,
+      normalizedProfile.exportProduceCount,
+      normalizedProfile.growingZones,
       normalizedProfile.gpsLatitude,
       normalizedProfile.gpsLongitude,
       normalizedProfile.cultivatedAreaHectares,
