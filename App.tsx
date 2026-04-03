@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useParams, Navigat
 import { DataProvider } from './context/DataContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider, useLocale } from './context/LocaleContext';
+import BackendStatusBanner from './components/BackendStatusBanner';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import FloatingContact from './components/FloatingContact';
@@ -63,8 +64,9 @@ const PublicLayout: React.FC = () => {
 
   return (
     <>
-      <Navbar />
-      <main className="flex-grow">
+        <Navbar />
+        <BackendStatusBanner />
+        <main className="flex-grow">
         <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载页面...' : 'Loading page...'} compact />}>
           <Outlet />
         </Suspense>

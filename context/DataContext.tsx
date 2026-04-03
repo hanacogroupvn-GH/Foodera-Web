@@ -13,6 +13,7 @@ interface DataContextType {
   activeNews: NewsItem[];
   isLoading: boolean;
   backendMode: BackendMode;
+  backendError: string | null;
   addProduct: (product: Product) => Promise<void>;
   updateProduct: (product: Product, oldId?: string) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -168,6 +169,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [backendMode, setBackendMode] = useState<BackendMode>('fallback');
+  const [backendError, setBackendError] = useState<string | null>(null);
   const activeProducts = useMemo(() => getActiveProducts(products), [products]);
   const activeNews = useMemo(() => getActiveNews(news), [news]);
 
@@ -179,10 +181,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProducts((payload.products ?? []).map(normalizeProduct));
       setNews((payload.news ?? []).map(normalizeNewsItem));
       setBackendMode(payload.backend || 'turso');
-    } catch {
+      setBackendError(null);
+    } catch (error) {
       setProducts(getFallbackProducts());
       setNews(getFallbackNews());
       setBackendMode('fallback');
+      setBackendError(error instanceof Error ? error.message : 'Failed to reach /api/content.');
     } finally {
       setIsLoading(false);
     }
@@ -257,6 +261,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeNews,
       isLoading,
       backendMode,
+      backendError,
       addProduct,
       updateProduct,
       deleteProduct,
@@ -268,7 +273,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       resetToDefaults,
       refresh
     }),
-    [products, news, activeProducts, activeNews, isLoading, backendMode]
+    [products, news, activeProducts, activeNews, isLoading, backendMode, backendError]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
