@@ -32,7 +32,8 @@ import {
   LogOut,
   Upload,
   Link as LinkIcon,
-  Languages
+  Languages,
+  MapPinned
 } from 'lucide-react';
 
 const NEWS_DRAFT_KEY = 'foodmax_admin_news_draft_v1';
@@ -111,7 +112,7 @@ const AdminNews: React.FC = () => {
           noMatches: '未找到匹配资讯',
           cmsLanguage: 'CMS 语言',
           imageUploadFailed: '图片上传失败。',
-          saveFailed: '无法保存该文章，请检查 Supabase schema 或权限策略。',
+          saveFailed: '无法保存该文章，请检查 Turso 后端或 API 权限。',
           csvLinkRequired: '请先输入 Google 表格链接。',
           csvImportFailed: 'CSV 导入失败。',
           supportedColumns: '支持的资讯列：id、title、slug、category、date、excerpt、content（或 content_1/content_2...）、image。',
@@ -163,7 +164,7 @@ const AdminNews: React.FC = () => {
           noMatches: 'No matching insights found',
           cmsLanguage: 'CMS Language',
           imageUploadFailed: 'Image upload failed.',
-          saveFailed: 'Unable to save this article. Please check Supabase schema/policies.',
+          saveFailed: 'Unable to save this article. Please check the Turso backend or API permissions.',
           csvLinkRequired: 'Please enter a Google Sheet link first.',
           csvImportFailed: 'CSV import failed.',
           supportedColumns: 'Supported insight columns: id, title, slug, category, date, excerpt, content (or content_1/content_2...), image.',
@@ -645,6 +646,13 @@ const AdminNews: React.FC = () => {
         <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
           <Link to={appRoutes.adminNews} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><FileText size={24} /></Link>
+          <Link
+            to={appRoutes.adminMapContent}
+            className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"
+            title={locale === 'zh' ? '地图内容' : 'Map Content'}
+          >
+            <MapPinned size={24} />
+          </Link>
         </div>
 
         {/* Mini Branded Exit Button */}

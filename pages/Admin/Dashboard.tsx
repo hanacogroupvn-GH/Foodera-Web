@@ -7,7 +7,6 @@ import { useLocale } from '../../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import { appRoutes } from '../../lib/routes';
 import { repairMojibakeDeep } from '../../lib/repairMojibake';
-import { hasSupabaseEnv } from '../../lib/supabaseClient';
 import { 
   LayoutDashboard, 
   Package, 
@@ -25,14 +24,16 @@ import {
   Trash2,
   ExternalLink,
   Settings,
-  RefreshCw
+  RefreshCw,
+  MapPinned
 } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
-  const { products, news, exportData, importData, resetToDefaults, isLoading } = useData();
+  const { products, news, exportData, importData, resetToDefaults, backendMode } = useData();
   const { logout } = useAuth();
   const { locale, setLocale } = useLocale();
   const navigate = useNavigate();
+  const isTursoMode = backendMode === 'turso';
   
   const [importStatus, setImportStatus] = useState<{message: string, type: 'success' | 'error' | null}>({message: '', type: null});
   const rawCopy =
@@ -42,6 +43,7 @@ const AdminDashboard: React.FC = () => {
           dashboard: '总览',
           inventory: '产品库',
           insights: '资讯',
+          mapContent: '地图内容',
           operationsPortal: '运营后台',
           exitHome: '返回首页',
           pageTitle: '后台概览',
@@ -64,10 +66,11 @@ const AdminDashboard: React.FC = () => {
           dashboard: 'Dashboard',
           inventory: 'Inventory',
           insights: 'Insights',
+          mapContent: 'Map Content',
           operationsPortal: 'Operations Portal',
           exitHome: 'Exit to Home',
           pageTitle: 'Staff Overview',
-          pageDesc: 'Supabase status is detected automatically.',
+          pageDesc: 'Backend status is detected automatically.',
           newExport: 'New Export',
           stats: ['Export Inventory', 'Market Reports', 'Global Regions', 'System Mode'],
           localOffline: 'Mode',
@@ -86,19 +89,19 @@ const AdminDashboard: React.FC = () => {
     ...baseCopy,
     pageDesc:
       locale === 'zh'
-        ? hasSupabaseEnv
-          ? '已连接 Supabase 云端内容库与 CMS 工作流。'
-          : 'Supabase 未配置，当前使用内置回退数据。'
-        : hasSupabaseEnv
-          ? 'Connected to Supabase for live CMS data and translation workflows.'
-          : 'Supabase is not configured, so the CMS is running in bundled fallback mode.',
+        ? isTursoMode
+          ? '已连接 Turso 云端内容库与 CMS 工作流。'
+          : 'Turso 后端暂未就绪，当前使用内置回退数据。'
+        : isTursoMode
+          ? 'Connected to Turso for live CMS data and content workflows.'
+          : 'Turso is unavailable, so the CMS is running in bundled fallback mode.',
     localOffline:
       locale === 'zh'
-        ? hasSupabaseEnv
-          ? 'Supabase 云端'
+        ? isTursoMode
+          ? 'Turso 云端'
           : '回退模式'
-        : hasSupabaseEnv
-          ? 'Supabase Cloud'
+        : isTursoMode
+          ? 'Turso Cloud'
           : 'Fallback Mode'
   };
 
@@ -106,19 +109,19 @@ const AdminDashboard: React.FC = () => {
     ...computedCopy,
     pageDesc:
       locale === 'zh'
-        ? hasSupabaseEnv
-          ? '\u5df2\u8fde\u63a5 Supabase \u4e91\u7aef\u5185\u5bb9\u5e93\u4e0e CMS \u5de5\u4f5c\u6d41\u3002'
-          : 'Supabase \u672a\u914d\u7f6e\uff0c\u5f53\u524d\u4f7f\u7528\u5185\u7f6e\u56de\u9000\u6570\u636e\u3002'
-        : hasSupabaseEnv
-          ? 'Connected to Supabase for live CMS data and translation workflows.'
-          : 'Supabase is not configured, so the CMS is running in bundled fallback mode.',
+        ? isTursoMode
+          ? '\u5df2\u8fde\u63a5 Turso \u4e91\u7aef\u5185\u5bb9\u5e93\u4e0e CMS \u5de5\u4f5c\u6d41\u3002'
+          : 'Turso \u540e\u7aef\u6682\u672a\u5c31\u7eea\uff0c\u5f53\u524d\u4f7f\u7528\u5185\u7f6e\u56de\u9000\u6570\u636e\u3002'
+        : isTursoMode
+          ? 'Connected to Turso for live CMS data and content workflows.'
+          : 'Turso is unavailable, so the CMS is running in bundled fallback mode.',
     localOffline:
       locale === 'zh'
-        ? hasSupabaseEnv
-          ? 'Supabase \u4e91\u7aef'
+        ? isTursoMode
+          ? 'Turso \u4e91\u7aef'
           : '\u56de\u9000\u6a21\u5f0f'
-        : hasSupabaseEnv
-          ? 'Supabase Cloud'
+        : isTursoMode
+          ? 'Turso Cloud'
           : 'Fallback Mode'
   };
 
@@ -158,7 +161,7 @@ const AdminDashboard: React.FC = () => {
     { label: copy.stats[0], val: products.length, icon: Package, color: 'bg-blue-500' },
     { label: copy.stats[1], val: news.length, icon: FileText, color: 'bg-purple-500' },
     { label: copy.stats[2], val: '32', icon: Globe, color: 'bg-foodmax-forest' },
-    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: hasSupabaseEnv ? 'bg-foodmax-forest' : 'bg-orange-500' }
+    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: isTursoMode ? 'bg-foodmax-forest' : 'bg-orange-500' }
   ];
 
   return (
@@ -182,6 +185,9 @@ const AdminDashboard: React.FC = () => {
           </Link>
           <Link to={appRoutes.adminNews} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
             <FileText size={18} /> {copy.insights}
+          </Link>
+          <Link to={appRoutes.adminMapContent} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
+            <MapPinned size={18} /> {copy.mapContent}
           </Link>
         </nav>
 
@@ -234,6 +240,12 @@ const AdminDashboard: React.FC = () => {
                   {'\u4e2d\u6587'}
                 </button>
              </div>
+             <button
+               onClick={() => navigate(appRoutes.adminMapContent)}
+               className="px-6 py-3 border border-foodmax-forest/15 bg-white text-foodmax-forest rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-sm hover:border-foodmax-forest hover:bg-foodmax-forest hover:text-white transition-all"
+             >
+                <MapPinned size={16} /> {copy.mapContent}
+             </button>
              <button onClick={() => navigate(appRoutes.adminInventory)} className="px-6 py-3 bg-foodmax-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
                 <Plus size={16} /> {copy.newExport}
              </button>

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, ArrowRight, AlertCircle, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { repairMojibakeDeep } from '../lib/repairMojibake';
+import { appRoutes } from '../lib/routes';
 
 const Login: React.FC = () => {
   const { locale } = useLocale();
   const { login, adminCheckError } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,19 +20,19 @@ const Login: React.FC = () => {
   const rawCopy =
     locale === 'zh'
       ? {
-          title: '管理员登录',
-          subtitle: '使用您的 Supabase 管理员账户登录',
-          email: '邮箱',
-          password: '密码',
+          title: 'ç®¡ç†å‘˜ç™»å½•',
+          subtitle: 'ä½¿ç”¨æ‚¨çš„ Foodmax ç®¡ç†å‘˜è´¦æˆ·ç™»å½•',
+          email: 'é‚®ç®±',
+          password: 'å¯†ç ',
           emailPlaceholder: 'admin@company.com',
-          passwordPlaceholder: '请输入密码',
-          signingIn: '登录中...',
-          signIn: '登录',
-          loginFailed: '登录失败'
+          passwordPlaceholder: 'è¯·è¾“å…¥å¯†ç ',
+          signingIn: 'ç™»å½•ä¸­...',
+          signIn: 'ç™»å½•',
+          loginFailed: 'ç™»å½•å¤±è´¥'
         }
       : {
           title: 'Admin Login',
-          subtitle: 'Sign in with your Supabase admin account',
+          subtitle: 'Sign in with your Foodmax admin account',
           email: 'Email',
           password: 'Password',
           emailPlaceholder: 'admin@company.com',
@@ -40,6 +42,8 @@ const Login: React.FC = () => {
           loginFailed: 'Login failed'
         };
   const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
+  const redirectParam = new URLSearchParams(location.search).get('redirect');
+  const redirectTarget = redirectParam && redirectParam.startsWith('/') ? redirectParam : appRoutes.admin;
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -56,7 +60,7 @@ const Login: React.FC = () => {
         return;
       }
 
-      navigate('/admin', { replace: true });
+      navigate(redirectTarget, { replace: true });
     } catch (error: any) {
       setErrorMsg(error?.message || copy.loginFailed);
     } finally {

@@ -40,7 +40,8 @@ import {
   Link as LinkIcon,
   Languages,
   RefreshCw,
-  FileDown
+  FileDown,
+  MapPinned
 } from 'lucide-react';
 
 const isValidPdfUrl = (value: string): boolean => {
@@ -694,7 +695,7 @@ const AdminInventory: React.FC = () => {
       : 'Fill in the English product name before translating.';
   const reloadButtonLabel = locale === 'zh' ? zh('\u91cd\u65b0\u52a0\u8f7d') : 'Reload';
   const reloadingButtonLabel = locale === 'zh' ? zh('\u52a0\u8f7d\u4e2d...') : 'Reloading...';
-  const reloadSuccessMessage = locale === 'zh' ? zh('\u5df2\u91cd\u65b0\u52a0\u8f7d\u4ea7\u54c1\u6570\u636e\u3002') : 'Inventory reloaded from Supabase.';
+  const reloadSuccessMessage = locale === 'zh' ? zh('\u5df2\u91cd\u65b0\u52a0\u8f7d\u4ea7\u54c1\u6570\u636e\u3002') : 'Inventory reloaded from Turso.';
   const bulkTranslateButtonLabel = locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u5f53\u524d\u5217\u8868') : 'Bulk Translate List';
   const bulkTranslatingButtonLabel = locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u4e2d') : 'Bulk Translating';
   const bulkTranslateEmptyMessage =
@@ -1558,6 +1559,13 @@ const AdminInventory: React.FC = () => {
         <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
           <Link to={appRoutes.adminInventory} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><Package size={24} /></Link>
+          <Link
+            to={appRoutes.adminMapContent}
+            className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"
+            title={locale === 'zh' ? '地图内容' : 'Map Content'}
+          >
+            <MapPinned size={24} />
+          </Link>
         </div>
 
         {/* Mini Branded Exit Button */}

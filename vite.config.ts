@@ -4,7 +4,7 @@ import { defineConfig, loadEnv, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-const DEFAULT_OLLAMA_BASE_URL = 'http://127.0.0.1:11434';
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
 const DEFAULT_OLLAMA_MODEL = 'qwen2.5:7b';
 const DEV_CMS_TRANSLATE_PATH = '/__cms_translate_ollama';
 
@@ -369,6 +369,8 @@ export default defineConfig(({ mode }) => {
   const ollamaBaseUrl = env.OLLAMA_BASE_URL?.trim() || DEFAULT_OLLAMA_BASE_URL;
   const ollamaModel = env.OLLAMA_MODEL?.trim() || DEFAULT_OLLAMA_MODEL;
   const ollamaApiKey = env.OLLAMA_API_KEY?.trim();
+  const apiPort = env.PORT?.trim() || '8787';
+  const localApiOrigin = `http://localhost:${apiPort}`;
 
   return {
     build: {
@@ -405,7 +407,20 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3000,
-      host: '0.0.0.0'
+      host: 'localhost',
+      strictPort: true,
+      origin: 'http://localhost:3000',
+      hmr: {
+        host: 'localhost',
+        clientPort: 3000,
+        protocol: 'ws'
+      },
+      proxy: {
+        '/api': {
+          target: localApiOrigin,
+          changeOrigin: true
+        }
+      }
     },
     plugins: [react(), tailwindcss(), createDevCmsTranslatePlugin({ baseUrl: ollamaBaseUrl, model: ollamaModel, apiKey: ollamaApiKey })],
     resolve: {

@@ -1,0 +1,180 @@
+import {
+  NewsItem,
+  Product,
+  ProvinceMapProfile,
+  ProvinceMapSuggestionResult
+} from '../types';
+
+export type AdminSessionUser = {
+  email: string;
+};
+
+export type BackendMode = 'turso' | 'fallback';
+
+export class ApiError extends Error {
+  status: number;
+  payload: unknown;
+
+  constructor(message: string, status: number, payload: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
+type ApiRequestOptions = Omit<RequestInit, 'body'> & {
+  body?: unknown;
+};
+
+const buildRequestInit = (options: ApiRequestOptions = {}): RequestInit => {
+  const { body, ...rest } = options;
+  const headers = new Headers(options.headers || {});
+  const init: RequestInit = {
+    ...rest,
+    credentials: 'include',
+    headers
+  };
+
+  if (body !== undefined) {
+    headers.set('Content-Type', 'application/json');
+    init.body = JSON.stringify(body);
+  }
+
+  return init;
+};
+
+const parseResponsePayload = async (response: Response) => {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  const text = await response.text();
+  return text ? { message: text } : null;
+};
+
+export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {}): Promise<T> => {
+  const response = await fetch(path, buildRequestInit(options));
+  const payload = await parseResponsePayload(response);
+
+  if (!response.ok) {
+    const message =
+      (typeof payload === 'object' && payload && 'error' in payload && typeof payload.error === 'string'
+        ? payload.error
+        : null) ||
+      (typeof payload === 'object' && payload && 'message' in payload && typeof payload.message === 'string'
+        ? payload.message
+        : null) ||
+      `Request failed with status ${response.status}`;
+
+    throw new ApiError(message, response.status, payload);
+  }
+
+  return payload as T;
+};
+
+export const api = {
+  getContent: () =>
+    apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[] }>('/api/content'),
+  getProvinceMapProfiles: () =>
+    apiRequest<{ profiles: ProvinceMapProfile[] }>('/api/map-profiles'),
+  getSession: () =>
+    apiRequest<{
+      isAuthenticated: boolean;
+      isAdmin: boolean;
+      user: AdminSessionUser | null;
+    }>('/api/auth/session'),
+  login: (email: string, password: string) =>
+    apiRequest<{ ok: true; user: AdminSessionUser }>('/api/auth/login', {
+      method: 'POST',
+      body: { email, password }
+    }),
+  logout: () =>
+    apiRequest<{ ok: true }>('/api/auth/logout', {
+      method: 'POST'
+    }),
+  submitContactInquiry: (payload: {
+    companyName: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    subject: string;
+    message: string;
+  }) =>
+    apiRequest<{ ok: true }>('/api/contact-inquiries', {
+      method: 'POST',
+      body: payload
+    }),
+  submitQuotationRequest: (payload: {
+    productId: string;
+    fullName: string;
+    email: string;
+    companyName?: string;
+    orderVolume?: string;
+    message: string;
+  }) =>
+    apiRequest<{ ok: true }>('/api/quotation-requests', {
+      method: 'POST',
+      body: payload
+    }),
+  importContent: (payload: { products: Product[]; news: NewsItem[] }) =>
+    apiRequest<{ ok: true; products: Product[]; news: NewsItem[] }>('/api/admin/import', {
+      method: 'POST',
+      body: payload
+    }),
+  upsertProduct: (product: Product, oldId?: string) =>
+    apiRequest<{ ok: true; product: Product }>('/api/admin/products/upsert', {
+      method: 'POST',
+      body: { product, oldId }
+    }),
+  deleteProduct: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/products/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  upsertNews: (item: NewsItem) =>
+    apiRequest<{ ok: true; item: NewsItem }>('/api/admin/news/upsert', {
+      method: 'POST',
+      body: { item }
+    }),
+  deleteNews: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/news/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  upsertProvinceMapProfile: (profile: ProvinceMapProfile) =>
+    apiRequest<{ ok: true; profile: ProvinceMapProfile }>('/api/admin/map-profiles/upsert', {
+      method: 'POST',
+      body: { profile }
+    }),
+  deleteProvinceMapProfile: (provinceId: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/map-profiles/${encodeURIComponent(provinceId)}`, {
+      method: 'DELETE'
+    }),
+  suggestProvinceMapProfile: (payload: {
+    provinceId: string;
+    provinceName: string;
+    provinceType: string;
+    regionLabel: string;
+    categoryScope?: 'auto' | 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture';
+  }) =>
+    apiRequest<{ ok: true } & ProvinceMapSuggestionResult>('/api/admin/map-profiles/ai-suggest', {
+      method: 'POST',
+      body: payload
+    }),
+  uploadCmsImage: (payload: {
+    dataUrl: string;
+    contentType: string;
+    fileName: string;
+    folderSegments: string[];
+  }) =>
+    apiRequest<{ ok: true; publicUrl: string }>('/api/admin/uploads/images', {
+      method: 'POST',
+      body: payload
+    }),
+  translateCmsPrompt: (prompt: string) =>
+    apiRequest<{ translation: unknown }>('/api/admin/translate', {
+      method: 'POST',
+      body: { prompt }
+    })
+};

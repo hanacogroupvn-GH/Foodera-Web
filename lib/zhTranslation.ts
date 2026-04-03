@@ -1,12 +1,10 @@
 import { NewsTranslation, ProductTranslation } from '../types';
 import { translateProductFilters } from './filterLocalization';
-import { hasSupabaseEnv, supabase } from './supabaseClient';
+import { api, ApiError } from './apiClient';
 import { preserveVietnamesePlaceNamesDeep } from './preserveVietnamesePlaceNames';
 
-const DEFAULT_OLLAMA_BASE_URL = 'http://127.0.0.1:11434';
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
 const DEFAULT_OLLAMA_MODEL = 'qwen2.5:7b';
-const CMS_TRANSLATE_FUNCTION = 'cms-translate-zh';
-const DEV_CMS_TRANSLATE_PATH = '/__cms_translate_ollama';
 
 const configuredOllamaBaseUrl = import.meta.env.VITE_OLLAMA_BASE_URL?.trim();
 const configuredOllamaApiKey = import.meta.env.VITE_OLLAMA_API_KEY?.trim();
@@ -216,131 +214,22 @@ const normalizeOllamaBaseUrl = (baseUrl: string) => baseUrl.replace(/\/$/, '').r
 const createCmsTranslateError = (message: string, status?: number): CmsTranslateError =>
   Object.assign(new Error(message), status ? { status } : {});
 
-const isRetryableFunctionAuthError = ({ message, status }: { message: string; status?: number }) =>
-  status === 401 && /invalid jwt|expired session|invalid or expired session|authorization|session/i.test(message);
-
-const refreshCmsSession = async () => {
-  if (!hasSupabaseEnv) {
-    return false;
-  }
-
+const invokeApiTranslate = async <TTranslation>(prompt: string) => {
   try {
-    const { data, error } = await supabase.auth.refreshSession();
-    return Boolean(data.session && !error);
-  } catch {
-    return false;
-  }
-};
+    const { translation } = await api.translateCmsPrompt(prompt);
 
-const readFunctionErrorDetail = async (error: unknown): Promise<{ message: string; status?: number }> => {
-  let status: number | undefined;
-  let message = '';
-
-  if (error && typeof error === 'object') {
-    const response = (error as { context?: unknown }).context;
-    if (response instanceof Response) {
-      status = response.status;
-
-      try {
-        const payload = (await response.clone().json()) as { error?: unknown; message?: unknown };
-        message = sanitizeText(payload.error) || sanitizeText(payload.message);
-      } catch {
-        try {
-          message = sanitizeText(await response.clone().text());
-        } catch {
-          message = '';
-        }
-      }
+    if (!translation || typeof translation !== 'object' || Array.isArray(translation)) {
+      throw new Error('The CMS translation service returned an invalid payload.');
     }
 
-    if (!message) {
-      message = sanitizeText((error as { message?: unknown }).message);
+    return translation as TTranslation;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw createCmsTranslateError(error.message, error.status);
     }
 
-    if (status == null && typeof (error as { status?: unknown }).status === 'number') {
-      status = (error as { status?: number }).status;
-    }
+    throw error;
   }
-
-  return {
-    message: message || 'Failed to reach the CMS translation service.',
-    status
-  };
-};
-
-const invokeCmsTranslateFunction = async <TTranslation>(
-  kind: 'news' | 'product',
-  source: Record<string, unknown>,
-  hasRetriedAuth = false
-) => {
-  const { data, error } = await supabase.functions.invoke(CMS_TRANSLATE_FUNCTION, {
-    body: {
-      kind,
-      source
-    }
-  });
-
-  if (error) {
-    const detail = await readFunctionErrorDetail(error);
-
-    if (!hasRetriedAuth && isRetryableFunctionAuthError(detail) && (await refreshCmsSession())) {
-      return invokeCmsTranslateFunction<TTranslation>(kind, source, true);
-    }
-
-    throw createCmsTranslateError(detail.message, detail.status);
-  }
-
-  const translation = (data as { translation?: unknown } | null)?.translation;
-  if (!translation || typeof translation !== 'object' || Array.isArray(translation)) {
-    throw new Error('The CMS translation service returned an invalid payload.');
-  }
-
-  return translation as TTranslation;
-};
-
-const invokeLocalDevTranslateProxy = async <TTranslation>(
-  kind: 'news' | 'product',
-  source: Record<string, unknown>
-) => {
-  let response: Response;
-
-  try {
-    response = await fetch(DEV_CMS_TRANSLATE_PATH, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        kind,
-        source
-      })
-    });
-  } catch {
-    throw createCmsTranslateError('Unable to reach the local CMS translation proxy.', 503);
-  }
-
-  let payload: { translation?: unknown; error?: unknown; message?: unknown } | null = null;
-  try {
-    payload = (await response.json()) as { translation?: unknown; error?: unknown; message?: unknown };
-  } catch {
-    payload = null;
-  }
-
-  if (!response.ok) {
-    throw createCmsTranslateError(
-      sanitizeText(payload?.error) ||
-        sanitizeText(payload?.message) ||
-        `Local CMS translation failed: ${response.status} ${response.statusText}`,
-      response.status
-    );
-  }
-
-  const translation = payload?.translation;
-  if (!translation || typeof translation !== 'object' || Array.isArray(translation)) {
-    throw new Error('The local CMS translation proxy returned an invalid payload.');
-  }
-
-  return translation as TTranslation;
 };
 
 const translateWithOllama = async (prompt: string) => {
@@ -395,8 +284,7 @@ const translateWithOllama = async (prompt: string) => {
   return content;
 };
 
-const canUseBrowserOllamaFallback = () => (!hasSupabaseEnv && Boolean(ollamaBaseUrl && ollamaModel)) || hasExplicitBrowserOllamaConfig;
-const canUseLocalDevTranslateProxy = () => import.meta.env.DEV;
+const canUseBrowserOllamaFallback = () => Boolean(ollamaBaseUrl && ollamaModel) || hasExplicitBrowserOllamaConfig;
 const getErrorStatus = (error: unknown) =>
   typeof (error as { status?: unknown })?.status === 'number'
     ? (error as { status?: number }).status
@@ -405,7 +293,7 @@ const getErrorStatus = (error: unknown) =>
 const shouldFallbackToBrowserOllama = (status?: number) =>
   canUseBrowserOllamaFallback() && (status == null || status === 404 || status >= 500);
 
-export const canTranslateCmsContent = hasSupabaseEnv || canUseLocalDevTranslateProxy() || canUseBrowserOllamaFallback();
+export const canTranslateCmsContent = true;
 
 export const translateNewsToChinese = async (source: {
   title: string;
@@ -413,35 +301,16 @@ export const translateNewsToChinese = async (source: {
   content: string[];
 }): Promise<NewsTranslation> => {
   let translated: NewsTranslation | undefined;
-  const translateInBrowser = async () => sanitizeNewsTranslation(extractJson(await translateWithOllama(buildNewsPrompt(source))));
+  const prompt = buildNewsPrompt(source);
+  const translateInBrowser = async () => sanitizeNewsTranslation(extractJson(await translateWithOllama(prompt)));
 
-  if (canUseLocalDevTranslateProxy()) {
-    try {
-      translated = sanitizeNewsTranslation(await invokeLocalDevTranslateProxy<NewsTranslation>('news', source));
-    } catch (devError) {
-      if (!hasSupabaseEnv) {
-        if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
-          throw devError;
-        }
-
-        translated = await translateInBrowser();
-      }
+  try {
+    translated = sanitizeNewsTranslation(await invokeApiTranslate<NewsTranslation>(prompt));
+  } catch (error) {
+    if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
+      throw error;
     }
-  }
 
-  if (!translated && hasSupabaseEnv) {
-    try {
-      translated = sanitizeNewsTranslation(await invokeCmsTranslateFunction<NewsTranslation>('news', source));
-    } catch (error) {
-      if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
-        throw error;
-      }
-
-      translated = await translateInBrowser();
-    }
-  }
-
-  if (!translated) {
     translated = await translateInBrowser();
   }
 
@@ -463,36 +332,16 @@ export const translateProductToChinese = async (source: {
   filters: Record<string, string>;
 }): Promise<ProductTranslation> => {
   let translated: ProductTranslation | undefined;
-  const translateInBrowser = async () =>
-    sanitizeProductTranslation(extractJson(await translateWithOllama(buildProductPrompt(source))));
+  const prompt = buildProductPrompt(source);
+  const translateInBrowser = async () => sanitizeProductTranslation(extractJson(await translateWithOllama(prompt)));
 
-  if (canUseLocalDevTranslateProxy()) {
-    try {
-      translated = sanitizeProductTranslation(await invokeLocalDevTranslateProxy<ProductTranslation>('product', source));
-    } catch (devError) {
-      if (!hasSupabaseEnv) {
-        if (!shouldFallbackToBrowserOllama(getErrorStatus(devError))) {
-          throw devError;
-        }
-
-        translated = await translateInBrowser();
-      }
+  try {
+    translated = sanitizeProductTranslation(await invokeApiTranslate<ProductTranslation>(prompt));
+  } catch (error) {
+    if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
+      throw error;
     }
-  }
 
-  if (!translated && hasSupabaseEnv) {
-    try {
-      translated = sanitizeProductTranslation(await invokeCmsTranslateFunction<ProductTranslation>('product', source));
-    } catch (error) {
-      if (!shouldFallbackToBrowserOllama(getErrorStatus(error))) {
-        throw error;
-      }
-
-      translated = await translateInBrowser();
-    }
-  }
-
-  if (!translated) {
     translated = await translateInBrowser();
   }
 

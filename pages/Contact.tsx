@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Mail, Phone, Send } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { api } from '../lib/apiClient';
 import { useLocale } from '../context/LocaleContext';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
@@ -33,7 +33,7 @@ const Contact: React.FC = () => {
         message: '消息内容',
         sending: '发送中...',
         send: '发送消息',
-        adminNote: '该咨询将存储到 Supabase，并可在后台查看。',
+        adminNote: '该咨询将存储到 Foodmax CMS，并可在后台查看。',
         subjects: ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'],
         headquarters: '全球总部',
         directions: '获取路线',
@@ -62,7 +62,7 @@ const Contact: React.FC = () => {
         message: 'Message Detail',
         sending: 'SENDING...',
         send: 'SEND MESSAGE',
-        adminNote: 'This inquiry will be stored in Supabase and visible to Admin.',
+        adminNote: 'This inquiry will be stored in Foodmax CMS and visible to Admin.',
         subjects: ['Rice Export Inquiry', 'Coffee Export Inquiry', 'Logistics & Shipping', 'Private Label Partnership', 'Other Corporate Inquiry'],
         headquarters: 'Global Headquarters',
         directions: 'Get Directions',
@@ -133,22 +133,14 @@ const Contact: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from('contact_inquiries').insert([
-        {
-          company_name: form.companyName.trim(),
-          full_name: form.fullName.trim(),
-          email: form.email.trim(),
-          phone_whatsapp: form.phone.trim() || null,
-          subject: form.subject,
-          message: form.message.trim(),
-        },
-      ]);
-
-      if (error) {
-        setErrorMsg(error.message);
-        setLoading(false);
-        return;
-      }
+      await api.submitContactInquiry({
+        companyName: form.companyName.trim(),
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || undefined,
+        subject: form.subject,
+        message: form.message.trim()
+      });
 
       setSent(true);
       setForm({

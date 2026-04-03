@@ -53,7 +53,7 @@ const Navbar: React.FC = () => {
         news: '新闻',
         about: '关于我们',
         contact: '联系',
-        commercialTool: '商业工具',
+        commercialTool: '互动地图',
         themeDark: '深色',
         themeLight: '浅色',
         searchPlaceholder: '搜索产品、新闻和出口信息...',
@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
         news: 'News',
         about: 'About Us',
         contact: 'Contact',
-        commercialTool: 'Commercial Tool',
+        commercialTool: 'Interactive Map',
         themeDark: 'Dark',
         themeLight: 'Light',
         searchPlaceholder: 'Search products, news, and export insights...',
@@ -259,7 +259,7 @@ const Navbar: React.FC = () => {
     <img
       src={Logo}
       alt="Foodmax"
-      className="h-44 w-auto md:h-48 object-contain"
+      className="h-8 w-auto md:h-10 object-contain"
       loading="lazy"
       decoding="async"
     />

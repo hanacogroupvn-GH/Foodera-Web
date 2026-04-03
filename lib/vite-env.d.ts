@@ -1,10 +1,6 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_SUPABASE_URL?: string;
-  readonly VITE_SUPABASE_ANON_KEY?: string;
-  readonly VITE_SUPABASE_PDF_BUCKET?: string;
-  readonly VITE_SUPABASE_IMAGE_BUCKET?: string;
   readonly VITE_GEMINI_API_KEY?: string;
   readonly VITE_GEMINI_TRANSLATE_MODEL?: string;
   readonly VITE_OLLAMA_BASE_URL?: string;
@@ -14,4 +10,9 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+declare module '*.geojson?url' {
+  const value: string;
+  export default value;
 }

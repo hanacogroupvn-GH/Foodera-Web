@@ -63,3 +63,36 @@ export interface NewsItem {
   image: string;
   translations?: Partial<Record<ContentLocale, NewsTranslation>>;
 }
+
+export interface ProvinceMapProduct {
+  name: string;
+  location: string;
+  zoneCount: number;
+  rating?: number | null;
+}
+
+export interface ProvinceMapProfile {
+  provinceId: string;
+  gpsLatitude: number | null;
+  gpsLongitude: number | null;
+  cultivatedAreaHectares: number | null;
+  averageOutputMtPerYear: number | null;
+  sowingPeriod: string;
+  harvestPeriod: string;
+  cropsPerYear: number | null;
+  characteristics: string;
+  varieties: string;
+  products: ProvinceMapProduct[];
+  updatedAt?: string;
+}
+
+export interface ProvinceMapSuggestionSource {
+  title: string;
+  uri: string;
+}
+
+export interface ProvinceMapSuggestionResult {
+  profile: ProvinceMapProfile;
+  provider: 'gemini' | 'ollama';
+  sources: ProvinceMapSuggestionSource[];
+}

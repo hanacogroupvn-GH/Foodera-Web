@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import AppShellLoader from '../components/AppShellLoader';
-import { hasSupabaseEnv, supabase } from '../lib/supabaseClient';
+import { api } from '../lib/apiClient';
 import {
   ArrowLeft,
   CheckCircle,
@@ -64,7 +64,7 @@ const ProductDetail: React.FC = () => {
         sending: '发送中...',
         sendInquiry: '发送给出口部门',
         responseTime: '标准回复时间：12-24 个工作小时',
-        quotationUnavailable: '由于 Supabase 未配置，暂时无法提交报价请求。'
+        quotationUnavailable: '由于 CMS 后端未就绪，暂时无法提交报价请求。'
       }
     : {
         loader: 'Loading product details...',
@@ -95,7 +95,7 @@ const ProductDetail: React.FC = () => {
         sending: 'SENDING...',
         sendInquiry: 'Send Inquiry to Export Dept',
         responseTime: 'Standard Response Time: 12-24 Business Hours',
-        quotationUnavailable: 'Quotation requests are unavailable because Supabase is not configured.'
+        quotationUnavailable: 'Quotation requests are temporarily unavailable because the CMS backend is not ready.'
       };
 
   // form states (NEW)
@@ -187,20 +187,14 @@ const ProductDetail: React.FC = () => {
     setSending(true);
 
     try {
-      if (!hasSupabaseEnv) {
-        throw new Error(copy.quotationUnavailable);
-      }
-
-      const { error } = await supabase.from('quotation_requests').insert({
-        product_id: product.id,
-        full_name: fullName.trim(),
+      await api.submitQuotationRequest({
+        productId: product.id,
+        fullName: fullName.trim(),
         email: email.trim(),
-        company_name: companyName.trim() || 'N/A',
-        order_volume: orderVolume.trim() || null,
+        companyName: companyName.trim() || undefined,
+        orderVolume: orderVolume.trim() || undefined,
         message: message.trim()
       });
-
-      if (error) throw error;
 
       setInquirySent(true);
 

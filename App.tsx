@@ -26,6 +26,7 @@ const Login = lazy(() => import('./pages/Login'));
 const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
 const AdminNews = lazy(() => import('./pages/Admin/News'));
+const AdminInteractiveMapContent = lazy(() => import('./pages/Admin/InteractiveMapContent'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -38,14 +39,21 @@ const ScrollToTop = () => {
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const { locale } = useLocale();
+  const location = useLocation();
 
   if (isLoading) {
     return <AppShellLoader label={locale === 'zh' ? '正在检查安全会话...' : 'Checking secure session...'} compact />;
   }
 
-  if (!isAuthenticated) return <Navigate to={appRoutes.login} replace />;
+  if (!isAuthenticated) {
+    const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={`${appRoutes.login}?redirect=${encodeURIComponent(redirectPath)}`} replace />;
+  }
 
-  if (!isAdmin) return <Navigate to={appRoutes.login} replace />;
+  if (!isAdmin) {
+    const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={`${appRoutes.login}?redirect=${encodeURIComponent(redirectPath)}`} replace />;
+  }
 
   return <>{children}</>;
 };
@@ -65,6 +73,16 @@ const PublicLayout: React.FC = () => {
       <LazyAIChatBot />
       <Footer />
     </>
+  );
+};
+
+const InteractiveMapLayout: React.FC = () => {
+  const { locale } = useLocale();
+
+  return (
+    <Suspense fallback={<AppShellLoader label={locale === 'zh' ? 'æ­£åœ¨åŠ è½½äº’åŠ¨åœ°å›¾...' : 'Loading interactive map...'} compact />}>
+      <Outlet />
+    </Suspense>
   );
 };
 
@@ -138,6 +156,22 @@ const AppRoutes: React.FC = () => {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path={appRoutes.adminMapContent}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载地图内容...' : 'Loading map content...'} compact />}>
+                        <AdminInteractiveMapContent />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route element={<InteractiveMapLayout />}>
+                  <Route path={appRoutes.commercialTool} element={<CommercialTool />} />
+                  <Route path="/interactivemap" element={<Navigate to={appRoutes.commercialTool} replace />} />
+                  <Route path={appRoutes.legacyCommercialTool} element={<Navigate to={appRoutes.commercialTool} replace />} />
+                </Route>
 
                 <Route element={<PublicLayout />}>
                   <Route path={appRoutes.home} element={<Home />} />
@@ -150,7 +184,6 @@ const AppRoutes: React.FC = () => {
                   <Route path={appRoutes.news} element={<News />} />
                   <Route path={`${appRoutes.news}/:slug`} element={<NewsDetail />} />
                   <Route path={`${appRoutes.news}/:legacyId/:legacySlug`} element={<NewsDetail />} />
-                  <Route path={appRoutes.commercialTool} element={<CommercialTool />} />
                   <Route path={appRoutes.operations} element={<Operations />} />
                   <Route path={appRoutes.contact} element={<Contact />} />
                   <Route path="*" element={<Navigate to={appRoutes.home} replace />} />

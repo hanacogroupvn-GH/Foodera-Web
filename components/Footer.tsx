@@ -70,7 +70,7 @@ const Footer: React.FC = () => {
               {copy.description}
             </p>
             <div className="flex space-x-4">
-              <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodmax-forest/40 rounded-xl flex items-center justify-center cursor-default"><Facebook size={20} /></span>
+              <a href="https://www.facebook.com/FoodmaxVietnam" target="_blank" rel="noreferrer" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Facebook size={20} /></a>
               <a href="https://www.linkedin.com/in/hobinhnghia/" target="_blank" rel="noreferrer" className="w-11 h-11 bg-gray-50 text-foodmax-forest rounded-xl flex items-center justify-center hover:bg-foodmax-forest hover:text-white transition-all"><Linkedin size={20} /></a>
               <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodmax-forest/40 rounded-xl flex items-center justify-center cursor-default"><Youtube size={20} /></span>
             </div>
