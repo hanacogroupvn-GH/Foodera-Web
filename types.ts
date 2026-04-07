@@ -64,6 +64,80 @@ export interface NewsItem {
   translations?: Partial<Record<ContentLocale, NewsTranslation>>;
 }
 
+export type PersonalizationEntityType = 'page' | 'category' | 'product' | 'news' | 'quote_request';
+export type PersonalizationAction = 'view' | 'click' | 'submit';
+
+export interface PersonalizationTrackPayload {
+  entityType: PersonalizationEntityType;
+  action: PersonalizationAction;
+  itemId?: string;
+  route?: string;
+  category?: CategoryType;
+  subCategory?: string;
+  newsCategory?: NewsCategory;
+  locale?: SupportedLocale;
+  metadata?: Record<string, string | number | boolean | null | undefined>;
+  weight?: number;
+}
+
+export interface PersonalizationScoreEntry {
+  key: string;
+  score: number;
+}
+
+export interface PersonalizationProfile {
+  visitorId: string;
+  model: string;
+  isPersonalized: boolean;
+  signalCount: number;
+  segment: string;
+  summary: string;
+  topCategories: PersonalizationScoreEntry[];
+  topSubCategories: PersonalizationScoreEntry[];
+  topNewsCategories: PersonalizationScoreEntry[];
+  topProducts: PersonalizationScoreEntry[];
+  topNews: PersonalizationScoreEntry[];
+  topRoutes: PersonalizationScoreEntry[];
+  lastActiveAt?: string;
+}
+
+export interface PersonalizedRecommendations {
+  visitorId: string;
+  profile: PersonalizationProfile;
+  products: Product[];
+  news: NewsItem[];
+}
+
+export interface RfqAttachment {
+  publicUrl: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export interface RfqRequestItemInput {
+  productId: string;
+  productName?: string;
+  targetSpecs?: string;
+}
+
+export interface RfqRequestPayload {
+  fullName: string;
+  email: string;
+  companyName?: string;
+  phoneWhatsapp?: string;
+  destinationPort: string;
+  incoterm: string;
+  monthlyVolume: string;
+  packaging?: string;
+  paymentTerms?: string;
+  certificationNeeded?: string;
+  timeline?: string;
+  message: string;
+  attachments?: RfqAttachment[];
+  items: RfqRequestItemInput[];
+}
+
 export interface ProvinceMapProduct {
   name: string;
   location: string;

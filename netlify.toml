@@ -3,6 +3,9 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[build.environment]
+  DATABASE_MODE = "turso"
+
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["express", "serverless-http", "@libsql/client", "@google/genai"]

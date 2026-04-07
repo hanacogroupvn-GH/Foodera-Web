@@ -5,6 +5,7 @@ import { useData } from '../context/DataContext';
 import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import AppShellLoader from '../components/AppShellLoader';
 import { useLocale } from '../context/LocaleContext';
+import { usePersonalization } from '../context/PersonalizationContext';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
 
@@ -273,6 +274,7 @@ const NewsDetail: React.FC = () => {
   const navigate = useNavigate();
   const { activeNews: news, isLoading } = useData();
   const { locale } = useLocale();
+  const { personalizedNews, hasPersonalizedContent, trackEvent } = usePersonalization();
   const primarySegment = useMemo(() => decodeRouteSegment(rawSlug), [rawSlug]);
   const legacyId = useMemo(() => decodeRouteSegment(rawLegacyId), [rawLegacyId]);
   const routeSlugSource = useMemo(
@@ -325,6 +327,18 @@ const NewsDetail: React.FC = () => {
         discussInsight: 'Discuss this insight',
         relatedInsights: 'Related Insights'
       };
+  const personalizedRelatedNews = useMemo(
+    () => (article ? personalizedNews.filter((item) => item.id !== article.id).slice(0, 3) : []),
+    [article, personalizedNews]
+  );
+  const relatedNews = useMemo(() => {
+    if (hasPersonalizedContent && personalizedRelatedNews.length > 0) {
+      return personalizedRelatedNews;
+    }
+
+    return localizedNews.filter((item) => item.id !== article?.id).slice(0, 3);
+  }, [article?.id, hasPersonalizedContent, localizedNews, personalizedRelatedNews]);
+  const isUsingPersonalizedRelatedNews = hasPersonalizedContent && personalizedRelatedNews.length > 0;
 
   const paragraphs = useMemo(() => {
     if (!localizedArticle) return [];
@@ -387,6 +401,29 @@ const NewsDetail: React.FC = () => {
   useEffect(() => {
     setIsImageBroken(false);
   }, [article?.id, article?.image]);
+
+  useEffect(() => {
+    if (!article) {
+      return;
+    }
+
+    void trackEvent(
+      {
+        entityType: 'news',
+        action: 'view',
+        itemId: article.id,
+        newsCategory: article.category,
+        locale,
+        metadata: {
+          surface: 'news_detail'
+        }
+      },
+      {
+        dedupeKey: `news-view:${article.id}`,
+        dedupeTtlMs: 2500
+      }
+    );
+  }, [article, locale, trackEvent]);
 
   useEffect(() => {
     if (!article) return;
@@ -641,13 +678,38 @@ const NewsDetail: React.FC = () => {
 
       <section className="bg-gray-50 py-20 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">{copy.relatedInsights}</h2>
+          <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">
+            {isUsingPersonalizedRelatedNews
+              ? locale === 'zh'
+                ? 'ä¸ºæ­¤è®¾å¤‡æŽ¨èçš„èµ„è®¯'
+                : 'Recommended Insights for This Device'
+              : copy.relatedInsights}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {localizedNews
-              .filter((n) => n.id !== article.id)
-              .slice(0, 3)
-              .map((related) => (
-                <Link key={related.id} to={getNewsPath(related)} className="group block">
+            {relatedNews.map((related) => (
+                <Link
+                  key={related.id}
+                  to={getNewsPath(related)}
+                  className="group block"
+                  onClick={() => {
+                    void trackEvent(
+                      {
+                        entityType: 'news',
+                        action: 'click',
+                        itemId: related.id,
+                        newsCategory: related.category,
+                        locale,
+                        metadata: {
+                          surface: 'news_related'
+                        }
+                      },
+                      {
+                        dedupeKey: `news-click:${related.id}:related`,
+                        dedupeTtlMs: 1200
+                      }
+                    );
+                  }}
+                >
                   <article className="h-full rounded-2xl border border-gray-100 bg-white p-3 shadow-sm group-hover:shadow-xl transition-all">
                     <div className="aspect-[16/9] rounded-xl overflow-hidden mb-5 border border-gray-100">
                       <img

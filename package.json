@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:local": "node scripts/dev.mjs local",
+    "dev:turso": "node scripts/dev.mjs turso",
     "dev:client": "vite --host localhost --strictPort",
     "dev:server": "node server/index.mjs",
+    "generate:local-seed": "node scripts/generate-local-seed.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.mjs"
@@ -15,6 +18,8 @@
     "@google/genai": "^1.38.0",
     "@libsql/client": "^0.17.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",

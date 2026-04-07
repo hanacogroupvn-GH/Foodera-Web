@@ -2,13 +2,11 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import AppShellLoader from '../components/AppShellLoader';
-import { api } from '../lib/apiClient';
 import {
   ArrowLeft,
   CheckCircle,
   Truck,
   FileText,
-  Send,
   ArrowRight,
   MapPin,
   Sun,
@@ -22,10 +20,13 @@ import {
   Database
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import RfqWorkflowForm from '../components/RfqWorkflowForm';
 import { useLocale } from '../context/LocaleContext';
+import { usePersonalization } from '../context/PersonalizationContext';
 import { getCategoryLabel, localizeProduct } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
+import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +34,16 @@ const ProductDetail: React.FC = () => {
   const { activeProducts: products, isLoading } = useData();
   const product = products.find((p) => p.id === id);
   const { locale } = useLocale();
+  const { personalizedProducts, hasPersonalizedContent, trackEvent } = usePersonalization();
   const localizedProduct = useMemo(() => (product ? localizeProduct(product, locale) : null), [locale, product]);
+
+  useDocumentMeta({
+    title: localizedProduct?.name || product?.name || (locale === 'zh' ? '产品详情' : 'Product Detail'),
+    description: localizedProduct?.shortDescription || product?.shortDescription || (locale === 'zh' ? 'Foodmax 出口产品详细信息与规格。' : 'Foodmax export product details and specifications.'),
+    canonicalUrl: product ? `${BASE_URL}${appRoutes.productById(product.id)}` : undefined,
+    ogUrl: product ? `${BASE_URL}${appRoutes.productById(product.id)}` : undefined,
+    ogImage: product?.image,
+  });
   const copy = locale === 'zh'
     ? {
         loader: '正在加载产品详情...',
@@ -97,18 +107,6 @@ const ProductDetail: React.FC = () => {
         responseTime: 'Standard Response Time: 12-24 Business Hours',
         quotationUnavailable: 'Quotation requests are temporarily unavailable because the CMS backend is not ready.'
       };
-
-  // form states (NEW)
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [orderVolume, setOrderVolume] = useState('');
-  const [message, setMessage] = useState('');
-
-  const [inquirySent, setInquirySent] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
   const packagingEntries = useMemo(
     () =>
       Object.entries(localizedProduct?.packaging || product?.packaging || {}).filter(
@@ -150,12 +148,43 @@ const ProductDetail: React.FC = () => {
     return () => observer.disconnect();
   }, [product]);
 
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+
+    void trackEvent(
+      {
+        entityType: 'product',
+        action: 'view',
+        itemId: product.id,
+        category: product.category,
+        subCategory: product.subCategory,
+        locale,
+        metadata: {
+          surface: 'product_detail'
+        }
+      },
+      {
+        dedupeKey: `product-view:${product.id}`,
+        dedupeTtlMs: 2500
+      }
+    );
+  }, [locale, product, trackEvent]);
+
+  const personalizedRelatedProducts = useMemo(
+    () => (product ? personalizedProducts.filter((item) => item.id !== product.id).slice(0, 4) : []),
+    [personalizedProducts, product]
+  );
   const relatedProducts = useMemo(() => {
     if (!product) return [];
-    return products
-      .filter((p) => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
-  }, [product, products]);
+    if (hasPersonalizedContent && personalizedRelatedProducts.length > 0) {
+      return personalizedRelatedProducts;
+    }
+
+    return products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  }, [hasPersonalizedContent, personalizedRelatedProducts, product, products]);
+  const isUsingPersonalizedRelated = hasPersonalizedContent && personalizedRelatedProducts.length > 0;
 
   if (isLoading && products.length === 0) {
     return <AppShellLoader compact label={copy.loader} />;
@@ -178,7 +207,7 @@ const ProductDetail: React.FC = () => {
   const isCoffee = product.category === 'Coffee';
   const hasProductPdf = Boolean(product.pdfUrl?.trim());
 
-  // Submit quotation requests through the app backend.
+  /* Legacy RFQ handler removed after migrating to RfqWorkflowForm.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product?.id) return;
@@ -197,6 +226,17 @@ const ProductDetail: React.FC = () => {
       });
 
       setInquirySent(true);
+      void trackEvent({
+        entityType: 'quote_request',
+        action: 'submit',
+        itemId: product.id,
+        category: product.category,
+        subCategory: product.subCategory,
+        locale,
+        metadata: {
+          orderVolume: orderVolume.trim() || undefined
+        }
+      });
 
       // clear inputs
       setFullName('');
@@ -215,6 +255,7 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  */
   const originData = useMemo(() => {
     if (isCashew) {
       return locale === 'zh'
@@ -588,16 +629,27 @@ const ProductDetail: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
               <div>
-                <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none">{copy.related}</h2>
+                <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none">
+                  {isUsingPersonalizedRelated ? (locale === 'zh' ? 'ä¸ºæ­¤è®¾å¤‡æŽ¨è' : 'Recommended for This Device') : copy.related}
+                </h2>
                 <p className="text-lg text-gray-500 font-medium mt-4">
-                  {copy.relatedDescPrefix} {getCategoryLabel(product.category, locale)} {copy.relatedDescSuffix}
+                  {isUsingPersonalizedRelated
+                    ? locale === 'zh'
+                      ? 'åŸºäºŽè¯¥è®¾å¤‡è¿‘æœŸæµè§ˆçš„äº§å“ä¸Žèµ„è®¯è¡Œä¸ºã€‚'
+                      : 'Based on recent product and news activity from this device.'
+                    : `${copy.relatedDescPrefix} ${getCategoryLabel(product.category, locale)} ${copy.relatedDescSuffix}`}
                 </p>
               </div>
               <Link
-                to={appRoutes.productsByCategory(product.category)}
+                to={isUsingPersonalizedRelated ? appRoutes.products : appRoutes.productsByCategory(product.category)}
                 className="inline-flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] group border-b-2 border-transparent hover:border-foodmax-lime transition-all pb-1"
               >
-                {copy.viewAllPrefix} {getCategoryLabel(product.category, locale)} {copy.viewAllSuffix} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                {isUsingPersonalizedRelated
+                  ? locale === 'zh'
+                    ? 'æµè§ˆç›®å½•'
+                    : 'Browse Catalog'
+                  : `${copy.viewAllPrefix} ${getCategoryLabel(product.category, locale)} ${copy.viewAllSuffix}`}{' '}
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
@@ -610,104 +662,25 @@ const ProductDetail: React.FC = () => {
         </section>
       )}
 
-      <section className="bg-white py-24 lg:py-32 border-t border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="bg-white border-2 border-foodmax-forest p-10 md:p-16 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-gray-50 rounded-full -mr-20 -mt-20 group-hover:bg-foodmax-forest/5 transition-colors duration-700"></div>
-
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-10 tracking-tight">{copy.requestQuotation}</h2>
-
-              {/* NEW: error display */}
-              {submitError && (
-                <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
-                  {submitError}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder={copy.yourName}
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-6 py-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-foodmax-forest outline-none text-sm font-medium placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <input
-                      type="email"
-                      placeholder={copy.businessEmail}
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-6 py-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-foodmax-forest outline-none text-sm font-medium placeholder:text-gray-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder={copy.companyName}
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="w-full px-6 py-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-foodmax-forest outline-none text-sm font-medium placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder={copy.orderVolume}
-                      value={orderVolume}
-                      onChange={(e) => setOrderVolume(e.target.value)}
-                      className="w-full px-6 py-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-foodmax-forest outline-none text-sm font-medium placeholder:text-gray-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <textarea
-                    rows={5}
-                    placeholder={copy.messagePlaceholder}
-                    required
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="w-full px-6 py-5 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-foodmax-forest outline-none text-sm font-medium placeholder:text-gray-400 resize-none"
-                  ></textarea>
-                </div>
-
-                <button
-                  disabled={sending || inquirySent}
-                  className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${
-                    inquirySent
-                      ? 'bg-green-500 text-white'
-                      : 'bg-foodmax-forest text-white hover:bg-foodmax-forest/90 active:scale-[0.98]'
-                  } ${sending ? 'opacity-80 cursor-not-allowed' : ''}`}
-                >
-                  {inquirySent ? (
-                    <>
-                      <CheckCircle size={20} /> {copy.inquirySubmitted}
-                    </>
-                  ) : (
-                    <>
-                      <Send size={18} /> {sending ? copy.sending : copy.sendInquiry}
-                    </>
-                  )}
-                </button>
-
-                <p className="text-[10px] text-gray-400 text-center uppercase tracking-[0.3em] font-black mt-8">
-                  {copy.responseTime}
-                </p>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
+      <RfqWorkflowForm
+        currentProduct={product}
+        products={products}
+        locale={locale}
+        onSubmitted={({ selectedProductIds, monthlyVolume }) => {
+          void trackEvent({
+            entityType: 'quote_request',
+            action: 'submit',
+            itemId: selectedProductIds[0] || product.id,
+            category: product.category,
+            subCategory: product.subCategory,
+            locale,
+            metadata: {
+              monthlyVolume,
+              itemCount: selectedProductIds.length
+            }
+          });
+        }}
+      />
     </div>
   );
 };

@@ -1,15 +1,19 @@
 import {
   NewsItem,
+  PersonalizedRecommendations,
+  PersonalizationTrackPayload,
   Product,
   ProvinceMapProfile,
-  ProvinceMapSuggestionResult
+  ProvinceMapSuggestionResult,
+  RfqAttachment,
+  RfqRequestPayload
 } from '../types';
 
 export type AdminSessionUser = {
   email: string;
 };
 
-export type BackendMode = 'turso' | 'fallback';
+export type BackendMode = 'turso' | 'local' | 'fallback';
 
 export class ApiError extends Error {
   status: number;
@@ -78,6 +82,28 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
 export const api = {
   getContent: () =>
     apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[] }>('/api/content'),
+  getPersonalizedRecommendations: (options?: { productLimit?: number; newsLimit?: number }) => {
+    const searchParams = new URLSearchParams();
+
+    if (options?.productLimit) {
+      searchParams.set('productLimit', String(options.productLimit));
+    }
+
+    if (options?.newsLimit) {
+      searchParams.set('newsLimit', String(options.newsLimit));
+    }
+
+    const query = searchParams.toString();
+    return apiRequest<PersonalizedRecommendations>(
+      `/api/personalization/recommendations${query ? `?${query}` : ''}`
+    );
+  },
+  trackPersonalizationEvent: (payload: PersonalizationTrackPayload) =>
+    apiRequest<{ ok: true } & PersonalizedRecommendations>('/api/personalization/events', {
+      method: 'POST',
+      body: payload,
+      keepalive: true
+    }),
   getProvinceMapProfiles: () =>
     apiRequest<{ profiles: ProvinceMapProfile[] }>('/api/map-profiles'),
   getSession: () =>
@@ -107,14 +133,16 @@ export const api = {
       method: 'POST',
       body: payload
     }),
-  submitQuotationRequest: (payload: {
-    productId: string;
-    fullName: string;
-    email: string;
-    companyName?: string;
-    orderVolume?: string;
-    message: string;
+  uploadRfqAttachment: (payload: {
+    dataUrl: string;
+    contentType: string;
+    fileName: string;
   }) =>
+    apiRequest<{ ok: true; attachment: RfqAttachment }>('/api/rfq/uploads', {
+      method: 'POST',
+      body: payload
+    }),
+  submitQuotationRequest: (payload: RfqRequestPayload) =>
     apiRequest<{ ok: true }>('/api/quotation-requests', {
       method: 'POST',
       body: payload

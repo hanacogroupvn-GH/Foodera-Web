@@ -2,74 +2,86 @@ import React, { useMemo, useState } from 'react';
 import { Mail, Phone, Send } from 'lucide-react';
 import { api } from '../lib/apiClient';
 import { useLocale } from '../context/LocaleContext';
+import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const Contact: React.FC = () => {
   const { locale } = useLocale();
+
+  useDocumentMeta({
+    title: locale === 'zh' ? '联系我们' : 'Contact Us',
+    description: locale === 'zh'
+      ? '联系 Foodmax 出口团队，咨询大米、咖啡、腰果出口合作事宜。24/7 全球出口热线与 WhatsApp 支持。'
+      : 'Contact Foodmax export specialists for rice, coffee & cashew import inquiries. 24/7 export hotline and WhatsApp support.',
+    canonicalUrl: `${BASE_URL}/contact`,
+    ogUrl: `${BASE_URL}/contact`,
+  });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const defaultSubject = locale === 'zh' ? '大米出口咨询' : 'Rice Export Inquiry';
-  const rawCopy = locale === 'zh'
-    ? {
-        required: '请填写所有必填字段。',
-        failed: '发送失败，请稍后重试。',
-        heroTitle: '联系我们',
-        heroDesc: '与我们的 B2B 出口专员沟通您的进口需求。',
-        emailChannels: '邮箱渠道',
-        exportInquiries: '全球出口咨询：',
-        emailNote: '我们的国际贸易团队 24/7 监控这些邮箱，便于快速响应。',
-        phoneWhatsapp: '电话与 WhatsApp',
-        hotline: '出口热线：',
-        available24: '支持 24/7 电话和 WhatsApp 信息',
-        inquiryTitle: '直接出口咨询',
-        inquiryReceived: '我们已收到您的咨询，会尽快与您联系。',
-        companyName: '公司名称',
-        fullName: '姓名',
-        email: '邮箱地址',
-        phone: '电话 / WhatsApp',
-        subject: '主题',
-        message: '消息内容',
-        sending: '发送中...',
-        send: '发送消息',
-        adminNote: '该咨询将存储到 Foodmax CMS，并可在后台查看。',
-        subjects: ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'],
-        headquarters: '全球总部',
-        directions: '获取路线',
-        officeLabel: '总部办公室',
-        address: '越南胡志明市第一郡多高坊丁先皇街 17 号',
-        mapTitle: 'Foodmax 总部位置'
-      }
-    : {
-        required: 'Please fill in all required fields.',
-        failed: 'Failed to send. Please try again.',
-        heroTitle: 'Connect With Us',
-        heroDesc: 'Discuss your import requirements with our dedicated B2B export specialists.',
-        emailChannels: 'Email Channels',
-        exportInquiries: 'Global Export Inquiries:',
-        emailNote: 'Both addresses monitored 24/7 by our international trade desk for immediate response.',
-        phoneWhatsapp: 'Direct Phone & WhatsApp',
-        hotline: 'Export Hotline:',
-        available24: 'Available for calls and WhatsApp messages 24/7',
-        inquiryTitle: 'Direct Export Inquiry',
-        inquiryReceived: "Inquiry received. We'll be in touch shortly.",
-        companyName: 'Company Name',
-        fullName: 'Full Name',
-        email: 'Email Address',
-        phone: 'Phone / WhatsApp',
-        subject: 'Subject',
-        message: 'Message Detail',
-        sending: 'SENDING...',
-        send: 'SEND MESSAGE',
-        adminNote: 'This inquiry will be stored in Foodmax CMS and visible to Admin.',
-        subjects: ['Rice Export Inquiry', 'Coffee Export Inquiry', 'Logistics & Shipping', 'Private Label Partnership', 'Other Corporate Inquiry'],
-        headquarters: 'Global Headquarters',
-        directions: 'Get Directions',
-        officeLabel: 'HQ Office',
-        address: '17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam',
-        mapTitle: 'Foodmax Headquarters Location'
-      };
+const enCopy = {
+  required: 'Please fill in all required fields.',
+  failed: 'Failed to send. Please try again.',
+  heroTitle: 'Connect With Us',
+  heroDesc: 'Discuss your import requirements with our dedicated B2B export specialists.',
+  emailChannels: 'Email Channels',
+  exportInquiries: 'Global Export Inquiries:',
+  emailNote: 'Both addresses monitored 24/7 by our international trade desk for immediate response.',
+  phoneWhatsapp: 'Direct Phone & WhatsApp',
+  hotline: 'Export Hotline:',
+  available24: 'Available for calls and WhatsApp messages 24/7',
+  inquiryTitle: 'Direct Export Inquiry',
+  inquiryReceived: "Inquiry received. We'll be in touch shortly.",
+  companyName: 'Company Name',
+  fullName: 'Full Name',
+  email: 'Email Address',
+  phone: 'Phone / WhatsApp',
+  subject: 'Subject',
+  message: 'Message Detail',
+  sending: 'SENDING...',
+  send: 'SEND MESSAGE',
+  adminNote: 'This inquiry will be stored in Foodmax CMS and visible to Admin.',
+  subjects: ['Rice Export Inquiry', 'Coffee Export Inquiry', 'Logistics & Shipping', 'Private Label Partnership', 'Other Corporate Inquiry'],
+  headquarters: 'Global Headquarters',
+  directions: 'Get Directions',
+  officeLabel: 'HQ Office',
+  address: '17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam',
+  mapTitle: 'Foodmax Headquarters Location'
+};
+
+const zhCopy = {
+  required: '请填写所有必填字段。',
+  failed: '发送失败，请稍后重试。',
+  heroTitle: '联系我们',
+  heroDesc: '与我们的 B2B 出口专员沟通您的进口需求。',
+  emailChannels: '邮箱渠道',
+  exportInquiries: '全球出口咨询：',
+  emailNote: '我们的国际贸易团队 24/7 监控这些邮箱，便于快速响应。',
+  phoneWhatsapp: '电话与 WhatsApp',
+  hotline: '出口热线：',
+  available24: '支持 24/7 电话和 WhatsApp 信息',
+  inquiryTitle: '直接出口咨询',
+  inquiryReceived: '我们已收到您的咨询，会尽快与您联系。',
+  companyName: '公司名称',
+  fullName: '姓名',
+  email: '邮箱地址',
+  phone: '电话 / WhatsApp',
+  subject: '主题',
+  message: '消息内容',
+  sending: '发送中...',
+  send: '发送消息',
+  adminNote: '该咨询将存储到 Foodmax CMS，并可在后台查看。',
+  subjects: ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'],
+  headquarters: '全球总部',
+  directions: '获取路线',
+  officeLabel: '总部办公室',
+  address: '越南胡志明市第一郡多高坊丁先皇街 17 号',
+  mapTitle: 'Foodmax 总部位置'
+};
+
+  const rawCopy = locale === 'zh' ? zhCopy : enCopy;
   const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
   const [form, setForm] = useState({

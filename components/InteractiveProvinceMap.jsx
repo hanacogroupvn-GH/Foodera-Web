@@ -894,20 +894,25 @@ function MapViewportController({ focusBounds, resetSequence, onMapReady }) {
       return undefined;
     }
 
+    let timeoutId;
     const syncSize = () => {
-      map.invalidateSize({
-        pan: false,
-        animate: false
-      });
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        map.invalidateSize({
+          pan: false,
+          animate: false
+        });
+      }, 50);
     };
     const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(syncSize);
 
     resizeObserver?.observe(container);
-    window.addEventListener("load", syncSize);
+    window.addEventListener("resize", syncSize);
 
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
       resizeObserver?.disconnect();
-      window.removeEventListener("load", syncSize);
+      window.removeEventListener("resize", syncSize);
     };
   }, [focusBounds, map]);
 
@@ -1355,12 +1360,12 @@ function focusProvinceLayer(layer) {
           boxZoom={false}
           keyboard={false}
           dragging
-          zoomAnimation={false}
-          fadeAnimation={false}
-          markerZoomAnimation={false}
-          zoomSnap={0.25}
-          zoomDelta={0.5}
-          wheelPxPerZoomLevel={115}
+          zoomAnimation={true}
+          fadeAnimation={true}
+          markerZoomAnimation={true}
+          zoomSnap={1}
+          zoomDelta={1}
+          wheelPxPerZoomLevel={120}
           inertia
           easeLinearity={0.2}
           className="leaflet-stage"
@@ -1373,8 +1378,8 @@ function focusProvinceLayer(layer) {
               subdomains="abcd"
               maxZoom={20}
               maxNativeZoom={20}
-              keepBuffer={2}
-              updateWhenIdle
+              keepBuffer={4}
+              updateWhenIdle={false}
               updateWhenZooming={false}
             />
           </Pane>

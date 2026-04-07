@@ -6,36 +6,51 @@
   --font-sans: "Inter", sans-serif;
 }
 
+/* Core Styling with CSS Variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --border-color: #e5e7eb;
+}
+
+.dark {
+  --bg-primary: #0b1114;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+  color-scheme: dark;
+}
+
 body {
-  background-color: #ffffff;
-  color: #111827;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
-.dark body {
-  background-color: #0b1114;
-  color: #e5e7eb;
-}
-
+/* Premium Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--bg-tertiary);
 }
 
 ::-webkit-scrollbar-thumb {
   background: #006838;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #8cc63f;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: #111827;
 }
 
 .dark ::-webkit-scrollbar-thumb {
@@ -46,62 +61,62 @@ body {
   background: #a3e635;
 }
 
-.dark .bg-white {
-  background-color: #0f172a;
+/* 
+  Legacy Overrides 
+  (Maps existing hardcoded CSS utility injections back to the native variables)
+*/
+.dark .bg-white { background-color: var(--bg-secondary) !important; }
+.dark .bg-gray-50 { background-color: var(--bg-primary) !important; }
+.dark .text-gray-900 { color: var(--text-primary) !important; }
+.dark .text-gray-600, 
+.dark .text-gray-500 { color: var(--text-secondary) !important; }
+.dark .border-gray-100 { border-color: #1e293b !important; }
+.dark .border-gray-200 { border-color: var(--border-color) !important; }
+
+.dark .text-foodmax-forest { color: #22c55e !important; }
+.dark .bg-foodmax-forest { background-color: #0f3d2a !important; }
+.dark .text-foodmax-lime { color: #a3e635 !important; }
+.dark .bg-foodmax-lime { background-color: #84cc16 !important; }
+
+/* Premium UI Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
 }
 
-.dark .bg-gray-50 {
-  background-color: #0b1114;
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
-.dark .text-gray-900 {
-  color: #f1f5f9;
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s;
 }
 
-.dark .text-gray-600,
-.dark .text-gray-500 {
-  color: #cbd5f5;
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-.dark .border-gray-100 {
-  border-color: #1f2937;
+.dark .hover-lift:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
-.dark .border-gray-200 {
-  border-color: #233043;
-}
-
-.dark .text-foodmax-forest {
-  color: #22c55e;
-}
-
-.dark .bg-foodmax-forest {
-  background-color: #0f3d2a;
-}
-
-.dark .text-foodmax-lime {
-  color: #a3e635;
-}
-
-.dark .bg-foodmax-lime {
-  background-color: #84cc16;
-}
-
+/* Animations */
 @keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-8px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
 }
 
-.animate-float-delayed {
-  animation: float 3s ease-in-out 1.5s infinite;
-}
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-float-delayed { animation: float 3s ease-in-out 1.5s infinite; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }

@@ -4,6 +4,10 @@ const isWindows = process.platform === 'win32';
 const npmCommand = isWindows ? 'npm.cmd' : 'npm';
 const children = [];
 let shuttingDown = false;
+const requestedMode = String(process.argv[2] || '').trim().toLowerCase();
+
+const resolvedDatabaseMode =
+  requestedMode === 'local' || requestedMode === 'turso' ? requestedMode : undefined;
 
 const shutdown = (code = 0) => {
   if (shuttingDown) {
@@ -28,7 +32,10 @@ const spawnTask = (args) => {
   const child = spawn(childCommand, childArgs, {
     stdio: ['inherit', 'pipe', 'pipe'],
     shell: false,
-    env: process.env
+    env: {
+      ...process.env,
+      ...(resolvedDatabaseMode ? { DATABASE_MODE: resolvedDatabaseMode } : {})
+    }
   });
 
   child.stdout?.on('data', (chunk) => {

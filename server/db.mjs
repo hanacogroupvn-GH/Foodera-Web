@@ -1,5 +1,8 @@
 import { createClient } from '@libsql/client';
 import crypto from 'node:crypto';
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const SCHEMA_STATEMENTS = [
   `
@@ -69,8 +72,27 @@ const SCHEMA_STATEMENTS = [
       full_name text not null,
       email text not null,
       company_name text,
+      phone_whatsapp text,
+      destination_port text not null default '',
+      incoterm text not null default '',
       order_volume text,
+      packaging text,
+      payment_terms text,
+      certification_needed text,
+      timeline text,
       message text not null,
+      items_count integer not null default 1,
+      attachments_json text not null default '[]',
+      created_at text not null default CURRENT_TIMESTAMP
+    )
+  `,
+  `
+    create table if not exists quotation_request_items (
+      id integer primary key autoincrement,
+      quotation_request_id integer not null,
+      product_id text not null,
+      product_name text not null default '',
+      target_specs text,
       created_at text not null default CURRENT_TIMESTAMP
     )
   `,
@@ -92,6 +114,39 @@ const SCHEMA_STATEMENTS = [
       varieties text not null default '',
       products text not null default '[]',
       created_at text not null default CURRENT_TIMESTAMP,
+      updated_at text not null default CURRENT_TIMESTAMP
+    )
+  `,
+  `
+    create table if not exists personalization_events (
+      id text primary key,
+      visitor_id text not null,
+      ip_hash text not null,
+      user_agent_hash text,
+      entity_type text not null,
+      action text not null,
+      item_id text,
+      route text,
+      category text,
+      sub_category text,
+      news_category text,
+      locale text,
+      weight real not null default 1,
+      metadata text not null default '{}',
+      created_at text not null default CURRENT_TIMESTAMP
+    )
+  `,
+  'create index if not exists idx_personalization_events_visitor on personalization_events(visitor_id, created_at desc)',
+  'create index if not exists idx_personalization_events_entity on personalization_events(entity_type, item_id, created_at desc)',
+  `
+    create table if not exists personalization_profiles (
+      visitor_id text primary key,
+      ip_hash text not null default '',
+      user_agent_hash text not null default '',
+      segment text not null default '',
+      summary text not null default '',
+      profile_json text not null default '{}',
+      last_active_at text,
       updated_at text not null default CURRENT_TIMESTAMP
     )
   `
@@ -144,6 +199,117 @@ const PROVINCE_MAP_PROFILE_COLUMNS = [
   ["varieties", "text not null default ''"]
 ];
 
+const QUOTATION_REQUEST_COLUMNS = [
+  ["phone_whatsapp", 'text'],
+  ["destination_port", "text not null default ''"],
+  ["incoterm", "text not null default ''"],
+  ['packaging', 'text'],
+  ['payment_terms', 'text'],
+  ['certification_needed', 'text'],
+  ['timeline', 'text'],
+  ['items_count', 'integer not null default 1'],
+  ["attachments_json", "text not null default '[]'"]
+];
+
+const DEFAULT_LOCAL_DATABASE_PATH = path.join('tmp', 'foodmax-local.db');
+
+const normalizeDatabaseMode = (value) => {
+  const normalized = String(value ?? 'auto').trim().toLowerCase();
+  return normalized === 'turso' || normalized === 'local' ? normalized : 'auto';
+};
+
+const isTruthy = (value) => ['1', 'true', 'yes', 'on'].includes(String(value ?? '').trim().toLowerCase());
+
+const resolveDatabaseEnv = (env = process.env) => ({
+  requestedMode: normalizeDatabaseMode(env.DATABASE_MODE),
+  tursoUrl: String(env.TURSO_DATABASE_URL || env.LIBSQL_URL || '').trim(),
+  tursoAuthToken: String(env.TURSO_AUTH_TOKEN || env.LIBSQL_AUTH_TOKEN || '').trim(),
+  localDatabasePath: String(env.LOCAL_DATABASE_PATH || '').trim(),
+  allowLocalDatabase: isTruthy(env.ALLOW_LOCAL_DATABASE),
+  isServerlessRuntime: Boolean(env.NETLIFY || env.AWS_LAMBDA_FUNCTION_NAME)
+});
+
+const resolveLocalDatabasePath = (projectRoot, configuredPath = '') => {
+  const targetPath = configuredPath || DEFAULT_LOCAL_DATABASE_PATH;
+  return path.isAbsolute(targetPath) ? targetPath : path.resolve(projectRoot, targetPath);
+};
+
+export const resolveDatabaseConfig = (
+  env = process.env,
+  { projectRoot = process.cwd(), allowLocalFallback = false } = {}
+) => {
+  const databaseEnv = resolveDatabaseEnv(env);
+  const hasTursoConfig = Boolean(databaseEnv.tursoUrl && databaseEnv.tursoAuthToken);
+  const canUseLocalDatabase =
+    databaseEnv.requestedMode === 'local' ||
+    databaseEnv.allowLocalDatabase ||
+    allowLocalFallback;
+
+  if (databaseEnv.requestedMode === 'turso') {
+    if (!hasTursoConfig) {
+      throw new Error('DATABASE_MODE=turso requires TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.');
+    }
+
+    return {
+      mode: 'turso',
+      provider: 'turso',
+      url: databaseEnv.tursoUrl,
+      authToken: databaseEnv.tursoAuthToken,
+      localPath: null
+    };
+  }
+
+  if (hasTursoConfig) {
+    return {
+      mode: 'turso',
+      provider: 'turso',
+      url: databaseEnv.tursoUrl,
+      authToken: databaseEnv.tursoAuthToken,
+      localPath: null
+    };
+  }
+
+  if (canUseLocalDatabase) {
+    const localPath = resolveLocalDatabasePath(projectRoot, databaseEnv.localDatabasePath);
+    return {
+      mode: 'local',
+      provider: 'sqlite',
+      url: pathToFileURL(localPath).href,
+      authToken: undefined,
+      localPath
+    };
+  }
+
+  if (databaseEnv.isServerlessRuntime) {
+    throw new Error(
+      'Missing Turso configuration in the serverless runtime. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in production.'
+    );
+  }
+
+  throw new Error(
+    'Missing Turso configuration. For local development, set DATABASE_MODE=local or configure TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.'
+  );
+};
+
+export const createDatabaseConnection = (
+  env = process.env,
+  options = {}
+) => {
+  const config = resolveDatabaseConfig(env, options);
+
+  if (config.localPath) {
+    mkdirSync(path.dirname(config.localPath), { recursive: true });
+  }
+
+  return {
+    client: createClient({
+      url: config.url,
+      authToken: config.authToken
+    }),
+    config
+  };
+};
+
 export const createTursoConnection = (env = process.env) => {
   const url = env.TURSO_DATABASE_URL?.trim();
   const authToken = env.TURSO_AUTH_TOKEN?.trim();
@@ -161,6 +327,17 @@ export const createTursoConnection = (env = process.env) => {
 export const ensureDatabaseSchema = async (client) => {
   for (const statement of SCHEMA_STATEMENTS) {
     await client.execute(statement);
+  }
+
+  const quotationRequestColumns = await client.execute('pragma table_info(quotation_requests)');
+  const existingQuotationRequestColumns = new Set(quotationRequestColumns.rows.map((row) => String(row.name ?? '').trim()));
+
+  for (const [columnName, columnDefinition] of QUOTATION_REQUEST_COLUMNS) {
+    if (existingQuotationRequestColumns.has(columnName)) {
+      continue;
+    }
+
+    await client.execute(`alter table quotation_requests add column ${columnName} ${columnDefinition}`);
   }
 
   const provinceMapProfileColumns = await client.execute('pragma table_info(province_map_profiles)');
@@ -249,6 +426,35 @@ const mapProvinceMapProfileRow = (row) => ({
   characteristics: String(row.characteristics ?? ''),
   varieties: String(row.varieties ?? ''),
   products: parseJsonColumn(row.products, []),
+  updatedAt: row.updated_at ? String(row.updated_at) : undefined
+});
+
+const mapPersonalizationEventRow = (row) => ({
+  id: String(row.id ?? ''),
+  visitorId: String(row.visitor_id ?? ''),
+  ipHash: String(row.ip_hash ?? ''),
+  userAgentHash: row.user_agent_hash ? String(row.user_agent_hash) : '',
+  entityType: String(row.entity_type ?? ''),
+  action: String(row.action ?? ''),
+  itemId: row.item_id ? String(row.item_id) : undefined,
+  route: row.route ? String(row.route) : undefined,
+  category: row.category ? String(row.category) : undefined,
+  subCategory: row.sub_category ? String(row.sub_category) : undefined,
+  newsCategory: row.news_category ? String(row.news_category) : undefined,
+  locale: row.locale ? String(row.locale) : undefined,
+  weight: Number(row.weight ?? 1) || 1,
+  metadata: parseJsonColumn(row.metadata, {}),
+  createdAt: row.created_at ? String(row.created_at) : undefined
+});
+
+const mapPersonalizationProfileRow = (row) => ({
+  visitorId: String(row.visitor_id ?? ''),
+  ipHash: String(row.ip_hash ?? ''),
+  userAgentHash: String(row.user_agent_hash ?? ''),
+  segment: String(row.segment ?? ''),
+  summary: String(row.summary ?? ''),
+  profile: parseJsonColumn(row.profile_json, {}),
+  lastActiveAt: row.last_active_at ? String(row.last_active_at) : undefined,
   updatedAt: row.updated_at ? String(row.updated_at) : undefined
 });
 
@@ -439,21 +645,111 @@ export const insertContactInquiry = async (client, inquiry) => {
 };
 
 export const insertQuotationRequest = async (client, inquiry) => {
+  const normalizedItems = Array.from(
+    new Map(
+      (
+        Array.isArray(inquiry?.items) && inquiry.items.length > 0
+          ? inquiry.items
+          : inquiry?.productId
+            ? [
+                {
+                  productId: inquiry.productId,
+                  productName: inquiry.productName,
+                  targetSpecs: inquiry.targetSpecs
+                }
+              ]
+            : []
+      )
+        .map((item) => ({
+          productId: String(item?.productId ?? '').trim(),
+          productName: String(item?.productName ?? '').trim(),
+          targetSpecs: String(item?.targetSpecs ?? '').trim()
+        }))
+        .filter((item) => item.productId)
+        .map((item) => [item.productId, item])
+    ).values()
+  );
+
+  if (!String(inquiry?.fullName ?? '').trim()) {
+    throw new Error('Full name is required.');
+  }
+
+  if (!String(inquiry?.email ?? '').trim()) {
+    throw new Error('Email is required.');
+  }
+
+  if (normalizedItems.length === 0) {
+    throw new Error('At least one product is required for an RFQ.');
+  }
+
+  if (!String(inquiry?.destinationPort ?? '').trim()) {
+    throw new Error('Destination port is required.');
+  }
+
+  if (!String(inquiry?.incoterm ?? '').trim()) {
+    throw new Error('Incoterm is required.');
+  }
+
+  if (!String(inquiry?.monthlyVolume ?? inquiry?.orderVolume ?? '').trim()) {
+    throw new Error('Monthly volume is required.');
+  }
+
+  if (!String(inquiry?.message ?? '').trim()) {
+    throw new Error('Message is required.');
+  }
+
+  const attachments = Array.isArray(inquiry?.attachments)
+    ? inquiry.attachments
+        .map((item) => ({
+          publicUrl: String(item?.publicUrl ?? '').trim(),
+          fileName: String(item?.fileName ?? '').trim(),
+          contentType: String(item?.contentType ?? '').trim(),
+          sizeBytes: Number(item?.sizeBytes ?? 0) || 0
+        }))
+        .filter((item) => item.publicUrl && item.fileName)
+    : [];
+
+  const primaryProductId = normalizedItems[0]?.productId || '';
   await client.execute({
     sql: `
       insert into quotation_requests (
-        product_id, full_name, email, company_name, order_volume, message
-      ) values (?, ?, ?, ?, ?, ?)
+        product_id, full_name, email, company_name, phone_whatsapp, destination_port, incoterm,
+        order_volume, packaging, payment_terms, certification_needed, timeline, message,
+        items_count, attachments_json
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     args: [
-      String(inquiry.productId ?? ''),
-      String(inquiry.fullName ?? ''),
-      String(inquiry.email ?? ''),
-      inquiry.companyName ? String(inquiry.companyName) : null,
-      inquiry.orderVolume ? String(inquiry.orderVolume) : null,
-      String(inquiry.message ?? '')
+      primaryProductId,
+      String(inquiry.fullName ?? '').trim(),
+      String(inquiry.email ?? '').trim(),
+      inquiry.companyName ? String(inquiry.companyName).trim() : null,
+      inquiry.phoneWhatsapp ? String(inquiry.phoneWhatsapp).trim() : null,
+      String(inquiry.destinationPort ?? '').trim(),
+      String(inquiry.incoterm ?? '').trim(),
+      String(inquiry.monthlyVolume ?? inquiry.orderVolume ?? '').trim(),
+      inquiry.packaging ? String(inquiry.packaging).trim() : null,
+      inquiry.paymentTerms ? String(inquiry.paymentTerms).trim() : null,
+      inquiry.certificationNeeded ? String(inquiry.certificationNeeded).trim() : null,
+      inquiry.timeline ? String(inquiry.timeline).trim() : null,
+      String(inquiry.message ?? '').trim(),
+      normalizedItems.length,
+      stringifyJsonColumn(attachments, [])
     ]
   });
+
+  const requestIdResult = await client.execute('select last_insert_rowid() as id');
+  const requestId = Number(requestIdResult.rows[0]?.id ?? 0);
+
+  for (const item of normalizedItems) {
+    await client.execute({
+      sql: `
+        insert into quotation_request_items (
+          quotation_request_id, product_id, product_name, target_specs
+        ) values (?, ?, ?, ?)
+      `,
+      args: [requestId, item.productId, item.productName || item.productId, item.targetSpecs || null]
+    });
+  }
 };
 
 export const findAdminByEmail = async (client, email) => {
@@ -583,4 +879,172 @@ export const deleteProvinceMapProfileById = async (client, provinceId) => {
     sql: 'delete from province_map_profiles where province_id = ?',
     args: [String(provinceId ?? '')]
   });
+};
+
+export const insertPersonalizationEvent = async (client, event) => {
+  const normalizedEvent = {
+    id: String(event?.id ?? crypto.randomUUID()),
+    visitorId: String(event?.visitorId ?? '').trim(),
+    ipHash: String(event?.ipHash ?? '').trim(),
+    userAgentHash: String(event?.userAgentHash ?? '').trim(),
+    entityType: String(event?.entityType ?? '').trim(),
+    action: String(event?.action ?? '').trim(),
+    itemId: event?.itemId ? String(event.itemId).trim() : null,
+    route: event?.route ? String(event.route).trim() : null,
+    category: event?.category ? String(event.category).trim() : null,
+    subCategory: event?.subCategory ? String(event.subCategory).trim() : null,
+    newsCategory: event?.newsCategory ? String(event.newsCategory).trim() : null,
+    locale: event?.locale ? String(event.locale).trim() : null,
+    weight: Number.isFinite(Number(event?.weight)) ? Number(event.weight) : 1,
+    metadata: stringifyJsonColumn(event?.metadata, {})
+  };
+
+  await client.execute({
+    sql: `
+      insert into personalization_events (
+        id, visitor_id, ip_hash, user_agent_hash, entity_type, action, item_id, route,
+        category, sub_category, news_category, locale, weight, metadata, created_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `,
+    args: [
+      normalizedEvent.id,
+      normalizedEvent.visitorId,
+      normalizedEvent.ipHash,
+      normalizedEvent.userAgentHash || null,
+      normalizedEvent.entityType,
+      normalizedEvent.action,
+      normalizedEvent.itemId,
+      normalizedEvent.route,
+      normalizedEvent.category,
+      normalizedEvent.subCategory,
+      normalizedEvent.newsCategory,
+      normalizedEvent.locale,
+      normalizedEvent.weight,
+      normalizedEvent.metadata
+    ]
+  });
+
+  const result = await client.execute({
+    sql: 'select * from personalization_events where id = ? limit 1',
+    args: [normalizedEvent.id]
+  });
+
+  return mapPersonalizationEventRow(result.rows[0]);
+};
+
+export const listPersonalizationEventsByVisitor = async (client, visitorId, limit = 250) => {
+  const safeLimit = Math.max(1, Math.min(1000, Number(limit) || 250));
+  const result = await client.execute({
+    sql: `
+      select *
+      from personalization_events
+      where visitor_id = ?
+        and created_at >= datetime('now', '-90 days')
+      order by created_at desc, id desc
+      limit ${safeLimit}
+    `,
+    args: [String(visitorId ?? '').trim()]
+  });
+
+  return result.rows.map(mapPersonalizationEventRow);
+};
+
+export const listRecentPersonalizationProfiles = async (client, options = {}) => {
+  const excludeVisitorId = String(options?.excludeVisitorId ?? '').trim();
+  const safeLimit = Math.max(1, Math.min(200, Number(options?.limit) || 60));
+  const hasExclusion = Boolean(excludeVisitorId);
+  const result = await client.execute({
+    sql: `
+      select *
+      from personalization_profiles
+      ${hasExclusion ? 'where visitor_id != ?' : ''}
+      order by updated_at desc, visitor_id asc
+      limit ${safeLimit}
+    `,
+    args: hasExclusion ? [excludeVisitorId] : []
+  });
+
+  return result.rows.map(mapPersonalizationProfileRow);
+};
+
+export const listRecentPersonalizationEventsByVisitors = async (client, visitorIds, limit = 500) => {
+  const safeVisitorIds = Array.from(
+    new Set((Array.isArray(visitorIds) ? visitorIds : []).map((value) => String(value ?? '').trim()).filter(Boolean))
+  );
+  if (safeVisitorIds.length === 0) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(2000, Number(limit) || 500));
+  const placeholders = safeVisitorIds.map(() => '?').join(', ');
+  const result = await client.execute({
+    sql: `
+      select *
+      from personalization_events
+      where visitor_id in (${placeholders})
+        and created_at >= datetime('now', '-90 days')
+      order by created_at desc, id desc
+      limit ${safeLimit}
+    `,
+    args: safeVisitorIds
+  });
+
+  return result.rows.map(mapPersonalizationEventRow);
+};
+
+export const findPersonalizationProfileByVisitor = async (client, visitorId) => {
+  const result = await client.execute({
+    sql: `
+      select *
+      from personalization_profiles
+      where visitor_id = ?
+      limit 1
+    `,
+    args: [String(visitorId ?? '').trim()]
+  });
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return mapPersonalizationProfileRow(result.rows[0]);
+};
+
+export const upsertPersonalizationProfile = async (client, payload) => {
+  const normalizedPayload = {
+    visitorId: String(payload?.visitorId ?? '').trim(),
+    ipHash: String(payload?.ipHash ?? '').trim(),
+    userAgentHash: String(payload?.userAgentHash ?? '').trim(),
+    segment: String(payload?.segment ?? '').trim(),
+    summary: String(payload?.summary ?? '').trim(),
+    profile: stringifyJsonColumn(payload?.profile, {}),
+    lastActiveAt: payload?.lastActiveAt ? String(payload.lastActiveAt).trim() : null
+  };
+
+  await client.execute({
+    sql: `
+      insert into personalization_profiles (
+        visitor_id, ip_hash, user_agent_hash, segment, summary, profile_json, last_active_at, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      on conflict(visitor_id) do update set
+        ip_hash = excluded.ip_hash,
+        user_agent_hash = excluded.user_agent_hash,
+        segment = excluded.segment,
+        summary = excluded.summary,
+        profile_json = excluded.profile_json,
+        last_active_at = excluded.last_active_at,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+    args: [
+      normalizedPayload.visitorId,
+      normalizedPayload.ipHash,
+      normalizedPayload.userAgentHash,
+      normalizedPayload.segment,
+      normalizedPayload.summary,
+      normalizedPayload.profile,
+      normalizedPayload.lastActiveAt
+    ]
+  });
+
+  return findPersonalizationProfileByVisitor(client, normalizedPayload.visitorId);
 };

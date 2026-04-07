@@ -34,6 +34,7 @@ const AdminDashboard: React.FC = () => {
   const { locale, setLocale } = useLocale();
   const navigate = useNavigate();
   const isTursoMode = backendMode === 'turso';
+  const isLocalBackendMode = backendMode === 'local';
   
   const [importStatus, setImportStatus] = useState<{message: string, type: 'success' | 'error' | null}>({message: '', type: null});
   const rawCopy =
@@ -124,6 +125,14 @@ const AdminDashboard: React.FC = () => {
           ? 'Turso Cloud'
           : 'Fallback Mode'
   };
+
+  if (isLocalBackendMode) {
+    copy.pageDesc =
+      locale === 'zh'
+        ? '\u5f53\u524d\u4f7f\u7528\u672c\u5730 SQLite \u5185\u5bb9\u5e93\u8fd0\u884c CMS\uff0c\u9002\u7528\u4e8e\u672c\u5730\u5f00\u53d1\u4e0e\u9a8c\u8bc1\u3002'
+        : 'Running the CMS on a local SQLite database for development.';
+    copy.localOffline = 'Local SQLite';
+  }
 
   const handleLogout = () => {
     logout();

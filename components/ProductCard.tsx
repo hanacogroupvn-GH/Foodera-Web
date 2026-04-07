@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { Product } from '../types';
 import { useLocale } from '../context/LocaleContext';
+import { usePersonalization } from '../context/PersonalizationContext';
 import { getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
 
@@ -13,6 +14,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { locale } = useLocale();
+  const { trackEvent } = usePersonalization();
   const localizedProduct = localizeProduct(product, locale);
   const copy = locale === 'zh'
     ? {
@@ -58,12 +60,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <Link 
       to={appRoutes.productById(product.id)}
+      onClick={() => {
+        void trackEvent(
+          {
+            entityType: 'product',
+            action: 'click',
+            itemId: product.id,
+            category: product.category,
+            subCategory: product.subCategory,
+            locale,
+            metadata: {
+              surface: 'product_card'
+            }
+          },
+          {
+            dedupeKey: `product-click:${product.id}:${window.location.pathname}`,
+            dedupeTtlMs: 1200
+          }
+        );
+      }}
       className="group block bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 transform hover:-translate-y-2 overflow-hidden flex flex-col h-full"
     >
       <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">
         <img 
           src={product.image} 
           alt={localizedProduct.name} 
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute top-4 left-4">

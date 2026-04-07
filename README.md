@@ -6,7 +6,7 @@ Foodmax website and CMS for Vietnamese rice, coffee, cashew, and interactive pro
 
 - Frontend: React + Vite
 - Backend: Express
-- Database: Turso
+- Database: Turso in production, SQLite file for local development when needed
 - AI routes: Gemini or Ollama
 - Deploy target: Netlify Functions for `/api/*`
 
@@ -22,17 +22,39 @@ npm install
 npm run dev
 ```
 
+Explicit database mode during local development:
+
+```bash
+npm run dev:local
+npm run dev:turso
+```
+
+Recommended split:
+- Keep shared or official-style defaults in `.env`
+- Put machine-only overrides in `.env.local`
+- `.env.local` overrides `.env` locally, while shell/hosting environment variables still win
+
+Refresh the local seed snapshot after catalog/news changes:
+
+```bash
+npm run generate:local-seed
+```
+
 Client runs on `http://localhost:3000`.
 Server runs on `http://localhost:8787` by default.
 
 ## Environment variables
 
-Copy `.env.example` to `.env` or `.env.local`.
+Copy `.env.example` to `.env`. If you want local-only overrides, copy `.env.local.example` to `.env.local`.
 
-Required:
-- `TURSO_DATABASE_URL`
-- `TURSO_AUTH_TOKEN`
+Required in all environments:
 - `SESSION_SECRET`
+
+Database:
+- `DATABASE_MODE=auto|turso|local`
+- `LOCAL_DATABASE_PATH` optional for local SQLite mode
+- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` required for production/serverless
+- Local SQLite databases auto-seed on first boot from `generated/local-seed-content.json`
 
 Admin bootstrap:
 - `ADMIN_EMAIL`
@@ -70,6 +92,7 @@ npm run build
 The repository includes `netlify.toml` and a function wrapper that serves the Express app through Netlify Functions.
 
 Required Netlify environment variables:
+- `DATABASE_MODE=turso`
 - `TURSO_DATABASE_URL`
 - `TURSO_AUTH_TOKEN`
 - `SESSION_SECRET`
@@ -86,6 +109,8 @@ Optional:
 
 ## Notes
 
-- Content data is stored in Turso.
+- Production content data should be stored in Turso.
+- Local Node development can run against `LOCAL_DATABASE_PATH` when `DATABASE_MODE=local` or when Turso credentials are absent and `DATABASE_MODE=auto`.
+- Local SQLite mode now auto-imports the default product/news dataset on a fresh database.
 - Product images migrated from the legacy object storage now live under `public/media/migrated`.
 - Legacy migration scripts and deployment artifacts have been removed from this project.

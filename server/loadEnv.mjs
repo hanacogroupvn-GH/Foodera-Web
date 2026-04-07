@@ -21,13 +21,26 @@ const parseEnvFile = (content) =>
   );
 
 export const loadProjectEnv = async (projectRoot) => {
+  const lockedKeys = new Set(Object.keys(process.env));
+  const fileLoadedKeys = new Set();
+
   for (const fileName of ['.env', '.env.local']) {
     try {
       const content = await fs.readFile(path.join(projectRoot, fileName), 'utf8');
       const parsed = parseEnvFile(content);
       for (const [key, value] of Object.entries(parsed)) {
+        if (lockedKeys.has(key)) {
+          continue;
+        }
+
+        if (fileName === '.env.local' && fileLoadedKeys.has(key)) {
+          process.env[key] = value;
+          continue;
+        }
+
         if (!process.env[key]) {
           process.env[key] = value;
+          fileLoadedKeys.add(key);
         }
       }
     } catch {

@@ -8,7 +8,7 @@ const BackendStatusBanner: React.FC = () => {
   const { backendMode, backendError, isLoading } = useData();
   const { locale } = useLocale();
 
-  if (isLoading || backendMode === 'turso') {
+  if (isLoading || backendMode === 'turso' || backendMode === 'local') {
     return null;
   }
 

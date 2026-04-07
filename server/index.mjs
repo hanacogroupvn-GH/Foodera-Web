@@ -1,4 +1,6 @@
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -7,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
 
 import {
-  createTursoConnection,
+  createDatabaseConnection,
   deleteProvinceMapProfileById,
   deleteNewsById,
   deleteProductById,
@@ -16,6 +18,7 @@ import {
   getContentSnapshot,
   hashPassword,
   importContentSnapshot,
+  insertPersonalizationEvent,
   insertContactInquiry,
   insertQuotationRequest,
   listProvinceMapProfiles,
@@ -26,6 +29,10 @@ import {
   verifyPassword
 } from './db.mjs';
 import { loadProjectEnv } from './loadEnv.mjs';
+import {
+  createNormalizedPersonalizationEvent,
+  getRecommendationsForVisitor
+} from './personalization.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,18 +40,23 @@ const projectRoot = path.resolve(__dirname, '..');
 const distRoot = path.join(projectRoot, 'dist');
 const publicRoot = path.join(projectRoot, 'public');
 const uploadsRoot = path.join(publicRoot, 'uploads', 'cms');
+const localSeedContentPath = path.join(projectRoot, 'generated', 'local-seed-content.json');
 
 await loadProjectEnv(projectRoot);
 
 const PORT = Number(process.env.PORT || 8787);
 const SESSION_COOKIE = 'foodmax_session';
+const VISITOR_COOKIE = 'foodmax_visitor';
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_RFQ_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024;
 const OLLAMA_DEFAULT_BASE_URL = 'http://localhost:11434';
 const OLLAMA_DEFAULT_MODEL = 'qwen2.5:7b';
 const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAP_AI_SCOPE_VALUES = new Set(['Rice', 'Coffee', 'Cashew', 'Agriculture']);
+const PERSONALIZATION_ENTITY_TYPES = new Set(['page', 'category', 'product', 'news', 'quote_request']);
+const PERSONALIZATION_ACTIONS = new Set(['view', 'click', 'submit']);
 
-const IMAGE_EXTENSION_BY_MIME = {
+const FILE_EXTENSION_BY_MIME = {
   'image/avif': 'avif',
   'image/gif': 'gif',
   'image/heic': 'heic',
@@ -52,8 +64,28 @@ const IMAGE_EXTENSION_BY_MIME = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/svg+xml': 'svg',
-  'image/webp': 'webp'
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'text/csv': 'csv',
+  'text/plain': 'txt'
 };
+
+const RFQ_ALLOWED_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+  'text/plain',
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
 
 const readCookies = (cookieHeader = '') =>
   Object.fromEntries(
@@ -136,6 +168,77 @@ const clearSessionCookie = (response) => {
   });
 };
 
+const hashIdentifier = (value) =>
+  crypto.createHash('sha256').update(String(value ?? '')).digest('hex');
+
+const normalizeRequestIp = (request) => {
+  const forwardedFor = request.headers['x-forwarded-for'];
+  const forwardedValue = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+  const rawIp =
+    String(forwardedValue ?? '')
+      .split(',')[0]
+      .trim() ||
+    String(request.ip ?? '').trim() ||
+    String(request.socket?.remoteAddress ?? '').trim() ||
+    'unknown';
+
+  return rawIp.replace(/^::ffff:/, '').trim() || 'unknown';
+};
+
+const setVisitorCookie = (response, visitorId) => {
+  const expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+  response.cookie(VISITOR_COOKIE, String(visitorId), {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    expires: expiresAt
+  });
+};
+
+const getVisitorContext = (request, response) => {
+  const cookies = readCookies(request.headers.cookie);
+  const ipHash = hashIdentifier(normalizeRequestIp(request));
+  const userAgentHash = hashIdentifier(request.headers['user-agent'] || '');
+  let visitorId = String(cookies[VISITOR_COOKIE] ?? '').trim();
+
+  if (!visitorId) {
+    visitorId = `v_${hashIdentifier(`${ipHash}:${userAgentHash}`).slice(0, 24)}`;
+    setVisitorCookie(response, visitorId);
+  }
+
+  return {
+    visitorId,
+    ipHash,
+    userAgentHash
+  };
+};
+
+const getActiveSnapshot = (snapshot) => ({
+  products: Array.isArray(snapshot?.products) ? snapshot.products.filter((item) => item?.isActive !== false) : [],
+  news: Array.isArray(snapshot?.news) ? snapshot.news.filter((item) => item?.isActive !== false) : []
+});
+
+const seedLocalDatabaseIfEmpty = async (client) => {
+  const snapshot = await getContentSnapshot(client);
+  const productCount = Array.isArray(snapshot?.products) ? snapshot.products.length : 0;
+  const newsCount = Array.isArray(snapshot?.news) ? snapshot.news.length : 0;
+
+  if (productCount > 0 || newsCount > 0) {
+    return false;
+  }
+
+  try {
+    const rawSeed = await fs.readFile(localSeedContentPath, 'utf8');
+    const seedSnapshot = JSON.parse(rawSeed);
+    await importContentSnapshot(client, seedSnapshot);
+    return true;
+  } catch (error) {
+    throw new Error(
+      `Local database is empty and seed import failed: ${error instanceof Error ? error.message : 'unknown error'}`
+    );
+  }
+};
+
 const slugifyPathSegment = (value, fallback = 'item') =>
   String(value ?? '')
     .toLowerCase()
@@ -151,8 +254,8 @@ const sanitizeUploadSegments = (segments = []) => {
 };
 
 const getFileExtension = (fileName, contentType) => {
-  if (contentType && IMAGE_EXTENSION_BY_MIME[contentType]) {
-    return IMAGE_EXTENSION_BY_MIME[contentType];
+  if (contentType && FILE_EXTENSION_BY_MIME[contentType]) {
+    return FILE_EXTENSION_BY_MIME[contentType];
   }
 
   const rawExtension = path.extname(String(fileName ?? '')).replace('.', '').toLowerCase();
@@ -162,13 +265,20 @@ const getFileExtension = (fileName, contentType) => {
 const parseDataUrl = (value) => {
   const match = String(value ?? '').match(/^data:([^;]+);base64,(.+)$/);
   if (!match) {
-    throw new Error('Invalid image payload.');
+    throw new Error('Invalid file payload.');
   }
 
   return {
     mimeType: match[1],
     buffer: Buffer.from(match[2], 'base64')
   };
+};
+
+const createRfqUploadFolderSegments = () => {
+  const now = new Date();
+  const year = String(now.getUTCFullYear());
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  return ['rfq', `${year}-${month}`];
 };
 
 const extractPromptTranslation = (text) => {
@@ -518,6 +628,23 @@ const getRequestSession = (request) => {
   return readSessionToken(cookies[SESSION_COOKIE]);
 };
 
+const getPersonalizedContentForRequest = async (request, response, options = {}) => {
+  const visitorContext = request.visitorContext || getVisitorContext(request, response);
+  const snapshot = await getContentSnapshot(request.app.locals.db);
+  const activeSnapshot = getActiveSnapshot(snapshot);
+
+  return getRecommendationsForVisitor({
+    client: request.app.locals.db,
+    visitorId: visitorContext.visitorId,
+    ipHash: visitorContext.ipHash,
+    userAgentHash: visitorContext.userAgentHash,
+    products: activeSnapshot.products,
+    news: activeSnapshot.news,
+    productLimit: Number(options?.productLimit) || 4,
+    newsLimit: Number(options?.newsLimit) || 3
+  });
+};
+
 const requireAdmin = async (request, response, next) => {
   const session = getRequestSession(request);
   if (!session?.email) {
@@ -546,8 +673,32 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
   const appPromise = (async () => {
     const app = express();
+    app.use(helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false
+    }));
     app.use(express.json({ limit: '25mb' }));
     app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+
+    const globalRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, 
+      max: 200, 
+      standardHeaders: true, 
+      legacyHeaders: false,
+      message: { error: 'Too many requests, please try again later.' }
+    });
+    
+    const eventsRateLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, 
+      max: 60, 
+      standardHeaders: true, 
+      legacyHeaders: false,
+      message: { error: 'Too many events submitted, please slow down.' }
+    });
+    
+    app.use('/api/', globalRateLimiter);
+    app.use('/api/personalization/events', eventsRateLimiter);
+
     app.use((request, _response, next) => {
       const functionPrefix = '/.netlify/functions/api';
       if (
@@ -560,29 +711,132 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
       next();
     });
+    app.use((request, response, next) => {
+      request.visitorContext = getVisitorContext(request, response);
+      next();
+    });
 
-    const db = createTursoConnection(process.env);
-    await ensureDatabaseSchema(db);
-    await ensureBootstrapAdmin(db);
+    let db = null;
+    let databaseConfig = {
+      mode: 'unavailable',
+      provider: 'none',
+      localPath: null
+    };
+    let startupError = null;
+
+    try {
+      const connection = createDatabaseConnection(process.env, {
+        projectRoot,
+        allowLocalFallback: !Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME)
+      });
+      db = connection.client;
+      databaseConfig = connection.config;
+      await ensureDatabaseSchema(db);
+      if (databaseConfig.mode === 'local') {
+        await seedLocalDatabaseIfEmpty(db);
+      }
+      await ensureBootstrapAdmin(db);
+    } catch (error) {
+      startupError = error instanceof Error ? error : new Error('Failed to initialize the database connection.');
+    }
 
     app.locals.db = db;
+    app.locals.backendMode = startupError ? 'unavailable' : databaseConfig.mode;
+    app.locals.backendError = startupError?.message || null;
+    app.locals.databaseConfig = databaseConfig;
 
     app.get('/api/health', async (_request, response) => {
-      response.json({
-        ok: true,
-        backend: 'turso'
+      response.status(startupError ? 500 : 200).json({
+        ok: !startupError,
+        backend: app.locals.backendMode,
+        database: {
+          provider: databaseConfig.provider,
+          localPath:
+            databaseConfig.mode === 'local' && databaseConfig.localPath
+              ? path.relative(projectRoot, databaseConfig.localPath)
+              : undefined
+        },
+        error: startupError?.message || undefined
       });
+    });
+
+    app.use((request, response, next) => {
+      if (!request.path.startsWith('/api') || request.path === '/api/health') {
+        next();
+        return;
+      }
+
+      if (!request.app.locals.db) {
+        response.status(503).json({
+          error: request.app.locals.backendError || 'Backend database is unavailable.',
+          backend: request.app.locals.backendMode
+        });
+        return;
+      }
+
+      next();
     });
 
     app.get('/api/content', async (request, response) => {
       try {
         const snapshot = await getContentSnapshot(request.app.locals.db);
         response.json({
-          backend: 'turso',
+          backend: request.app.locals.backendMode,
           ...snapshot
         });
       } catch (error) {
         response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load content.' });
+      }
+    });
+
+    app.get('/api/personalization/recommendations', async (request, response) => {
+      try {
+        const productLimit = Math.max(1, Math.min(8, Number(request.query?.productLimit) || 4));
+        const newsLimit = Math.max(1, Math.min(6, Number(request.query?.newsLimit) || 3));
+        const recommendations = await getPersonalizedContentForRequest(request, response, {
+          productLimit,
+          newsLimit
+        });
+
+        response.json(recommendations);
+      } catch (error) {
+        response.status(500).json({
+          error: error instanceof Error ? error.message : 'Failed to load personalized recommendations.'
+        });
+      }
+    });
+
+    app.post('/api/personalization/events', async (request, response) => {
+      try {
+        const event = createNormalizedPersonalizationEvent(request.body ?? {});
+
+        if (!PERSONALIZATION_ENTITY_TYPES.has(event.entityType)) {
+          response.status(400).json({ error: 'Unsupported personalization entity type.' });
+          return;
+        }
+
+        if (!PERSONALIZATION_ACTIONS.has(event.action)) {
+          response.status(400).json({ error: 'Unsupported personalization action.' });
+          return;
+        }
+
+        const visitorContext = request.visitorContext || getVisitorContext(request, response);
+        await insertPersonalizationEvent(request.app.locals.db, {
+          ...event,
+          visitorId: visitorContext.visitorId,
+          ipHash: visitorContext.ipHash,
+          userAgentHash: visitorContext.userAgentHash
+        });
+
+        const recommendations = await getPersonalizedContentForRequest(request, response);
+        response.status(201).json({
+          ok: true,
+          ...recommendations
+        });
+      } catch (error) {
+        response.status(400).json({
+          error: error instanceof Error ? error.message : 'Failed to record personalization event.'
+        });
       }
     });
 
@@ -661,6 +915,50 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         response.status(201).json({ ok: true });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to submit inquiry.' });
+      }
+    });
+
+    app.post('/api/rfq/uploads', async (request, response) => {
+      try {
+        if (!enableLocalUploads) {
+          response.status(501).json({
+            error: 'Local RFQ file uploads are disabled in the serverless runtime. Use object storage for production.'
+          });
+          return;
+        }
+
+        const { dataUrl, contentType, fileName } = request.body ?? {};
+        const { buffer, mimeType } = parseDataUrl(dataUrl);
+        const resolvedContentType = String(contentType || mimeType || '').trim().toLowerCase();
+
+        if (!RFQ_ALLOWED_CONTENT_TYPES.has(resolvedContentType)) {
+          throw new Error('Unsupported RFQ attachment type.');
+        }
+
+        if (buffer.length > MAX_RFQ_ATTACHMENT_SIZE_BYTES) {
+          throw new Error('RFQ attachment size must be 15MB or smaller.');
+        }
+
+        const safeSegments = createRfqUploadFolderSegments();
+        const extension = getFileExtension(fileName, resolvedContentType);
+        const absoluteDir = path.join(uploadsRoot, ...safeSegments);
+
+        await fs.mkdir(absoluteDir, { recursive: true });
+
+        const savedFileName = `${crypto.randomUUID()}.${extension}`;
+        await fs.writeFile(path.join(absoluteDir, savedFileName), buffer);
+
+        response.status(201).json({
+          ok: true,
+          attachment: {
+            publicUrl: `/uploads/cms/${safeSegments.join('/')}/${savedFileName}`,
+            fileName: String(fileName ?? savedFileName).trim() || savedFileName,
+            contentType: resolvedContentType,
+            sizeBytes: buffer.length
+          }
+        });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'RFQ attachment upload failed.' });
       }
     });
 
@@ -863,6 +1161,74 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         response.json({ translation });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Translation failed.' });
+      }
+    });
+
+    app.get('/sitemap.xml', async (request, response) => {
+      try {
+        const { rows: products } = await db.execute('SELECT id, category FROM products ORDER BY sort_order DESC');
+        const { rows: news } = await db.execute('SELECT id, slug, title, date FROM news ORDER BY date DESC, _rowid_ DESC');
+        
+        const stripDiacritics = (val) => val.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/\u0110/g, 'd');
+        const normalizeNewsSlug = (val) => stripDiacritics(val).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+        const getNewsSlug = (item) => {
+          const explicitSlug = normalizeNewsSlug(item.slug || '');
+          if (explicitSlug) return explicitSlug;
+          const titleSlug = normalizeNewsSlug(item.title || '');
+          if (titleSlug) return titleSlug;
+          const idSlug = normalizeNewsSlug(item.id || '');
+          return idSlug || 'news-item';
+        };
+
+        const baseUrl = 'https://foodmax.vn';
+        
+        const staticRoutes = [
+          { url: '/', priority: '1.0', changefreq: 'weekly' },
+          { url: '/product', priority: '0.9', changefreq: 'weekly' },
+          { url: '/about', priority: '0.7', changefreq: 'monthly' },
+          { url: '/news', priority: '0.7', changefreq: 'weekly' },
+          { url: '/operations', priority: '0.6', changefreq: 'monthly' },
+          { url: '/contact', priority: '0.6', changefreq: 'monthly' },
+          { url: '/interactive-map', priority: '0.5', changefreq: 'monthly' }
+        ];
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+        for (const route of staticRoutes) {
+          xml += `  <url>\n    <loc>${baseUrl}${route.url}</loc>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>\n`;
+        }
+
+        for (const product of products) {
+          xml += `  <url>\n    <loc>${baseUrl}/product/item/${encodeURIComponent(product.id)}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+        }
+
+        for (const item of news) {
+          const slug = encodeURIComponent(getNewsSlug(item));
+          let dateStr = '';
+          try {
+             if (item.date) {
+               const d = new Date(item.date);
+               if (!isNaN(d.valueOf())) {
+                 dateStr = d.toISOString().split('T')[0];
+               }
+             }
+          } catch {}
+          
+          xml += `  <url>\n    <loc>${baseUrl}/news/${slug}</loc>\n`;
+          if (dateStr) {
+            xml += `    <lastmod>${dateStr}</lastmod>\n`;
+          }
+          xml += `    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+        }
+
+        xml += '</urlset>';
+        
+        response.header('Content-Type', 'application/xml');
+        response.send(xml);
+      } catch (error) {
+        console.error('Sitemap Error:', error);
+        response.status(500).end();
       }
     });
 

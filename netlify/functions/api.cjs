@@ -8,6 +8,7 @@ let cachedHandlerPromise;
 const getHandler = async () => {
   if (!cachedHandlerPromise) {
     cachedHandlerPromise = (async () => {
+      process.env.DATABASE_MODE = process.env.DATABASE_MODE || 'turso';
       const entryUrl = pathToFileURL(path.join(__dirname, '../../server/index.mjs')).href;
       const { createApp } = await import(entryUrl);
       const app = await createApp({

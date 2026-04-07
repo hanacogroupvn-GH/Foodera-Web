@@ -15,10 +15,20 @@ import {
 import { useLocale } from '../context/LocaleContext';
 import { appRoutes } from '../lib/routes';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
+import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 
 const Operations: React.FC = () => {
   const { hash } = useLocation();
   const { locale } = useLocale();
+
+  useDocumentMeta({
+    title: locale === 'zh' ? '运营与合规' : 'Operational Compliance',
+    description: locale === 'zh'
+      ? 'Foodmax 国际出口的技术标准与贸易执行框架：ISO 22000、HACCP 认证、包装规格与 Incoterms 贸易条款。'
+      : 'Technical standards and trade frameworks for Foodmax exports: ISO 22000, HACCP, packaging specs, and Incoterms 2020.',
+    canonicalUrl: `${BASE_URL}/operations`,
+    ogUrl: `${BASE_URL}/operations`,
+  });
 
   useEffect(() => {
     if (hash) {
@@ -29,150 +39,151 @@ const Operations: React.FC = () => {
     }
   }, [hash]);
 
-  const rawCopy =
-    locale === 'zh'
-      ? {
-          heroTitle: '运营与合规',
-          heroAccent: '合规',
-          heroDesc: 'Foodmax 国际出口业务所遵循的技术标准与贸易执行框架。我们在原产地到目的港之间维持严格、透明、可验证的运营体系。',
-          qualityLabel: '章节 01 / 质量标准',
-          qualityTitle: '纯净标准的系统化架构',
-          qualityDesc:
-            '在 Foodmax，质量不是单次检查，而是一套完整系统。从水分、杂质到感官表现，我们通过多阶段验证流程确保每一批次都满足国际食品安全与专业采购标准。',
-          qualityItems: [
-            {
-              title: 'ISO 22000 与 HACCP',
-              desc: '全球食品安全标准已整合进我们的加工工厂与仓储流程。'
-            },
-            {
-              title: 'SGS / Vinacontrol 联动',
-              desc: '可按需提供第三方独立检测，覆盖每一个出口货柜。'
-            },
-            {
-              title: '感官校准',
-              desc: '内部品控团队与技术人员持续校准批次一致性。'
-            },
-            {
-              title: '植物检疫严控',
-              desc: '为长距离航运建立严格的虫害与污染物控制机制。'
-            }
-          ],
-          batchTitle: '批次主权追踪',
-          batchDesc: '每一批货物都会分配唯一 Foodmax Tracking ID，支持从农场集群到最终包装线的完整追溯。',
-          admixture: '混杂容忍度',
-          verifiedBatches: '实验室验证批次',
-          logisticsLabel: '章节 02 / 全球物流',
-          logisticsTitle: '动态供应链管理',
-          logisticsCards: [
-            {
-              title: '战略港口节点',
-              desc: '连接胡志明市 Cat Lai、头顿 Cai Mep 与海防港，缩短内陆运输时间并提升装船效率。'
-            },
-            {
-              title: '多承运人网络',
-              desc: '与主要航运公司签订服务协议，即使在旺季也能争取更稳定的舱位配置。'
-            },
-            {
-              title: '单证流效率',
-              desc: '熟练处理提单、原产地证书及清关文件，降低滞港与文件差错风险。'
-            }
-          ],
-          packagingLabel: '章节 03 / 包装规格',
-          packagingTitle: '为运输环境而设计的保护',
-          packagingDesc:
-            '我们的包装方案用于抵御湿度、氧化与运输冲击，覆盖工业级散装到精品零售包装的不同场景。',
-          packagingAlt: '包装',
-          exportBulk: '出口散装',
-          retailSpecialty: '零售与精品',
-          exportBulkItems: ['25kg / 50kg PP 编织袋', '1MT 吨袋', '60kg 黄麻袋（咖啡）'],
-          retailItems: ['真空包装', '多层牛皮纸袋', '自有品牌 / 白牌定制'],
-          termsLabel: '章节 04 / 贸易条款',
-          termsTitle: '商业严谨与信任机制',
-          termsDesc:
-            '我们采用透明的商业执行框架，以降低国际买家的交易风险。所有合同均以 Incoterms 2020 和国际认可的结算工具为基础。',
-          incotermsTitle: 'Incoterms 2020 支持',
-          incotermsDesc: '主要报价通常基于 FOB 或 CIF 条款，以确保风险转移边界清晰。',
-          settlementTitle: '结算工具',
-          instrumentOne: '工具 01',
-          instrumentTwo: '工具 02',
-          currency: '币种',
-          ctaTitle: '需要正式技术档案吗？',
-          ctaDesc: '联系我们获取更完整的技术资料，包括加工能力、检验流程与物流时效说明。',
-          requestPdf: '申请技术 PDF',
-          emailDesk: '发送邮件给贸易团队'
-        }
-      : {
-          heroTitle: 'Operational',
-          heroAccent: 'Compliance',
-          heroDesc:
-            'Technical standards and trade frameworks governing Foodmax international export activity. We maintain a rigorous, transparent, and verifiable operating model from origin to destination.',
-          qualityLabel: 'Section 01 / Quality Standards',
-          qualityTitle: 'The Architecture of Purity',
-          qualityDesc:
-            'At Foodmax, quality is not a single inspection. It is a system. From moisture and admixture to sensory profile, our multi-stage verification process keeps every lot aligned with international food safety and procurement standards.',
-          qualityItems: [
-            {
-              title: 'ISO 22000 & HACCP',
-              desc: 'Global standards integrated into every processing plant and warehouse.'
-            },
-            {
-              title: 'SGS / Vinacontrol Alignment',
-              desc: 'Optional third-party analysis available for each export container.'
-            },
-            {
-              title: 'Sensory Calibration',
-              desc: 'In-house technical teams calibrate batches for consistency.'
-            },
-            {
-              title: 'Phytosanitary Rigor',
-              desc: 'Strict pest and contaminant control protocols for long-haul shipping.'
-            }
-          ],
-          batchTitle: 'Batch Sovereignty',
-          batchDesc:
-            'Every lot is assigned a unique Foodmax Tracking ID, enabling full upstream visibility from farm cluster to final packing line.',
-          admixture: 'Admixture Tolerance',
-          verifiedBatches: 'Lab-Verified Batches',
-          logisticsLabel: 'Section 02 / Global Logistics',
-          logisticsTitle: 'Kinetic Supply Chain Management',
-          logisticsCards: [
-            {
-              title: 'Strategic Port Hubs',
-              desc: 'Direct access to Cat Lai, Cai Mep, and Hai Phong helps reduce domestic transit time and speed vessel loading.'
-            },
-            {
-              title: 'Multi-Carrier Network',
-              desc: 'Carrier agreements support more reliable space allocation, even during peak demand.'
-            },
-            {
-              title: 'Doc-Flow Efficiency',
-              desc: 'Experienced handling of bills of lading, COO forms, and customs documents reduces demurrage risk.'
-            }
-          ],
-          packagingLabel: 'Section 03 / Packaging Specs',
-          packagingTitle: 'Atmospheric Protection',
-          packagingDesc:
-            'Our packaging solutions protect product integrity against humidity, oxidation, and transit stress across both bulk and specialty formats.',
-          packagingAlt: 'Packaging',
-          exportBulk: 'Export Bulk',
-          retailSpecialty: 'Retail & Specialty',
-          exportBulkItems: ['25kg / 50kg PP Bags', '1MT Jumbo Bags', '60kg Jute (Coffee)'],
-          retailItems: ['Vacuum Sealing', 'Multi-Wall Kraft', 'Private Label Branding'],
-          termsLabel: 'Section 04 / Terms of Trade',
-          termsTitle: 'Commercial Rigor & Trust',
-          termsDesc:
-            'We operate under a transparent commercial framework designed to reduce risk for international buyers. Contracts are anchored in Incoterms 2020 and globally accepted settlement instruments.',
-          incotermsTitle: 'Incoterms 2020 Support',
-          incotermsDesc: 'Primary pricing is typically structured on FOB or CIF terms to keep risk transfer clear.',
-          settlementTitle: 'Settlement Instruments',
-          instrumentOne: 'Instrument 01',
-          instrumentTwo: 'Instrument 02',
-          currency: 'Currency',
-          ctaTitle: 'Need a formal technical dossier?',
-          ctaDesc: 'Reach out for a fuller technical pack covering processing capacity, inspection flows, and logistics lead times.',
-          requestPdf: 'Request Technical PDF',
-          emailDesk: 'Email Trade Desk'
-        };
+const enCopy = {
+  heroTitle: 'Operational',
+  heroAccent: 'Compliance',
+  heroDesc:
+    'Technical standards and trade frameworks governing Foodmax international export activity. We maintain a rigorous, transparent, and verifiable operating model from origin to destination.',
+  qualityLabel: 'Section 01 / Quality Standards',
+  qualityTitle: 'The Architecture of Purity',
+  qualityDesc:
+    'At Foodmax, quality is not a single inspection. It is a system. From moisture and admixture to sensory profile, our multi-stage verification process keeps every lot aligned with international food safety and procurement standards.',
+  qualityItems: [
+    {
+      title: 'ISO 22000 & HACCP',
+      desc: 'Global standards integrated into every processing plant and warehouse.'
+    },
+    {
+      title: 'SGS / Vinacontrol Alignment',
+      desc: 'Optional third-party analysis available for each export container.'
+    },
+    {
+      title: 'Sensory Calibration',
+      desc: 'In-house technical teams calibrate batches for consistency.'
+    },
+    {
+      title: 'Phytosanitary Rigor',
+      desc: 'Strict pest and contaminant control protocols for long-haul shipping.'
+    }
+  ],
+  batchTitle: 'Batch Sovereignty',
+  batchDesc:
+    'Every lot is assigned a unique Foodmax Tracking ID, enabling full upstream visibility from farm cluster to final packing line.',
+  admixture: 'Admixture Tolerance',
+  verifiedBatches: 'Lab-Verified Batches',
+  logisticsLabel: 'Section 02 / Global Logistics',
+  logisticsTitle: 'Kinetic Supply Chain Management',
+  logisticsCards: [
+    {
+      title: 'Strategic Port Hubs',
+      desc: 'Direct access to Cat Lai, Cai Mep, and Hai Phong helps reduce domestic transit time and speed vessel loading.'
+    },
+    {
+      title: 'Multi-Carrier Network',
+      desc: 'Carrier agreements support more reliable space allocation, even during peak demand.'
+    },
+    {
+      title: 'Doc-Flow Efficiency',
+      desc: 'Experienced handling of bills of lading, COO forms, and customs documents reduces demurrage risk.'
+    }
+  ],
+  packagingLabel: 'Section 03 / Packaging Specs',
+  packagingTitle: 'Atmospheric Protection',
+  packagingDesc:
+    'Our packaging solutions protect product integrity against humidity, oxidation, and transit stress across both bulk and specialty formats.',
+  packagingAlt: 'Packaging',
+  exportBulk: 'Export Bulk',
+  retailSpecialty: 'Retail & Specialty',
+  exportBulkItems: ['25kg / 50kg PP Bags', '1MT Jumbo Bags', '60kg Jute (Coffee)'],
+  retailItems: ['Vacuum Sealing', 'Multi-Wall Kraft', 'Private Label Branding'],
+  termsLabel: 'Section 04 / Terms of Trade',
+  termsTitle: 'Commercial Rigor & Trust',
+  termsDesc:
+    'We operate under a transparent commercial framework designed to reduce risk for international buyers. Contracts are anchored in Incoterms 2020 and globally accepted settlement instruments.',
+  incotermsTitle: 'Incoterms 2020 Support',
+  incotermsDesc: 'Primary pricing is typically structured on FOB or CIF terms to keep risk transfer clear.',
+  settlementTitle: 'Settlement Instruments',
+  instrumentOne: 'Instrument 01',
+  instrumentTwo: 'Instrument 02',
+  currency: 'Currency',
+  ctaTitle: 'Need a formal technical dossier?',
+  ctaDesc: 'Reach out for a fuller technical pack covering processing capacity, inspection flows, and logistics lead times.',
+  requestPdf: 'Request Technical PDF',
+  emailDesk: 'Email Trade Desk'
+};
+
+const zhCopy = {
+  heroTitle: '运营与合规',
+  heroAccent: '合规',
+  heroDesc: 'Foodmax 国际出口业务所遵循的技术标准与贸易执行框架。我们在原产地到目的港之间维持严格、透明、可验证的运营体系。',
+  qualityLabel: '章节 01 / 质量标准',
+  qualityTitle: '纯净标准的系统化架构',
+  qualityDesc:
+    '在 Foodmax，质量不是单次检查，而是一套完整系统。从水分、杂质到感官表现，我们通过多阶段验证流程确保每一批次都满足国际食品安全与专业采购标准。',
+  qualityItems: [
+    {
+      title: 'ISO 22000 与 HACCP',
+      desc: '全球食品安全标准已整合进我们的加工工厂与仓储流程。'
+    },
+    {
+      title: 'SGS / Vinacontrol 联动',
+      desc: '可按需提供第三方独立检测，覆盖每一个出口货柜。'
+    },
+    {
+      title: '感官校准',
+      desc: '内部品控团队与技术人员持续校准批次一致性。'
+    },
+    {
+      title: '植物检疫严控',
+      desc: '为长距离航运建立严格的虫害与污染物控制机制。'
+    }
+  ],
+  batchTitle: '批次主权追踪',
+  batchDesc: '每一批货物都会分配唯一 Foodmax Tracking ID，支持从农场集群到最终包装线的完整追溯。',
+  admixture: '混杂容忍度',
+  verifiedBatches: '实验室验证批次',
+  logisticsLabel: '章节 02 / 全球物流',
+  logisticsTitle: '动态供应链管理',
+  logisticsCards: [
+    {
+      title: '战略港口节点',
+      desc: '连接胡志明市 Cat Lai、头顿 Cai Mep 与海防港，缩短内陆运输时间并提升装船效率。'
+    },
+    {
+      title: '多承运人网络',
+      desc: '与主要航运公司签订服务协议，即使在旺季也能争取更稳定的舱位配置。'
+    },
+    {
+      title: '单证流效率',
+      desc: '熟练处理提单、原产地证书及清关文件，降低滞港与文件差错风险。'
+    }
+  ],
+  packagingLabel: '章节 03 / 包装规格',
+  packagingTitle: '为运输环境而设计的保护',
+  packagingDesc:
+    '我们的包装方案用于抵御湿度、氧化与运输冲击，覆盖工业级散装到精品零售包装的不同场景。',
+  packagingAlt: '包装',
+  exportBulk: '出口散装',
+  retailSpecialty: '零售与精品',
+  exportBulkItems: ['25kg / 50kg PP 编织袋', '1MT 吨袋', '60kg 黄麻袋（咖啡）'],
+  retailItems: ['真空包装', '多层牛皮纸袋', '自有品牌 / 白牌定制'],
+  termsLabel: '章节 04 / 贸易条款',
+  termsTitle: '商业严谨与信任机制',
+  termsDesc:
+    '我们采用透明的商业执行框架，以降低国际买家的交易风险。所有合同均以 Incoterms 2020 和国际认可的结算工具为基础。',
+  incotermsTitle: 'Incoterms 2020 支持',
+  incotermsDesc: '主要报价通常基于 FOB 或 CIF 条款，以确保风险转移边界清晰。',
+  settlementTitle: '结算工具',
+  instrumentOne: '工具 01',
+  instrumentTwo: '工具 02',
+  currency: '币种',
+  ctaTitle: '需要正式技术档案吗？',
+  ctaDesc: '联系我们获取更完整的技术资料，包括加工能力、检验流程与物流时效说明。',
+  requestPdf: '申请技术 PDF',
+  emailDesk: '发送邮件给贸易团队'
+};
+
+  const rawCopy = locale === 'zh' ? zhCopy : enCopy;
   const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
   return (

@@ -8,9 +8,10 @@ import AppShellLoader from '../components/AppShellLoader';
 import { Filter, X, ChevronDown, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { findProductCategoryBySlug, normalizeProductCategorySlug, PRODUCT_CATEGORIES } from '../lib/productCategories';
 import { useLocale } from '../context/LocaleContext';
+import { usePersonalization } from '../context/PersonalizationContext';
 import { getCategoryLabel, getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
-
+import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 const ITEMS_PER_PAGE = 9;
 
 interface ProductsProps {
@@ -20,6 +21,7 @@ interface ProductsProps {
 const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
   const { activeProducts: products, isLoading } = useData();
   const { locale } = useLocale();
+  const { trackEvent } = usePersonalization();
   const navigate = useNavigate();
   const { category } = useParams<{ category?: string }>();
   const location = useLocation();
@@ -77,6 +79,17 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
         emptyDesc: 'We are currently updating our available export stock for these specific criteria.',
         clearAllFilters: 'Clear All Filters'
       };
+
+  useDocumentMeta({
+    title: activeCategory
+      ? `${getCategoryLabel(activeCategory, locale)} ${locale === 'zh' ? '产品系列' : 'Portfolio'}`
+      : (locale === 'zh' ? '出口产品目录' : 'Export Product Portfolios'),
+    description: locale === 'zh'
+      ? `浏览 Foodmax 的${activeCategory ? getCategoryLabel(activeCategory, locale) : ''}出口产品，符合国际食品安全标准的优质农产品。`
+      : `Browse Foodmax ${activeCategory ? getCategoryLabel(activeCategory, locale) + ' ' : ''}export products. Premium agricultural commodities processed to global food safety standards.`,
+    canonicalUrl: `${BASE_URL}${activeCategory ? appRoutes.productsByCategory(activeCategory) : appRoutes.products}`,
+    ogUrl: `${BASE_URL}${activeCategory ? appRoutes.productsByCategory(activeCategory) : appRoutes.products}`,
+  });
 
   useEffect(() => {
     setFilterProcessing('all');
@@ -144,6 +157,29 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
 
   const activeSubCategories = activeCategory ? subs[activeCategory] || [] : [];
   const activeCategoryKey = activeCategory ? normalizeProductCategorySlug(activeCategory) : 'all';
+
+  useEffect(() => {
+    if (!activeCategory && filterSub === 'all' && filterProcessing === 'all') {
+      return;
+    }
+
+    void trackEvent(
+      {
+        entityType: 'category',
+        action: 'view',
+        category: activeCategory || undefined,
+        subCategory: filterSub !== 'all' ? subCategoryParam || undefined : undefined,
+        locale,
+        metadata: {
+          processing: filterProcessing !== 'all' ? filterProcessing : undefined
+        }
+      },
+      {
+        dedupeKey: `product-category:${activeCategoryKey}:${filterSub}:${filterProcessing}`,
+        dedupeTtlMs: 1600
+      }
+    );
+  }, [activeCategory, activeCategoryKey, filterProcessing, filterSub, locale, subCategoryParam, trackEvent]);
 
   const processingMethods = {
     'rice': ['Standard', 'Soft', 'Premium', 'Luxury'],

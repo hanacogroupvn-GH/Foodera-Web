@@ -1,0 +1,12 @@
+# Foodmax Agriculture Export — robots.txt
+User-agent: *
+Allow: /
+
+# Disallow admin and internal routes
+Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://foodmax.vn/sitemap.xml

@@ -11,8 +11,12 @@ node_modules
 dist
 dist-ssr
 .env
+.env.local
 *.local
 public/uploads
+tmp/*.db
+tmp/*.sqlite
+tmp/*.sqlite3
 !.env.example
 
 # Editor directories and files

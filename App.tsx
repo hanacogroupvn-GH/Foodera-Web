@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useParams, Navigat
 import { DataProvider } from './context/DataContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider, useLocale } from './context/LocaleContext';
+import { PersonalizationProvider } from './context/PersonalizationContext';
 import BackendStatusBanner from './components/BackendStatusBanner';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -11,6 +12,7 @@ import FloatingContact from './components/FloatingContact';
 import LazyAIChatBot from './components/LazyAIChatBot';
 import AppShellLoader from './components/AppShellLoader';
 import AppErrorBoundary from './components/AppErrorBoundary';
+import PersonalizationRouteTracker from './components/PersonalizationRouteTracker';
 import { appRoutes } from './lib/routes';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -28,6 +30,7 @@ const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
 const AdminNews = lazy(() => import('./pages/Admin/News'));
 const AdminInteractiveMapContent = lazy(() => import('./pages/Admin/InteractiveMapContent'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -117,7 +120,9 @@ const AppRoutes: React.FC = () => {
       <AuthProvider>
         <DataProvider>
           <Router>
+            <PersonalizationProvider>
             <ScrollToTop />
+            <PersonalizationRouteTracker />
             <div className="min-h-screen flex flex-col font-sans antialiased text-gray-900 bg-white">
               <Routes>
                 <Route
@@ -188,10 +193,11 @@ const AppRoutes: React.FC = () => {
                   <Route path={`${appRoutes.news}/:legacyId/:legacySlug`} element={<NewsDetail />} />
                   <Route path={appRoutes.operations} element={<Operations />} />
                   <Route path={appRoutes.contact} element={<Contact />} />
-                  <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
+                  <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
             </div>
+            </PersonalizationProvider>
           </Router>
         </DataProvider>
       </AuthProvider>

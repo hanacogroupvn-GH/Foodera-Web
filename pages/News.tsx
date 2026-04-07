@@ -7,7 +7,9 @@ import { NewsCategory } from '../types';
 import { getNewsPath } from '../lib/newsSeo';
 import AppShellLoader from '../components/AppShellLoader';
 import { useLocale } from '../context/LocaleContext';
+import { usePersonalization } from '../context/PersonalizationContext';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
+import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 
 const extractYear = (value: string) => {
   const parsed = Date.parse(value);
@@ -22,6 +24,16 @@ const extractYear = (value: string) => {
 const News: React.FC = () => {
   const { activeNews: news, isLoading } = useData();
   const { locale } = useLocale();
+  const { trackEvent } = usePersonalization();
+
+  useDocumentMeta({
+    title: locale === 'zh' ? '新闻与洞察' : 'News & Insights',
+    description: locale === 'zh'
+      ? '关于全球农产品趋势、贸易动态与 Foodmax 企业进展的专业市场分析与行业洞察。'
+      : 'Professional perspectives on global agricultural trends, trade activities, and Foodmax corporate developments.',
+    canonicalUrl: `${BASE_URL}/news`,
+    ogUrl: `${BASE_URL}/news`,
+  });
   const [activeCategory, setActiveCategory] = useState<NewsCategory | 'All'>('All');
   const [activeYear, setActiveYear] = useState<string>('All');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
@@ -86,6 +98,29 @@ const News: React.FC = () => {
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
   }, [activeCategory, activeYear, copy.all, localizedNews, sortOrder]);
+
+  React.useEffect(() => {
+    if (activeCategory === 'All' && activeYear === 'All') {
+      return;
+    }
+
+    void trackEvent(
+      {
+        entityType: 'category',
+        action: 'view',
+        newsCategory: activeCategory === 'All' ? undefined : activeCategory,
+        locale,
+        metadata: {
+          year: activeYear === 'All' ? undefined : activeYear,
+          sortOrder
+        }
+      },
+      {
+        dedupeKey: `news-category:${activeCategory}:${activeYear}:${sortOrder}`,
+        dedupeTtlMs: 1600
+      }
+    );
+  }, [activeCategory, activeYear, locale, sortOrder, trackEvent]);
 
   if (isLoading && news.length === 0) {
     return <AppShellLoader compact label={copy.loader} />;
@@ -163,6 +198,24 @@ const News: React.FC = () => {
                 <Link
                   key={item.id}
                   to={getNewsPath(item)}
+                  onClick={() => {
+                    void trackEvent(
+                      {
+                        entityType: 'news',
+                        action: 'click',
+                        itemId: item.id,
+                        newsCategory: item.category,
+                        locale,
+                        metadata: {
+                          surface: 'news_archive'
+                        }
+                      },
+                      {
+                        dedupeKey: `news-click:${item.id}:archive`,
+                        dedupeTtlMs: 1200
+                      }
+                    );
+                  }}
                   className="group block h-full"
                 >
                   <div className="h-full flex flex-col">
