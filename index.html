@@ -79,21 +79,11 @@
             document.documentElement.classList.toggle('dark', stored === 'dark');
             return;
           }
-          const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.classList.toggle('dark', isDark);
+          // Default to light theme
+          document.documentElement.classList.toggle('dark', false);
         }
 
         applyTheme();
-
-        // Listen for OS theme changes natively instead of setInterval loop
-        if (window.matchMedia) {
-          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            const stored = localStorage.getItem('theme');
-            if (!stored || stored === 'auto') {
-              applyTheme();
-            }
-          });
-        }
       })();
     </script>
   </head>
