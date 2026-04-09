@@ -1,5 +1,5 @@
 
-export type CategoryType = 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture';
+export type CategoryType = 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture' | 'Pepper';
 
 export type NewsCategory = 'Market Insights' | 'Company Updates' | 'Sustainability' | 'Events';
 

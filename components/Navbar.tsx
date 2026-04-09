@@ -13,7 +13,8 @@ import { appRoutes } from '../lib/routes';
 const MEGA_MENU_SECTIONS: Array<{ category: Product['category'] }> = [
   { category: 'Rice' },
   { category: 'Coffee' },
-  { category: 'Cashew' }
+  { category: 'Cashew' },
+  { category: 'Pepper' }
 ];
 
 const buildSectionSubtitle = (items: Product[], locale: 'en' | 'zh') => {
@@ -83,11 +84,13 @@ const Navbar: React.FC = () => {
         riceExportPortfolios: '大米出口系列',
         coffeeTradeLines: '咖啡产品线',
         cashewKernelGrades: '腰果等级',
+        pepperOriginSeries: '胡椒系列',
         marketAnalysisArchive: '市场分析归档',
         sectionTitles: {
           Rice: '大米产品线',
           Coffee: '咖啡出口',
-          Cashew: '腰果出口'
+          Cashew: '腰果出口',
+          Pepper: '胡椒产地系列'
         }
       }
     : {
@@ -125,11 +128,13 @@ const Navbar: React.FC = () => {
         riceExportPortfolios: 'Rice Export Portfolios',
         coffeeTradeLines: 'Coffee Trade Lines',
         cashewKernelGrades: 'Cashew Kernel Grades',
+        pepperOriginSeries: 'Pepper Series',
         marketAnalysisArchive: 'Market Analysis Archive',
         sectionTitles: {
           Rice: 'Rice Portfolios',
           Coffee: 'Coffee Exports',
-          Cashew: 'Cashew Exports'
+          Cashew: 'Cashew Exports',
+          Pepper: 'Pepper Origins'
         }
       };
 
@@ -681,6 +686,7 @@ const Navbar: React.FC = () => {
                     <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Rice'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.riceExportPortfolios}</button>
                     <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Coffee'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.coffeeTradeLines}</button>
                     <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Cashew'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.cashewKernelGrades}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Pepper'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.pepperOriginSeries}</button>
                     <button onClick={() => handleSearchNavigation(appRoutes.news)} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.marketAnalysisArchive}</button>
                   </div>
                 </div>

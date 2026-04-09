@@ -13,13 +13,15 @@ const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
     Rice: 'Rice',
     Coffee: 'Coffee',
     Cashew: 'Cashew',
-    Agriculture: 'Agriculture'
+    Agriculture: 'Agriculture',
+    Pepper: 'Pepper'
   },
   zh: {
     Rice: '\u5927\u7c73',
     Coffee: '\u5496\u5561',
     Cashew: '\u8170\u679c',
-    Agriculture: '\u519c\u4ea7\u54c1'
+    Agriculture: '\u519c\u4ea7\u54c1',
+    Pepper: '\u80e1\u6912'
   }
 };
 

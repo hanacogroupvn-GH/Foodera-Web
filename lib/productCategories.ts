@@ -9,7 +9,7 @@ type ProductCategoryInput = {
   sub_category?: string | null;
 };
 
-export const PRODUCT_CATEGORIES: CategoryType[] = ['Rice', 'Coffee', 'Cashew', 'Agriculture'];
+export const PRODUCT_CATEGORIES: CategoryType[] = ['Rice', 'Coffee', 'Cashew', 'Agriculture', 'Pepper'];
 
 export const normalizeProductCategorySlug = (value: string): string =>
   value
@@ -43,6 +43,7 @@ export const normalizeProductCategory = (input: ProductCategoryInput): CategoryT
   if (category.includes('cashew')) return 'Cashew';
   if (category.includes('agri') && isLegacyCashew) return 'Cashew';
   if (category.includes('agri')) return 'Agriculture';
+  if (category.includes('pepper')) return 'Pepper';
   if (isLegacyCashew) return 'Cashew';
   return 'Rice';
 };
