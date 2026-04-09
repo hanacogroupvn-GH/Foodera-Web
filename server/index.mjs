@@ -628,6 +628,56 @@ const getRequestSession = (request) => {
   return readSessionToken(cookies[SESSION_COOKIE]);
 };
 
+const getStringValue = (value) => {
+  if (Array.isArray(value)) {
+    return getStringValue(value[0]);
+  }
+
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  return String(value);
+};
+
+const parseCredentialPayload = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value;
+  }
+
+  const raw = getStringValue(value).trim();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    // Fall through to x-www-form-urlencoded parsing.
+  }
+
+  const params = new URLSearchParams(raw);
+  if ([...params.keys()].length === 0) {
+    return null;
+  }
+
+  return Object.fromEntries(params.entries());
+};
+
+const getLoginCredentials = (request) => {
+  const parsedBody = parseCredentialPayload(request.body) || parseCredentialPayload(request.rawBody);
+  const email = getStringValue(parsedBody?.email).trim().toLowerCase();
+  const password = getStringValue(parsedBody?.password);
+
+  return {
+    email,
+    password
+  };
+};
+
 const getPersonalizedContentForRequest = async (request, response, options = {}) => {
   const visitorContext = request.visitorContext || getVisitorContext(request, response);
   const snapshot = await getContentSnapshot(request.app.locals.db);
@@ -673,12 +723,18 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
   const appPromise = (async () => {
     const app = express();
+    const captureRawRequestBody = (request, _response, buffer) => {
+      if (buffer?.length) {
+        request.rawBody = buffer.toString('utf8');
+      }
+    };
+
     app.use(helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false
     }));
-    app.use(express.json({ limit: '25mb' }));
-    app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+    app.use(express.json({ limit: '25mb', verify: captureRawRequestBody }));
+    app.use(express.urlencoded({ extended: false, limit: '25mb', verify: captureRawRequestBody }));
 
     const globalRateLimiter = rateLimit({
       windowMs: 15 * 60 * 1000, 
@@ -878,8 +934,7 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
     app.post('/api/auth/login', async (request, response) => {
       try {
-        const email = String(request.body?.email ?? '').trim().toLowerCase();
-        const password = String(request.body?.password ?? '');
+        const { email, password } = getLoginCredentials(request);
 
         if (!email || !password) {
           response.status(400).json({ error: 'Email and password are required.' });

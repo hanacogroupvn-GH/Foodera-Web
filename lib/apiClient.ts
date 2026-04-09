@@ -29,10 +29,11 @@ export class ApiError extends Error {
 
 type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
+  bodyType?: 'json' | 'form';
 };
 
 const buildRequestInit = (options: ApiRequestOptions = {}): RequestInit => {
-  const { body, ...rest } = options;
+  const { body, bodyType = 'json', ...rest } = options;
   const headers = new Headers(options.headers || {});
   const init: RequestInit = {
     ...rest,
@@ -41,8 +42,30 @@ const buildRequestInit = (options: ApiRequestOptions = {}): RequestInit => {
   };
 
   if (body !== undefined) {
-    headers.set('Content-Type', 'application/json');
-    init.body = JSON.stringify(body);
+    if (bodyType === 'form') {
+      const formBody = new URLSearchParams();
+
+      if (body instanceof URLSearchParams) {
+        init.body = body.toString();
+      } else if (body && typeof body === 'object' && !Array.isArray(body)) {
+        for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+          if (value === undefined || value === null) {
+            continue;
+          }
+
+          formBody.set(key, String(value));
+        }
+
+        init.body = formBody.toString();
+      } else {
+        throw new Error('Form request body must be a plain object or URLSearchParams.');
+      }
+
+      headers.set('Content-Type', 'application/x-www-form-urlencoded;charset=UTF-8');
+    } else {
+      headers.set('Content-Type', 'application/json');
+      init.body = JSON.stringify(body);
+    }
   }
 
   return init;
@@ -115,7 +138,8 @@ export const api = {
   login: (email: string, password: string) =>
     apiRequest<{ ok: true; user: AdminSessionUser }>('/api/auth/login', {
       method: 'POST',
-      body: { email, password }
+      body: { email, password },
+      bodyType: 'form'
     }),
   logout: () =>
     apiRequest<{ ok: true }>('/api/auth/logout', {
