@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, ArrowRight, AlertCircle, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -12,20 +12,20 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const rawCopy =
     locale === 'zh'
       ? {
-          title: 'ç®¡ç†å‘˜ç™»å½•',
-          subtitle: 'ä½¿ç”¨æ‚¨çš„ Foodmax ç®¡ç†å‘˜è´¦æˆ·ç™»å½•',
+          title: 'ç®¡ç†å'˜ç™»å½•',
+          subtitle: 'ä½¿ç"¨æ‚¨çš„ Foodmax ç®¡ç†å'˜è´¦æˆ·ç™»å½•',
           email: 'é‚®ç®±',
-          password: 'å¯†ç ',
+          password: 'å¯†ç ',
           emailPlaceholder: 'admin@company.com',
-          passwordPlaceholder: 'è¯·è¾“å…¥å¯†ç ',
+          passwordPlaceholder: 'è¯·è¾"å…¥å¯†ç ',
           signingIn: 'ç™»å½•ä¸­...',
           signIn: 'ç™»å½•',
           loginFailed: 'ç™»å½•å¤±è´¥'
@@ -49,16 +49,21 @@ const Login: React.FC = () => {
     event.preventDefault();
     if (isLoading) return;
 
-    // Use FormData to grab actual native DOM values to bypass React state bugs during Autofill
-    const formData = new FormData(event.currentTarget);
-    const actualEmail = (formData.get('email') as string) || email;
-    const actualPassword = (formData.get('password') as string) || password;
+    // Read directly from DOM refs — guaranteed to have the actual rendered value,
+    // even when the browser autofill skips React's onChange events.
+    const actualEmail = emailRef.current?.value?.trim() ?? '';
+    const actualPassword = passwordRef.current?.value ?? '';
+
+    if (!actualEmail || !actualPassword) {
+      setErrorMsg('Email and password are required.');
+      return;
+    }
 
     setErrorMsg(null);
     setIsLoading(true);
 
     try {
-      const result = await login(actualEmail.trim(), actualPassword);
+      const result = await login(actualEmail, actualPassword);
 
       if (!result?.ok) {
         setErrorMsg(result?.message || copy.loginFailed);
@@ -99,9 +104,8 @@ const Login: React.FC = () => {
             <div className="relative">
               <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
+                ref={emailRef}
                 name="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
                 type="email"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none"
@@ -116,9 +120,8 @@ const Login: React.FC = () => {
             <div className="relative">
               <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
+                ref={passwordRef}
                 name="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 type="password"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none"
