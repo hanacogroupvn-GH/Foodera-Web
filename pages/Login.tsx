@@ -45,15 +45,20 @@ const Login: React.FC = () => {
   const redirectParam = new URLSearchParams(location.search).get('redirect');
   const redirectTarget = redirectParam && redirectParam.startsWith('/') ? redirectParam : appRoutes.admin;
 
-  const handleLogin = async (event: React.FormEvent) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isLoading) return;
+
+    // Use FormData to grab actual native DOM values to bypass React state bugs during Autofill
+    const formData = new FormData(event.currentTarget);
+    const actualEmail = (formData.get('email') as string) || email;
+    const actualPassword = (formData.get('password') as string) || password;
 
     setErrorMsg(null);
     setIsLoading(true);
 
     try {
-      const result = await login(email.trim(), password);
+      const result = await login(actualEmail.trim(), actualPassword);
 
       if (!result?.ok) {
         setErrorMsg(result?.message || copy.loginFailed);
@@ -94,6 +99,7 @@ const Login: React.FC = () => {
             <div className="relative">
               <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
+                name="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 type="email"
@@ -110,6 +116,7 @@ const Login: React.FC = () => {
             <div className="relative">
               <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
+                name="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
