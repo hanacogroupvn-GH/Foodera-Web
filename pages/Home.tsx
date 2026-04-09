@@ -166,7 +166,7 @@ const Home: React.FC = () => {
   const recommendedNews = personalizedNews.slice(0, 2).map((item) => localizeNewsItem(item, locale));
 
   useDocumentMeta({
-    title: locale === 'zh' ? '首页 — 越南优质农产品出口' : "Vietnam's Premier Agri-Export Partner",
+    title: locale === 'zh' ? '首页' : "FoodMax Official Site",
     description: locale === 'zh'
       ? 'Foodmax 专注越南优质大米、咖啡与腰果出口，服务全球30+国家进口商。HACCP & ISO 22000 认证。'
       : "Premium rice, specialty coffee & cashew kernels from Vietnam. HACCP & ISO 22000 certified. Serving importers in 30+ countries.",

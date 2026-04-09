@@ -10,7 +10,7 @@ interface DocumentMetaOptions {
   canonicalUrl?: string;
 }
 
-const BASE_TITLE = 'Foodmax | Global Agri-Export';
+const BASE_TITLE = 'FoodMax Official Site';
 const BASE_URL = 'https://foodmax.vn';
 
 const setMetaTag = (attribute: 'name' | 'property', key: string, content: string) => {
@@ -49,7 +49,9 @@ const useDocumentMeta = (options: DocumentMetaOptions) => {
 
     // Title
     if (options.title) {
-      document.title = `${options.title} — ${BASE_TITLE}`;
+      document.title = options.title === BASE_TITLE 
+        ? options.title 
+        : `${options.title} - ${BASE_TITLE}`;
     }
 
     // Meta description
