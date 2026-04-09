@@ -20,15 +20,15 @@ const Login: React.FC = () => {
   const rawCopy =
     locale === 'zh'
       ? {
-          title: 'ç®¡ç†å'˜ç™»å½•',
-          subtitle: 'ä½¿ç"¨æ‚¨çš„ Foodmax ç®¡ç†å'˜è´¦æˆ·ç™»å½•',
-          email: 'é‚®ç®±',
-          password: 'å¯†ç ',
+          title: `ç®¡ç†å'˜ç™»å½•`,
+          subtitle: `ä½¿ç"¨æ‚¨çš„ Foodmax ç®¡ç†å'˜è´¦æˆ·ç™»å½•`,
+          email: `é‚®ç®±`,
+          password: `å¯†ç `,
           emailPlaceholder: 'admin@company.com',
-          passwordPlaceholder: 'è¯·è¾"å…¥å¯†ç ',
-          signingIn: 'ç™»å½•ä¸­...',
-          signIn: 'ç™»å½•',
-          loginFailed: 'ç™»å½•å¤±è´¥'
+          passwordPlaceholder: `è¯·è¾"å…¥å¯†ç `,
+          signingIn: `ç™»å½•ä¸­...`,
+          signIn: `ç™»å½•`,
+          loginFailed: `ç™»å½•å¤±è´¥`
         }
       : {
           title: 'Admin Login',
