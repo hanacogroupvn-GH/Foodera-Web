@@ -116,10 +116,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[10px] font-bold text-foodmax-forest/60 uppercase tracking-widest">
-            &copy; 2026 Foodmax Agriculture Export Co., Ltd. All rights reserved.
-            <span className="ml-2 font-mono text-foodmax-forest/40 lowercase">v1.0.0-beta</span>
-          </p>
+          <p className="text-[10px] font-bold text-foodmax-forest/60 uppercase tracking-widest">&copy; {new Date().getFullYear()} {copy.rights}</p>
           <div className="flex items-center gap-6">
             <Link to={appRoutes.login} className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest/60 hover:text-foodmax-lime transition-colors uppercase tracking-widest">
               <Shield size={12} /> {copy.staffPortal}
