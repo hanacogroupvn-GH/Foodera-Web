@@ -628,6 +628,52 @@ const getRequestSession = (request) => {
   return readSessionToken(cookies[SESSION_COOKIE]);
 };
 
+const isSerializedBufferLike = (value) =>
+  Boolean(value && typeof value === 'object' && value.type === 'Buffer' && Array.isArray(value.data));
+
+const decodeBufferLikeBody = (value) => {
+  if (Buffer.isBuffer(value)) {
+    return value.toString('utf8');
+  }
+
+  if (isSerializedBufferLike(value)) {
+    return Buffer.from(value.data).toString('utf8');
+  }
+
+  return null;
+};
+
+const normalizeServerlessRequestBody = (request, _response, next) => {
+  const decodedBody = decodeBufferLikeBody(request.body);
+  if (decodedBody === null) {
+    next();
+    return;
+  }
+
+  request.rawBody = request.rawBody || decodedBody;
+
+  const contentType = String(request.headers['content-type'] || '').toLowerCase();
+
+  if (contentType.includes('application/json')) {
+    try {
+      request.body = JSON.parse(decodedBody);
+    } catch {
+      request.body = {};
+    }
+    next();
+    return;
+  }
+
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    request.body = Object.fromEntries(new URLSearchParams(decodedBody).entries());
+    next();
+    return;
+  }
+
+  request.body = decodedBody;
+  next();
+};
+
 const getStringValue = (value) => {
   if (Array.isArray(value)) {
     return getStringValue(value[0]);
@@ -641,6 +687,11 @@ const getStringValue = (value) => {
 };
 
 const parseCredentialPayload = (value) => {
+  const decodedBufferBody = decodeBufferLikeBody(value);
+  if (decodedBufferBody !== null) {
+    return parseCredentialPayload(decodedBufferBody);
+  }
+
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return value;
   }
@@ -735,6 +786,7 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
     }));
     app.use(express.json({ limit: '25mb', verify: captureRawRequestBody }));
     app.use(express.urlencoded({ extended: false, limit: '25mb', verify: captureRawRequestBody }));
+    app.use(normalizeServerlessRequestBody);
 
     const globalRateLimiter = rateLimit({
       windowMs: 15 * 60 * 1000, 
