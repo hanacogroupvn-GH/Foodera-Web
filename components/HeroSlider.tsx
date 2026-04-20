@@ -77,6 +77,11 @@ const HeroSlider: React.FC = () => {
           <img 
             src={slide.image} 
             alt={slide.title}
+            width={1600}
+            height={900}
+            fetchPriority={index === 0 ? 'high' : 'low'}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding={index === 0 ? 'sync' : 'async'}
             className="w-full h-full object-cover object-center transform transition-transform duration-[8000ms] ease-out opacity-80"
             style={{ transform: index === current ? 'scale(1.1)' : 'scale(1)' }}
           />

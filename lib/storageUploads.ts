@@ -1,4 +1,5 @@
 import { api } from './apiClient';
+import { isCloudinaryConfigured, uploadToCloudinary } from './cloudinaryUpload';
 
 export const CMS_IMAGE_INPUT_ACCEPT =
   'image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml,image/heic,image/heif';
@@ -30,9 +31,19 @@ const validateImageFile = (file: File) => {
   }
 };
 
+/**
+ * Upload a CMS image. Uses Cloudinary when configured (production),
+ * falls back to local server endpoint for development.
+ */
 export const uploadCmsImage = async (file: File, folderSegments: string[]) => {
   validateImageFile(file);
 
+  // Try Cloudinary first (works on both local and production)
+  if (isCloudinaryConfigured()) {
+    return uploadToCloudinary(file, folderSegments);
+  }
+
+  // Fall back to local server upload (dev only)
   const dataUrl = await readFileAsDataUrl(file);
   const { publicUrl } = await api.uploadCmsImage({
     dataUrl,
@@ -43,3 +54,4 @@ export const uploadCmsImage = async (file: File, folderSegments: string[]) => {
 
   return publicUrl;
 };
+

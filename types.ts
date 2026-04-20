@@ -143,6 +143,7 @@ export interface ProvinceMapProduct {
   location: string;
   zoneCount: number;
   rating?: number | null;
+  category?: string;
 }
 
 export interface ProvinceMapProfile {

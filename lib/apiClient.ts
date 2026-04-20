@@ -208,7 +208,7 @@ export const api = {
     provinceName: string;
     provinceType: string;
     regionLabel: string;
-    categoryScope?: 'auto' | 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture';
+    categoryScope?: 'auto' | 'Rice' | 'Coffee' | 'Cashew' | 'Pepper' | 'Agriculture';
   }) =>
     apiRequest<{ ok: true } & ProvinceMapSuggestionResult>('/api/admin/map-profiles/ai-suggest', {
       method: 'POST',

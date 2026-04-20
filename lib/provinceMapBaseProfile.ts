@@ -1,3 +1,4 @@
+import { ProvinceMapProduct } from '../types';
 import { repairMojibakeText } from './repairMojibake';
 
 type ProvinceMapBaseProfileInput = {
@@ -8,6 +9,8 @@ type ProvinceMapBaseProfileInput = {
   color?: string;
   gpsLatitude?: number | null;
   gpsLongitude?: number | null;
+  staticProducts?: ProvinceMapProduct[];
+  staticCharacteristics?: string;
 };
 
 export const buildProvinceMapBaseProfile = ({
@@ -17,7 +20,9 @@ export const buildProvinceMapBaseProfile = ({
   regionLabel,
   color,
   gpsLatitude = null,
-  gpsLongitude = null
+  gpsLongitude = null,
+  staticProducts = [],
+  staticCharacteristics = ''
 }: ProvinceMapBaseProfileInput) => ({
   provinceId: String(provinceId ?? '').trim(),
   provinceName: repairMojibakeText(String(provinceName ?? '').trim() || 'Unknown province'),
@@ -31,7 +36,8 @@ export const buildProvinceMapBaseProfile = ({
   sowingPeriod: '',
   harvestPeriod: '',
   cropsPerYear: null,
-  characteristics: '',
+  characteristics: staticCharacteristics,
   varieties: '',
-  products: []
+  products: staticProducts
 });
+

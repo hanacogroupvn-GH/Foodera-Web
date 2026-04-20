@@ -236,6 +236,7 @@ const AdminNews: React.FC = () => {
   const [coverImageUploadError, setCoverImageUploadError] = useState<string | null>(null);
   const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
+  const [modalTab, setModalTab] = useState<'general' | 'content' | 'translation'>('general');
 
   // Form State
   const [formData, setFormData] = useState<Partial<NewsItem>>({
@@ -329,6 +330,7 @@ const AdminNews: React.FC = () => {
       setHasCustomSlug(false);
     }
     setIsModalOpen(true);
+    setModalTab('general');
   };
 
   const closeModal = () => {
@@ -896,7 +898,33 @@ const AdminNews: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="flex-grow overflow-y-auto p-10 space-y-8">
+            <form onSubmit={handleSave} className="flex-grow overflow-y-auto flex flex-col">
+              {/* Tab Bar */}
+              <div className="flex border-b border-gray-200 px-10 pt-4 gap-1 bg-gray-50/50 flex-shrink-0">
+                {(['general', 'content', 'translation'] as const).map((tab) => {
+                  const tabLabels = { general: 'General', content: 'Content', translation: 'Translation' };
+                  const isActive = modalTab === tab;
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setModalTab(tab)}
+                      className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest rounded-t-xl transition-all ${
+                        isActive
+                          ? 'bg-white text-foodmax-forest border border-gray-200 border-b-white -mb-px shadow-sm'
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                      }`}
+                    >
+                      {tabLabels[tab]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex-grow overflow-y-auto p-10 space-y-8">
+              {/* TAB: General */}
+              {modalTab === 'general' && (
+              <>
               {/* Cover Image */}
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.coverImageLabel}</label>
@@ -1006,31 +1034,57 @@ const AdminNews: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{statusFieldLabel}</label>
-                <select
-                  value={formData.isActive === false ? 'inactive' : 'active'}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
-                >
-                  <option value="active">{activeStatusLabel}</option>
-                  <option value="inactive">{inactiveStatusLabel}</option>
-                </select>
-                <p className="text-[10px] text-gray-400 italic">{statusHelpText}</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{statusFieldLabel}</label>
+                  <select
+                    value={formData.isActive === false ? 'inactive' : 'active'}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                  >
+                    <option value="active">{activeStatusLabel}</option>
+                    <option value="inactive">{inactiveStatusLabel}</option>
+                  </select>
+                  <p className="text-[10px] text-gray-400 italic">{statusHelpText}</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.excerptLabel}</label>
+                  <textarea 
+                    rows={3}
+                    value={formData.excerpt}
+                    onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                    placeholder={copy.excerptPlaceholder}
+                    required
+                  />
+                </div>
               </div>
+              </>
+              )}
 
+              {/* TAB: Content */}
+              {modalTab === 'content' && (
+              <>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.excerptLabel}</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.fullContentLabel}</label>
+                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.fullContentHint}</span>
+                </div>
                 <textarea 
-                  rows={2}
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
-                  placeholder={copy.excerptPlaceholder}
+                  rows={20}
+                  value={contentString}
+                  onChange={(e) => setContentString(e.target.value)}
+                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
+                  placeholder="Draft your professional analysis here..."
                   required
                 />
               </div>
+              </>
+              )}
 
+              {/* TAB: Translation */}
+              {modalTab === 'translation' && (
+              <>
               <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -1100,31 +1154,19 @@ const AdminNews: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.fullContentLabel}</label>
-                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.fullContentHint}</span>
-                </div>
-                <textarea 
-                  rows={10}
-                  value={contentString}
-                  onChange={(e) => setContentString(e.target.value)}
-                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
-                  placeholder="Draft your professional analysis here..."
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-center mb-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.zhContentLabel}</label>
                   <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.zhContentHint}</span>
                 </div>
                 <textarea
-                  rows={8}
+                  rows={12}
                   value={zhContentString}
                   onChange={(e) => setZhContentString(e.target.value)}
                   className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
                   placeholder="中文正文内容..."
                 />
+              </div>
+              </>
+              )}
               </div>
             </form>
 
