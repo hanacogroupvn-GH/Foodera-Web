@@ -6,20 +6,7 @@ export const CMS_IMAGE_INPUT_ACCEPT =
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
-const readFileAsDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
 
-      reject(new Error('Failed to encode image for upload.'));
-    };
-    reader.onerror = () => reject(new Error('Failed to read image file.'));
-    reader.readAsDataURL(file);
-  });
 
 const validateImageFile = (file: File) => {
   if (!file.type.startsWith('image/')) {
@@ -32,26 +19,14 @@ const validateImageFile = (file: File) => {
 };
 
 /**
- * Upload a CMS image. Uses Cloudinary when configured (production),
- * falls back to local server endpoint for development.
+ * Upload a CMS image. Uses Cloudinary exclusively.
  */
 export const uploadCmsImage = async (file: File, folderSegments: string[]) => {
   validateImageFile(file);
 
-  // Try Cloudinary first (works on both local and production)
-  if (isCloudinaryConfigured()) {
-    return uploadToCloudinary(file, folderSegments);
+  if (!isCloudinaryConfigured()) {
+    throw new Error('Cloudinary environment configuration is missing. Image upload requires VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to be set.');
   }
-
-  // Fall back to local server upload (dev only)
-  const dataUrl = await readFileAsDataUrl(file);
-  const { publicUrl } = await api.uploadCmsImage({
-    dataUrl,
-    contentType: file.type,
-    fileName: file.name,
-    folderSegments
-  });
-
-  return publicUrl;
+  
+  return uploadToCloudinary(file, folderSegments);
 };
-

@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -726,16 +727,10 @@ const AdminInventory: React.FC = () => {
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [csvSheetUrl, setCsvSheetUrl] = useState('');
   const [isImportingCsv, setIsImportingCsv] = useState(false);
-  const [csvImportStatus, setCsvImportStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
-    type: null,
-    message: ''
-  });
-  const [translationStatus, setTranslationStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
-    type: null,
-    message: ''
-  });
+  // CSV Import status handled via toast
+  // Translation status handled via toast
   const [isUploadingPrimaryImage, setIsUploadingPrimaryImage] = useState(false);
-  const [primaryImageUploadError, setPrimaryImageUploadError] = useState<string | null>(null);
+  const [modalTab, setModalTab] = useState<'general' | 'media' | 'specs' | 'settings'>('general');
   const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
   const [isReloadingInventory, setIsReloadingInventory] = useState(false);
@@ -807,8 +802,8 @@ const AdminInventory: React.FC = () => {
   const bulkTranslateTargets = useMemo(() => filteredProducts.slice(), [filteredProducts]);
 
   const openModal = (product?: Product) => {
-    setPrimaryImageUploadError(null);
-    setTranslationStatus({ type: null, message: '' });
+    
+    
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -857,7 +852,7 @@ const AdminInventory: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
-    setPrimaryImageUploadError(null);
+    
     clearInventoryDraft();
   };
 
@@ -881,7 +876,7 @@ const AdminInventory: React.FC = () => {
     event.target.value = '';
     if (!file) return;
 
-    setPrimaryImageUploadError(null);
+    
     setIsUploadingPrimaryImage(true);
 
     try {
@@ -896,17 +891,15 @@ const AdminInventory: React.FC = () => {
         image: publicUrl
       }));
     } catch (err: any) {
-      setPrimaryImageUploadError(err?.message || copy.imageUploadFailed);
+      toast.error(err?.message || copy.imageUploadFailed);
     } finally {
       setIsUploadingPrimaryImage(false);
     }
   };
 
   const pushTranslationStatus = (type: 'success' | 'error', message: string) => {
-    setTranslationStatus({ type, message });
-    window.setTimeout(() => {
-      setTranslationStatus((current) => (current.message === message ? { type: null, message: '' } : current));
-    }, 4000);
+    if (type === 'success') toast.success(message);
+    else toast.error(message);
   };
 
   const translateProductSource = async (source: {
@@ -1380,24 +1373,22 @@ const AdminInventory: React.FC = () => {
           ? zh(`\uff0c\u8df3\u8fc7 ${mapped.errors.length} \u884c\u65e0\u6548\u6570\u636e`)
           : `, skipped ${mapped.errors.length} invalid row(s)`
         : '';
-    setCsvImportStatus({
-      type: 'success',
-      message:
+    toast.success(
         locale === 'zh'
           ? zh(`${sourceLabel}: \u5df2\u5bfc\u5165 ${mapped.items.length} \u4e2a\u4ea7\u54c1\uff08\u65b0\u589e ${createdCount} \u4e2a\uff0c\u66f4\u65b0 ${updatedCount} \u4e2a${skippedPart}\uff09\u3002`)
           : `${sourceLabel}: imported ${mapped.items.length} product(s) (${createdCount} new, ${updatedCount} updated${skippedPart}).`
-    });
+    );
   };
 
   const handleImportFromSheet = async () => {
     const rawUrl = csvSheetUrl.trim();
     if (!rawUrl) {
-      setCsvImportStatus({ type: 'error', message: copy.csvLinkRequired });
+      toast.error(copy.csvLinkRequired);
       return;
     }
 
     setIsImportingCsv(true);
-    setCsvImportStatus({ type: null, message: '' });
+    
     try {
       const csvUrl = googleSheetToCsvUrl(rawUrl);
       const response = await fetch(csvUrl);
@@ -1411,7 +1402,7 @@ const AdminInventory: React.FC = () => {
       const csvText = await response.text();
       await importProductsFromCsvText(csvText, locale === 'zh' ? zh('Google \u8868\u683c') : 'Google Sheet');
     } catch (err: any) {
-      setCsvImportStatus({ type: 'error', message: err?.message || copy.csvImportFailed });
+      toast.error(err?.message || copy.csvImportFailed);
     } finally {
       setIsImportingCsv(false);
     }
@@ -1423,12 +1414,12 @@ const AdminInventory: React.FC = () => {
     if (!file) return;
 
     setIsImportingCsv(true);
-    setCsvImportStatus({ type: null, message: '' });
+    
     try {
       const csvText = await file.text();
       await importProductsFromCsvText(csvText, file.name || (locale === 'zh' ? zh('CSV \u6587\u4ef6') : 'CSV file'));
     } catch (err: any) {
-      setCsvImportStatus({ type: 'error', message: err?.message || copy.csvImportFailed });
+      toast.error(err?.message || copy.csvImportFailed);
     } finally {
       setIsImportingCsv(false);
     }
@@ -1438,7 +1429,7 @@ const AdminInventory: React.FC = () => {
     if (isReloadingInventory || isBulkTranslating) return;
 
     setIsReloadingInventory(true);
-    setTranslationStatus({ type: null, message: '' });
+    
     try {
       await refresh();
       pushTranslationStatus('success', reloadSuccessMessage);
@@ -1468,7 +1459,7 @@ const AdminInventory: React.FC = () => {
 
     setIsBulkTranslating(true);
     setBulkTranslateProgress({ current: 0, total: bulkTranslateTargets.length });
-    setTranslationStatus({ type: null, message: '' });
+    
 
     let successCount = 0;
     let failureCount = 0;
@@ -1685,28 +1676,8 @@ const AdminInventory: React.FC = () => {
                 ? '支持的产品列：id、name、category、subCategory、shortDescription、description、image、pdfUrl、gallery、specifications/spec_*、packaging/pack_*、payment/payment_* 以及 filters/filter_*。'
                 : 'Supported product columns: id, name, category, subCategory, shortDescription, description, image, pdfUrl, gallery, specifications/spec_*, packaging/pack_*, payment/payment_* and filters/filter_*.'}
             </p>
-            {csvImportStatus.type && (
-              <div
-                className={`px-4 py-3 rounded-xl text-sm font-semibold ${
-                  csvImportStatus.type === 'success'
-                    ? 'bg-green-50 border border-green-200 text-green-700'
-                    : 'bg-red-50 border border-red-200 text-red-700'
-                }`}
-              >
-                {csvImportStatus.message}
-              </div>
-            )}
-            {translationStatus.type && (
-              <div
-                className={`px-4 py-3 rounded-xl text-sm font-semibold ${
-                  translationStatus.type === 'success'
-                    ? 'bg-green-50 border border-green-200 text-green-700'
-                    : 'bg-red-50 border border-red-200 text-red-700'
-                }`}
-              >
-                {translationStatus.message}
-              </div>
-            )}
+            
+            
           </div>
 
           {/* Search & Filters */}
@@ -1856,7 +1827,33 @@ const AdminInventory: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="flex-grow overflow-y-auto p-10 space-y-10">
+            
+            {/* Tab Bar */}
+            <div className="flex border-b border-gray-200 px-10 pt-4 gap-1 bg-gray-50/50 flex-shrink-0">
+              {(['general', 'media', 'specs', 'settings'] as const).map((tab) => {
+                const tabLabels = { general: 'General', media: 'Gallery & Media', specs: 'Specs & Options', settings: 'Translation & Settings' };
+                const isActive = modalTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setModalTab(tab)}
+                    className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest rounded-t-xl transition-all ${
+                      isActive
+                        ? 'bg-white text-foodmax-forest border border-gray-200 border-b-white -mb-px shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                    }`}
+                  >
+                    {tabLabels[tab]}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <form onSubmit={handleSave} className="flex-grow overflow-y-auto flex flex-col">
+              <div className="flex-grow overflow-y-auto p-10 space-y-10">
+
+              {modalTab === 'general' && (<>
               {/* Product SKU / ID - NOW MANUALLY EDITABLE */}
               <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
                 <div className="flex items-center gap-3">
@@ -1919,13 +1916,13 @@ const AdminInventory: React.FC = () => {
                       <span className="text-[10px] text-gray-400 font-medium">JPG, PNG, WEBP, GIF, AVIF. Max 10MB.</span>
                     </div>
                     <p className="text-[10px] text-gray-400 italic">{copy.primaryImageHint}</p>
-                    {primaryImageUploadError && (
-                      <p className="text-[10px] text-red-500 italic">{primaryImageUploadError}</p>
-                    )}
+
                   </div>
                 </div>
               </div>
 
+              </>)}
+              {modalTab === 'media' && (<>
               {/* Product PDF Section */}
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.productPdfSection}</label>
@@ -2002,6 +1999,8 @@ const AdminInventory: React.FC = () => {
                 </div>
               </div>
 
+              </>)}
+              {modalTab === 'general' && (<>
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -2078,6 +2077,8 @@ const AdminInventory: React.FC = () => {
                 />
               </div>
 
+              </>)}
+              {modalTab === 'settings' && (<>
               <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -2146,6 +2147,8 @@ const AdminInventory: React.FC = () => {
                 </div>
               </div>
 
+              </>)}
+              {modalTab === 'specs' && (<>
               {/* DYNAMIC QUALITY SPECS EDITOR */}
               <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8">
                 <div className="flex items-center justify-between">
@@ -2166,14 +2169,14 @@ const AdminInventory: React.FC = () => {
                 
                 <div className="space-y-3">
                   {Object.entries(formData.specifications || {}).map(([key, value], idx) => (
-                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={idx} className="flex items-center gap-3 group animate-in fade-in slide-in-from-top-1 duration-200 border-b border-gray-50 pb-2 mb-2">
                       <div className="flex-[2]">
                         <input 
                           type="text"
                           value={key}
                           onChange={(e) => handleUpdateSpec(key, e.target.value, value as string)}
                           placeholder={copy.specsLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2182,15 +2185,15 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateSpec(key, key, e.target.value)}
                           placeholder={copy.specsValuePlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button 
                         type="button"
                         onClick={() => handleRemoveSpec(key)}
-                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -2221,14 +2224,14 @@ const AdminInventory: React.FC = () => {
 
                 <div className="space-y-3">
                   {Object.entries(formData.packaging || {}).map(([key, value], idx) => (
-                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={idx} className="flex items-center gap-3 group animate-in fade-in slide-in-from-top-1 duration-200 border-b border-gray-50 pb-2 mb-2">
                       <div className="flex-[2]">
                         <input
                           type="text"
                           value={key}
                           onChange={(e) => handleUpdatePackaging(key, e.target.value, value as string)}
                           placeholder={copy.packagingLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2237,15 +2240,15 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdatePackaging(key, key, e.target.value)}
                           placeholder={copy.packagingValuePlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemovePackaging(key)}
-                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -2276,14 +2279,14 @@ const AdminInventory: React.FC = () => {
 
                 <div className="space-y-3">
                   {Object.entries(formData.payment || {}).map(([key, value], idx) => (
-                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={idx} className="flex items-center gap-3 group animate-in fade-in slide-in-from-top-1 duration-200 border-b border-gray-50 pb-2 mb-2">
                       <div className="flex-[2]">
                         <input
                           type="text"
                           value={key}
                           onChange={(e) => handleUpdatePayment(key, e.target.value, value as string)}
                           placeholder={copy.paymentLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2292,15 +2295,15 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdatePayment(key, key, e.target.value)}
                           placeholder={copy.paymentValuePlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemovePayment(key)}
-                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -2331,7 +2334,7 @@ const AdminInventory: React.FC = () => {
 
                 <div className="space-y-3">
                   {Object.entries(formData.translations?.zh?.specifications || {}).map(([key, value], idx) => (
-                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={idx} className="flex items-center gap-3 group animate-in fade-in slide-in-from-top-1 duration-200 border-b border-gray-50 pb-2 mb-2">
                       <div className="flex-[2]">
                         <input
                           type="text"
@@ -2347,15 +2350,15 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateZhSpec(key, key, e.target.value)}
                           placeholder={copy.zhSpecsValuePlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveZhSpec(key)}
-                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -2386,7 +2389,7 @@ const AdminInventory: React.FC = () => {
 
                 <div className="space-y-3">
                   {Object.entries(formData.translations?.zh?.packaging || {}).map(([key, value], idx) => (
-                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={idx} className="flex items-center gap-3 group animate-in fade-in slide-in-from-top-1 duration-200 border-b border-gray-50 pb-2 mb-2">
                       <div className="flex-[2]">
                         <input
                           type="text"
@@ -2402,15 +2405,15 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateZhPackaging(key, key, e.target.value)}
                           placeholder={copy.zhPackagingValuePlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveZhPackaging(key)}
-                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -2441,7 +2444,7 @@ const AdminInventory: React.FC = () => {
 
                 <div className="space-y-3">
                   {Object.entries(formData.translations?.zh?.payment || {}).map(([key, value], idx) => (
-                    <div key={idx} className="flex gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={idx} className="flex items-center gap-3 group animate-in fade-in slide-in-from-top-1 duration-200 border-b border-gray-50 pb-2 mb-2">
                       <div className="flex-[2]">
                         <input
                           type="text"
@@ -2457,15 +2460,15 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateZhPayment(key, key, e.target.value)}
                           placeholder={copy.zhPaymentValuePlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveZhPayment(key)}
-                        className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
@@ -2476,20 +2479,11 @@ const AdminInventory: React.FC = () => {
                   )}
                 </div>
               </div>
-            </form>
+            </>)}
+</div></form>
 
             <div className="p-8 border-t border-gray-100 bg-gray-50">
-              {translationStatus.type && (
-                <div
-                  className={`mb-3 px-4 py-3 rounded-xl text-sm font-semibold ${
-                    translationStatus.type === 'success'
-                      ? 'bg-green-50 border border-green-200 text-green-700'
-                      : 'bg-red-50 border border-red-200 text-red-700'
-                  }`}
-                >
-                  {translationStatus.message}
-                </div>
-              )}
+              
               <div className="flex items-center gap-4">
                 <button 
                   onClick={closeModal}

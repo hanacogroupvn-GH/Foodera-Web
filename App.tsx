@@ -12,6 +12,7 @@ import FloatingContact from './components/FloatingContact';
 import LazyAIChatBot from './components/LazyAIChatBot';
 import AppShellLoader from './components/AppShellLoader';
 import AppErrorBoundary from './components/AppErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 import PersonalizationRouteTracker from './components/PersonalizationRouteTracker';
 import { appRoutes } from './lib/routes';
 
@@ -209,6 +210,17 @@ const App: React.FC = () => {
   return (
     <LocaleProvider>
       <AppRoutes />
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{ 
+          duration: 4000,
+          style: {
+            fontSize: '13px',
+            fontWeight: 600,
+            borderRadius: '12px',
+          }
+        }} 
+      />
     </LocaleProvider>
   );
 };
