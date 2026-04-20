@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
@@ -720,6 +722,9 @@ const AdminInventory: React.FC = () => {
       ? zh('\u65e0\u6cd5\u6253\u5f00 PDF \u7a97\u53e3\uff0c\u8bf7\u5141\u8bb8\u6d4f\u89c8\u5668\u5f39\u7a97\u540e\u518d\u8bd5\u3002')
       : 'Unable to open the PDF window. Allow browser pop-ups and try again.';
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [isExportingZip, setIsExportingZip] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -799,6 +804,8 @@ const AdminInventory: React.FC = () => {
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
   const bulkTranslateTargets = useMemo(() => filteredProducts.slice(), [filteredProducts]);
 
   const openModal = (product?: Product) => {
@@ -1522,6 +1529,115 @@ const AdminInventory: React.FC = () => {
     }
   };
 
+  
+  const handleExportZip = async () => {
+    if (isExportingZip) return;
+    setIsExportingZip(true);
+    const toastId = toast.loading(locale === 'zh' ? '正在准备 PDF...' : 'Preparing PDFs...');
+    
+    try {
+      const zip = new JSZip();
+      
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = (html2pdfModule.default || html2pdfModule) as any;
+      
+      const capturePdfToBlob = async (htmlContent: string, filename: string): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+          const iframe = document.createElement('iframe');
+          iframe.style.position = 'fixed';
+          iframe.style.width = '794px';
+          iframe.style.height = '1122px';
+          iframe.style.top = '0';
+          iframe.style.left = '0';
+          iframe.style.zIndex = '-9999';
+          iframe.style.opacity = '0';
+          iframe.style.pointerEvents = 'none';
+          document.body.appendChild(iframe);
+
+          iframe.onload = async () => {
+            try {
+              const doc = iframe.contentDocument;
+              if (!doc) throw new Error('No iframe document available');
+
+              // Wait for images to load
+              const imgs = Array.from(doc.querySelectorAll('img'));
+              if (imgs.length > 0) {
+                let loaded = 0;
+                await new Promise<void>((imgResolve) => {
+                  imgs.forEach((img) => {
+                    if (img.complete) {
+                      loaded++;
+                      if (loaded === imgs.length) imgResolve();
+                    } else {
+                      img.onload = () => {
+                        loaded++;
+                        if (loaded === imgs.length) imgResolve();
+                      };
+                      img.onerror = () => {
+                        loaded++;
+                        if (loaded === imgs.length) imgResolve();
+                      };
+                    }
+                  });
+                });
+              }
+
+              // Give browser time to paint styles
+              await new Promise((r) => setTimeout(r, 200));
+
+              const blob = await html2pdf()
+                .from(doc.documentElement)
+                .set({
+                  margin: 0,
+                  filename,
+                  image: { type: 'jpeg', quality: 0.98 },
+                  html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
+                  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                })
+                .output('blob');
+              
+              document.body.removeChild(iframe);
+              resolve(blob);
+            } catch (err) {
+              document.body.removeChild(iframe);
+              reject(err);
+            }
+          };
+
+          iframe.contentDocument?.open();
+          iframe.contentDocument?.write(htmlContent.replace(/<script>[\s\S]*?<\/script>/gi, ''));
+          iframe.contentDocument?.close();
+        });
+      };
+
+      let processed = 0;
+      
+      for (const p of products) {
+        if (!p.id) continue;
+        
+        const htmlEn = buildProductPdfTemplateHtml(p, 'en', { headerImageSrc: pdfHeaderImage, footerImageSrc: pdfFooterImage });
+        const pdfEnBlob = await capturePdfToBlob(htmlEn, `${p.id}-EN.pdf`);
+        zip.folder('EN')?.folder(p.category)?.file(`${p.id}-EN.pdf`, pdfEnBlob);
+        
+        const htmlCn = buildProductPdfTemplateHtml(p, 'zh', { headerImageSrc: pdfHeaderImage, footerImageSrc: pdfFooterImage });
+        const pdfCnBlob = await capturePdfToBlob(htmlCn, `${p.id}-CN.pdf`);
+        zip.folder('CN')?.folder(p.category)?.file(`${p.id}-CN.pdf`, pdfCnBlob);
+        
+        processed++;
+        toast.loading(`${locale === 'zh' ? '导出' : 'Exporting'} ${processed}/${products.length}...`, { id: toastId });
+      }
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      saveAs(zipBlob, `Foodmax-Products-${new Date().toISOString().slice(0,10)}.zip`);
+      toast.success(locale === 'zh' ? 'PDF 批量导出成功！' : 'Bulk PDF Export completed!', { id: toastId });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to export ZIP', { id: toastId });
+    } finally {
+      setIsExportingZip(false);
+    }
+  };
+
   const handleExportProductPdf = (product: Product, exportLocale: SupportedLocale) => {
     const popup = window.open('', '_blank', 'width=980,height=1180');
     if (!popup) {
@@ -1609,24 +1725,42 @@ const AdminInventory: React.FC = () => {
                 type="button"
                 onClick={handleReloadInventory}
                 disabled={isReloadingInventory || isBulkTranslating}
-                className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600 shadow-sm transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:opacity-50"
+                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:opacity-50 relative group"
               >
-                {isReloadingInventory ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                <span className="whitespace-nowrap">{isReloadingInventory ? reloadingButtonLabel : reloadButtonLabel}</span>
+                {isReloadingInventory ? <Loader2 size={20} className="animate-spin" /> : <RefreshCw size={20} />}
+                <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap w-max shadow-xl z-50 border border-gray-800">
+                  {isReloadingInventory ? reloadingButtonLabel : reloadButtonLabel}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 translate-y-[5px] w-2.5 h-2.5 bg-gray-900 border-t border-l border-gray-800 rotate-45"></div>
+                </div>
               </button>
               <button
                 type="button"
                 onClick={handleBulkTranslateFiltered}
                 disabled={isBulkTranslating || isReloadingInventory}
-                className="flex min-w-0 flex-1 items-center justify-center gap-3 rounded-2xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-4 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-foodmax-forest shadow-sm transition-all hover:bg-foodmax-forest hover:text-white disabled:opacity-50"
+                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl border border-foodmax-forest/15 bg-foodmax-forest/5 text-foodmax-forest shadow-sm transition-all hover:bg-foodmax-forest hover:text-white disabled:opacity-50 relative group"
               >
-                {isBulkTranslating ? <Loader2 size={16} className="animate-spin" /> : <Languages size={16} />}
-                <span className="truncate">
+                {isBulkTranslating ? <Loader2 size={20} className="animate-spin" /> : <Languages size={20} />}
+                <div className="absolute top-full mt-3 right-0 lg:left-1/2 lg:-translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap w-max shadow-xl z-50 border border-gray-800">
                   {isBulkTranslating
                     ? `${bulkTranslatingButtonLabel} ${bulkTranslateProgress.current}/${bulkTranslateProgress.total}`
                     : `${bulkTranslateButtonLabel} (${bulkTranslateTargets.length})`}
-                </span>
+                  <div className="absolute bottom-full right-4 lg:left-1/2 lg:-translate-x-1/2 translate-y-[5px] w-2.5 h-2.5 bg-gray-900 border-t border-l border-gray-800 rotate-45"></div>
+                </div>
               </button>
+              
+              <button
+                type="button"
+                onClick={handleExportZip}
+                disabled={isExportingZip}
+                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl bg-white border border-gray-200 text-foodmax-forest shadow-sm transition-all hover:bg-gray-50 hover:text-foodmax-lime disabled:opacity-50 relative group"
+              >
+                {isExportingZip ? <Loader2 size={20} className="animate-spin" /> : <FileDown size={20} />}
+                <div className="absolute top-full mt-3 right-0 lg:left-1/2 lg:-translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap w-max shadow-xl z-50 border border-gray-800">
+                  {locale === 'zh' ? '导出全部为 ZIP' : 'Export PDF (ZIP)'}
+                  <div className="absolute bottom-full right-4 lg:left-1/2 lg:-translate-x-1/2 translate-y-[5px] w-2.5 h-2.5 bg-gray-900 border-t border-l border-gray-800 rotate-45"></div>
+                </div>
+              </button>
+
               <button 
                 onClick={() => openModal()}
                 className="flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-foodmax-forest px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl transition-all hover:bg-foodmax-lime hover:text-foodmax-forest"
@@ -1688,25 +1822,36 @@ const AdminInventory: React.FC = () => {
                 type="text" 
                 placeholder={copy.searchPlaceholder}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
               />
             </div>
-            <div className="relative md:w-72">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={16} />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-xs font-black text-gray-500 uppercase tracking-widest cursor-pointer"
+          </div>
+          {/* Category Tabs */}
+          <div className="flex border-b border-gray-200 mb-8 overflow-x-auto hide-scrollbar gap-1">
+            <button
+              onClick={() => { setSelectedCategory('all'); setCurrentPage(1); }}
+              className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
+                selectedCategory === 'all' 
+                ? 'border-foodmax-forest text-foodmax-forest' 
+                : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
+              }`}
+            >
+              {copy.allCategories}
+            </button>
+            {PRODUCT_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
+                className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
+                  selectedCategory === cat
+                  ? 'border-foodmax-forest text-foodmax-forest' 
+                  : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
+                }`}
               >
-                <option value="all">{copy.allCategories}</option>
-                {PRODUCT_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {getCategoryLabel(category as CategoryType, locale)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {getCategoryLabel(cat as CategoryType, locale)}
+              </button>
+            ))}
           </div>
 
           {/* Product Table */}
@@ -1721,7 +1866,7 @@ const AdminInventory: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredProducts.map(p => {
+                {paginatedProducts.map(p => {
                   const localized = localizeProduct(p, locale);
                   return (
                   <tr key={p.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -1805,6 +1950,31 @@ const AdminInventory: React.FC = () => {
               <div className="py-20 text-center">
                 <AlertCircle size={48} className="mx-auto text-gray-200 mb-4" />
                 <p className="text-gray-400 font-black uppercase text-xs tracking-widest">{copy.noMatches}</p>
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-4">
+                   Page {currentPage} / {totalPages}
+                 </span>
+                 <div className="flex gap-2">
+                   <button 
+                     disabled={currentPage === 1}
+                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                     className="px-4 py-2 border border-gray-200 rounded-lg text-xs font-black uppercase text-gray-600 disabled:opacity-50 hover:bg-white transition-all bg-gray-100"
+                   >
+                     Prev
+                   </button>
+                   <button 
+                     disabled={currentPage === totalPages}
+                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                     className="px-4 py-2 border border-gray-200 rounded-lg text-xs font-black uppercase text-gray-600 disabled:opacity-50 hover:bg-white transition-all bg-gray-100"
+                   >
+                     Next
+                   </button>
+                 </div>
               </div>
             )}
           </div>
