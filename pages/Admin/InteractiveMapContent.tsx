@@ -126,7 +126,7 @@ const toFormState = (profile: ProvinceMapProfile): FormState => ({
 });
 
 const inputClassName =
-  'w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 outline-none transition focus:border-foodmax-forest';
+  'w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 outline-none transition focus:border-foodera-forest';
 const labelClassName = 'mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500';
 
 export default function AdminInteractiveMapContent() {
@@ -260,7 +260,7 @@ export default function AdminInteractiveMapContent() {
   };
 
   if (isLoading || !selectedProvince || !formState || !previewProfile) {
-    return <div className="flex min-h-screen bg-stone-100 font-sans"><div className="flex-grow px-6 py-10"><div className="mx-auto max-w-6xl rounded-[2rem] border border-gray-200 bg-white px-6 py-5 text-sm font-semibold text-gray-600 shadow-sm">{isLoading ? <span className="inline-flex items-center gap-3"><Loader2 size={18} className="animate-spin text-foodmax-forest" />{COPY.loading}</span> : COPY.loadError}</div></div></div>;
+    return <div className="flex min-h-screen bg-stone-100 font-sans"><div className="flex-grow px-6 py-10"><div className="mx-auto max-w-6xl rounded-[2rem] border border-gray-200 bg-white px-6 py-5 text-sm font-semibold text-gray-600 shadow-sm">{isLoading ? <span className="inline-flex items-center gap-3"><Loader2 size={18} className="animate-spin text-foodera-forest" />{COPY.loading}</span> : COPY.loadError}</div></div></div>;
   }
 
   const previewRows = [
@@ -277,7 +277,7 @@ export default function AdminInteractiveMapContent() {
   return (
     <div className="flex min-h-screen bg-stone-100 font-sans">
       {/* Mini Sidebar — matching Inventory / News pattern */}
-      <aside className="w-[5.5rem] bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
+      <aside className="w-[5.5rem] bg-foodera-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
         <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5">
           <ChevronLeft size={24} />
         </Link>
@@ -288,7 +288,7 @@ export default function AdminInteractiveMapContent() {
           <Link to={appRoutes.adminNews} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5" title="News">
             <FileText size={24} />
           </Link>
-          <Link to={appRoutes.adminMapContent} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20" title="Map Content">
+          <Link to={appRoutes.adminMapContent} className="p-3.5 bg-foodera-lime text-foodera-forest rounded-2xl shadow-xl shadow-foodera-lime/20 border border-foodera-lime/20" title="Map Content">
             <MapPinned size={24} />
           </Link>
         </div>
@@ -303,11 +303,11 @@ export default function AdminInteractiveMapContent() {
           >
             <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
               <div className="flex items-center relative">
-                <span className="text-foodmax-forest font-[900] text-xl">F</span>
+                <span className="text-foodera-forest font-[900] text-xl">F</span>
               </div>
             </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodmax-lime rounded-full flex items-center justify-center border-2 border-foodmax-forest shadow-md">
-              <LogOut size={10} className="text-foodmax-forest" />
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
+              <LogOut size={10} className="text-foodera-forest" />
             </div>
           </Link>
         </div>
@@ -326,7 +326,7 @@ export default function AdminInteractiveMapContent() {
                 <Link to={appRoutes.commercialTool} className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-700">Public map</Link>
                 <button type="button" onClick={() => void loadEditorData()} className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-700"><RefreshCw size={16} />{COPY.reload}</button>
                 <button type="button" onClick={handleReset} disabled={isResetting} className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 disabled:opacity-60">{isResetting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}{isResetting ? COPY.resetting : COPY.reset}</button>
-                <button type="button" onClick={handleSave} disabled={isSaving || !isDirty} className="inline-flex items-center gap-2 rounded-2xl bg-foodmax-forest px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{isSaving ? COPY.saving : COPY.save}</button>
+                <button type="button" onClick={handleSave} disabled={isSaving || !isDirty} className="inline-flex items-center gap-2 rounded-2xl bg-foodera-forest px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{isSaving ? COPY.saving : COPY.save}</button>
               </div>
             </div>
             {status.type ? <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm font-semibold ${status.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'}`}>{status.message}</div> : null}
@@ -338,7 +338,7 @@ export default function AdminInteractiveMapContent() {
                 <div className="md:col-span-2"><label className={labelClassName}>{COPY.province}</label><select value={selectedProvinceId} onChange={(event) => setSelectedProvinceId(event.target.value)} className={inputClassName}>{provinceOptions.map((province) => <option key={province.provinceId} value={province.provinceId}>{province.provinceName}</option>)}</select></div>
                 <div><label className={labelClassName}>{COPY.type}</label><div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700">{selectedProvince.provinceType}</div></div>
               </div>
-              <div className="mt-6 rounded-[1.75rem] border border-gray-200 bg-gray-50 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-gray-700">{COPY.aiTitle}</h3></div><button type="button" onClick={handleSuggest} disabled={isSuggesting} className="inline-flex items-center gap-2 rounded-2xl bg-foodmax-lime px-5 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-foodmax-forest shadow-xl disabled:opacity-60">{isSuggesting ? <Loader2 size={14} className="animate-spin" /> : <Wrench size={14} />}{isSuggesting ? COPY.aiSuggesting : COPY.aiSuggest}</button></div><div className="mt-4 max-w-sm"><label className={labelClassName}>{COPY.aiScope}</label><select value={aiScope} onChange={(event) => setAiScope(event.target.value as MapAiScope)} className={inputClassName}>{AI_SCOPE_OPTIONS.map((scope) => <option key={scope} value={scope}>{scope}</option>)}</select></div></div>
+              <div className="mt-6 rounded-[1.75rem] border border-gray-200 bg-gray-50 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-gray-700">{COPY.aiTitle}</h3></div><button type="button" onClick={handleSuggest} disabled={isSuggesting} className="inline-flex items-center gap-2 rounded-2xl bg-foodera-lime px-5 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-foodera-forest shadow-xl disabled:opacity-60">{isSuggesting ? <Loader2 size={14} className="animate-spin" /> : <Wrench size={14} />}{isSuggesting ? COPY.aiSuggesting : COPY.aiSuggest}</button></div><div className="mt-4 max-w-sm"><label className={labelClassName}>{COPY.aiScope}</label><select value={aiScope} onChange={(event) => setAiScope(event.target.value as MapAiScope)} className={inputClassName}>{AI_SCOPE_OPTIONS.map((scope) => <option key={scope} value={scope}>{scope}</option>)}</select></div></div>
               <div className="mt-6 space-y-5">
                 <div className="grid gap-4 md:grid-cols-2"><div><label className={labelClassName}>{COPY.gpsLatitude}</label><input value={formState.gpsLatitude} onChange={(event) => applyField('gpsLatitude', event.target.value.replace(/[^0-9.-]/g, ''))} className={inputClassName} /></div><div><label className={labelClassName}>{COPY.gpsLongitude}</label><input value={formState.gpsLongitude} onChange={(event) => applyField('gpsLongitude', event.target.value.replace(/[^0-9.-]/g, ''))} className={inputClassName} /></div></div>
                 <div className="grid gap-4 md:grid-cols-2"><div><label className={labelClassName}>{COPY.cultivatedArea}</label><input value={formState.cultivatedAreaHectares} onChange={(event) => applyField('cultivatedAreaHectares', event.target.value.replace(/[^0-9.]/g, ''))} className={inputClassName} /></div><div><label className={labelClassName}>{COPY.averageOutput}</label><input value={formState.averageOutputMtPerYear} onChange={(event) => applyField('averageOutputMtPerYear', event.target.value.replace(/[^0-9.]/g, ''))} className={inputClassName} /></div></div>

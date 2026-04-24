@@ -11,8 +11,8 @@ const Contact: React.FC = () => {
   useDocumentMeta({
     title: locale === 'zh' ? '联系我们' : 'Contact Us',
     description: locale === 'zh'
-      ? '联系 Foodmax 出口团队，咨询大米、咖啡、腰果出口合作事宜。24/7 全球出口热线与 WhatsApp 支持。'
-      : 'Contact Foodmax export specialists for rice, coffee & cashew import inquiries. 24/7 export hotline and WhatsApp support.',
+      ? '联系 FoodEra 出口团队，咨询大米、咖啡、腰果出口合作事宜。24/7 全球出口热线与 WhatsApp 支持。'
+      : 'Contact FoodEra export specialists for rice, coffee & cashew import inquiries. 24/7 export hotline and WhatsApp support.',
     canonicalUrl: `${BASE_URL}/contact`,
     ogUrl: `${BASE_URL}/contact`,
   });
@@ -42,13 +42,13 @@ const enCopy = {
   message: 'Message Detail',
   sending: 'SENDING...',
   send: 'SEND MESSAGE',
-  adminNote: 'This inquiry will be stored in Foodmax CMS and visible to Admin.',
+  adminNote: 'This inquiry will be stored in FoodEra CMS and visible to Admin.',
   subjects: ['Rice Export Inquiry', 'Coffee Export Inquiry', 'Logistics & Shipping', 'Private Label Partnership', 'Other Corporate Inquiry'],
   headquarters: 'Global Headquarters',
   directions: 'Get Directions',
   officeLabel: 'HQ Office',
-  address: '17 Dinh Tien Hoang, Da Kao, District 1, Ho Chi Minh City, Vietnam',
-  mapTitle: 'Foodmax Headquarters Location'
+  address: 'No. 6 Mac Dinh Chi St, Sai Gon Ward, Ho Chi Minh City, Vietnam',
+  mapTitle: 'FoodEra Headquarters Location'
 };
 
 const zhCopy = {
@@ -72,13 +72,13 @@ const zhCopy = {
   message: '消息内容',
   sending: '发送中...',
   send: '发送消息',
-  adminNote: '该咨询将存储到 Foodmax CMS，并可在后台查看。',
+  adminNote: '该咨询将存储到 FoodEra CMS，并可在后台查看。',
   subjects: ['大米出口咨询', '咖啡出口咨询', '物流与船运', '自有品牌合作', '其他企业咨询'],
   headquarters: '全球总部',
   directions: '获取路线',
   officeLabel: '总部办公室',
   address: '越南胡志明市第一郡多高坊丁先皇街 17 号',
-  mapTitle: 'Foodmax 总部位置'
+  mapTitle: 'FoodEra 总部位置'
 };
 
   const rawCopy = locale === 'zh' ? zhCopy : enCopy;
@@ -172,7 +172,7 @@ const zhCopy = {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="bg-foodmax-forest py-24">
+      <div className="bg-foodera-forest py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl md:text-6xl font-black text-white mb-6">{copy.heroTitle}</h1>
           <p className="text-xl text-green-100 max-w-2xl mx-auto">
@@ -186,23 +186,23 @@ const zhCopy = {
           {/* Info Cards */}
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-green-50 text-foodmax-forest rounded-xl flex items-center justify-center mb-6">
+              <div className="w-12 h-12 bg-green-50 text-foodera-forest rounded-xl flex items-center justify-center mb-6">
                 <Mail size={24} />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{copy.emailChannels}</h3>
               <p className="text-sm text-gray-500 mb-4">{copy.exportInquiries}</p>
               <div className="space-y-2">
                 <a
-                  href="mailto:export@foodmax.vn"
-                  className="block text-md font-bold text-foodmax-forest hover:text-foodmax-lime transition-colors"
+                  href="mailto:export@foodera.vn"
+                  className="block text-md font-bold text-foodera-forest hover:text-foodera-lime transition-colors"
                 >
-                  export@foodmax.vn
+                  export@foodera.vn
                 </a>
                 <a
-                  href="mailto:support@foodmax.vn"
-                  className="block text-md font-bold text-foodmax-forest hover:text-foodmax-lime transition-colors"
+                  href="mailto:support@foodera.vn"
+                  className="block text-md font-bold text-foodera-forest hover:text-foodera-lime transition-colors"
                 >
-                  support@foodmax.vn
+                  support@foodera.vn
                 </a>
               </div>
               <p className="text-xs text-gray-400 mt-6 leading-relaxed">
@@ -211,12 +211,12 @@ const zhCopy = {
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-green-50 text-foodmax-forest rounded-xl flex items-center justify-center mb-6">
+              <div className="w-12 h-12 bg-green-50 text-foodera-forest rounded-xl flex items-center justify-center mb-6">
                 <Phone size={24} />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{copy.phoneWhatsapp}</h3>
               <p className="text-sm text-gray-500 mb-4">{copy.hotline}</p>
-              <p className="text-lg font-bold text-foodmax-forest">+84 964 791 902</p>
+              <p className="text-lg font-bold text-foodera-forest">(+84).319.519.329</p>
               <p className="text-xs text-gray-400 mt-2">{copy.available24}</p>
             </div>
           </div>
@@ -247,7 +247,7 @@ const zhCopy = {
                     required
                     value={form.companyName}
                     onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodera-forest focus:ring-1 focus:ring-foodera-forest transition-all"
                   />
                 </div>
                 <div>
@@ -259,7 +259,7 @@ const zhCopy = {
                     required
                     value={form.fullName}
                     onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodera-forest focus:ring-1 focus:ring-foodera-forest transition-all"
                   />
                 </div>
               </div>
@@ -274,7 +274,7 @@ const zhCopy = {
                     required
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodera-forest focus:ring-1 focus:ring-foodera-forest transition-all"
                   />
                 </div>
                 <div>
@@ -285,7 +285,7 @@ const zhCopy = {
                     type="text"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodera-forest focus:ring-1 focus:ring-foodera-forest transition-all"
                   />
                 </div>
               </div>
@@ -295,7 +295,7 @@ const zhCopy = {
                 <select
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodera-forest focus:ring-1 focus:ring-foodera-forest transition-all"
                 >
                   {copy.subjects.map((subject) => (
                     <option key={subject}>{subject}</option>
@@ -312,7 +312,7 @@ const zhCopy = {
                   required
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodmax-forest focus:ring-1 focus:ring-foodmax-forest transition-all resize-none"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-foodera-forest focus:ring-1 focus:ring-foodera-forest transition-all resize-none"
                 ></textarea>
               </div>
 
@@ -320,7 +320,7 @@ const zhCopy = {
                 type="submit"
                 disabled={loading}
                 className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-foodmax-forest hover:bg-foodmax-forest/90'
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-foodera-forest hover:bg-foodera-forest/90'
                 }`}
               >
                 {loading ? copy.sending : (
@@ -354,8 +354,8 @@ const zhCopy = {
           <div className="absolute top-6 left-6 pointer-events-none">
             <div className="bg-white/95 backdrop-blur-md px-6 py-5 rounded-3xl shadow-2xl border border-gray-100 max-w-xs group-hover:translate-y-[-4px] transition-transform duration-500">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-foodmax-lime animate-pulse"></div>
-                <h4 className="text-xs font-black text-foodmax-forest uppercase tracking-[0.2em]">{copy.headquarters}</h4>
+                <div className="w-2 h-2 rounded-full bg-foodera-lime animate-pulse"></div>
+                <h4 className="text-xs font-black text-foodera-forest uppercase tracking-[0.2em]">{copy.headquarters}</h4>
               </div>
               <p className="text-[11px] font-bold text-gray-700 leading-relaxed mb-4">
                 {copy.address}
@@ -366,7 +366,7 @@ const zhCopy = {
                   href="https://www.google.com/maps/place/17+%C4%90inh+Ti%C3%AAn+Ho%C3%A0ng,+%C4%90a+Kao,+Qu%E1%BA%ADn+1,+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh,+Vietnam/@10.7886314,106.6966048,17z"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="pointer-events-auto text-[9px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4"
+                  className="pointer-events-auto text-[9px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4"
                 >
                   {copy.directions}
                 </a>

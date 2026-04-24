@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-foodmax-forest: #006838;
-  --color-foodmax-lime: #8cc63f;
-  --font-sans: "Inter", sans-serif;
+  --color-foodera-forest: #1B6B3A;
+  --color-foodera-lime: #8BC34A;
+  --font-sans: "Montserrat", sans-serif;
 }
 
 /* Core Styling with CSS Variables */
@@ -73,10 +73,10 @@ body {
 .dark .border-gray-100 { border-color: #1e293b !important; }
 .dark .border-gray-200 { border-color: var(--border-color) !important; }
 
-.dark .text-foodmax-forest { color: #22c55e !important; }
-.dark .bg-foodmax-forest { background-color: #0f3d2a !important; }
-.dark .text-foodmax-lime { color: #a3e635 !important; }
-.dark .bg-foodmax-lime { background-color: #84cc16 !important; }
+.dark .text-foodera-forest { color: #22c55e !important; }
+.dark .bg-foodera-forest { background-color: #0f3d2a !important; }
+.dark .text-foodera-lime { color: #a3e635 !important; }
+.dark .bg-foodera-lime { background-color: #84cc16 !important; }
 
 /* Premium UI Utilities */
 .glass-panel {

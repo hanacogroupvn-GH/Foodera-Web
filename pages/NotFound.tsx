@@ -10,8 +10,8 @@ const NotFound: React.FC = () => {
 
   useEffect(() => {
     document.title = locale === 'zh' 
-      ? '找不到页面 - Foodmax' 
-      : 'Page Not Found - Foodmax';
+      ? '找不到页面 - FoodEra' 
+      : 'Page Not Found - FoodEra';
   }, [locale]);
 
   const copy = locale === 'zh' ? {
@@ -35,10 +35,10 @@ const NotFound: React.FC = () => {
       <div className="max-w-xl w-full space-y-10 text-center relative z-10">
         
         {/* Decorative background circle */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-foodmax-forest/5 rounded-full blur-3xl -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-foodera-forest/5 rounded-full blur-3xl -z-10" />
 
         <div className="mx-auto flex items-center justify-center h-28 w-28 rounded-full bg-white shadow-xl border border-gray-100">
-          <ShieldAlert className="h-12 w-12 text-foodmax-forest" />
+          <ShieldAlert className="h-12 w-12 text-foodera-forest" />
         </div>
         
         <div className="space-y-4">
@@ -59,13 +59,13 @@ const NotFound: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row justify-center gap-4 border-t border-gray-200">
           <Link
             to={appRoutes.home}
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-transparent text-xs font-black uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-foodmax-forest/20 text-white bg-foodmax-forest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all hover:-translate-y-1"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-transparent text-xs font-black uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-foodera-forest/20 text-white bg-foodera-forest hover:bg-foodera-lime hover:text-foodera-forest transition-all hover:-translate-y-1"
           >
             <Home size={16} /> {copy.backToHome}
           </Link>
           <Link
             to={appRoutes.contact}
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-gray-200 text-xs font-black uppercase tracking-[0.2em] rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-foodmax-forest hover:text-foodmax-forest transition-all group"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-gray-200 text-xs font-black uppercase tracking-[0.2em] rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-foodera-forest hover:text-foodera-forest transition-all group"
           >
             {copy.contactSupport} <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
           </Link>

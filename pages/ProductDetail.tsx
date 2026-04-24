@@ -39,7 +39,7 @@ const ProductDetail: React.FC = () => {
 
   useDocumentMeta({
     title: localizedProduct?.name || product?.name || (locale === 'zh' ? '产品详情' : 'Product Detail'),
-    description: localizedProduct?.shortDescription || product?.shortDescription || (locale === 'zh' ? 'Foodmax 出口产品详细信息与规格。' : 'Foodmax export product details and specifications.'),
+    description: localizedProduct?.shortDescription || product?.shortDescription || (locale === 'zh' ? 'FoodEra 出口产品详细信息与规格。' : 'FoodEra export product details and specifications.'),
     canonicalUrl: product ? `${BASE_URL}${appRoutes.productById(product.id)}` : undefined,
     ogUrl: product ? `${BASE_URL}${appRoutes.productById(product.id)}` : undefined,
     ogImage: product?.image,
@@ -195,7 +195,7 @@ const ProductDetail: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
         <h2 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h2>
         <p className="text-gray-600 mb-8">{copy.notFoundDesc}</p>
-        <Link to={appRoutes.products} className="px-8 py-3 bg-foodmax-forest text-white rounded-lg font-bold">
+        <Link to={appRoutes.products} className="px-8 py-3 bg-foodera-forest text-white rounded-lg font-bold">
           {copy.backToProducts}
         </Link>
       </div>
@@ -273,7 +273,7 @@ const ProductDetail: React.FC = () => {
             ],
             usefulInfo: {
               title: '分级尺寸标准',
-              desc: 'Foodmax 腰果分级遵循 AFI 标准，并通过激光分选确保 WW180 到 WW320 的等级与颜色一致性。',
+              desc: 'FoodEra 腰果分级遵循 AFI 标准，并通过激光分选确保 WW180 到 WW320 的等级与颜色一致性。',
               points: ['激光颜色校准', '水分 < 5%', '零异物控制']
             },
             protocol: {
@@ -322,7 +322,7 @@ const ProductDetail: React.FC = () => {
             ],
             usefulInfo: {
               title: '湄公河物流协同',
-              desc: 'Foodmax 将内河驳船运输与港口物流衔接，使 1,000 吨级批次可从加工厂直接进入国际集装箱港口。',
+              desc: 'FoodEra 将内河驳船运输与港口物流衔接，使 1,000 吨级批次可从加工厂直接进入国际集装箱港口。',
               points: ['河港直连', '实时批次追踪', 'FOB/CIF 透明']
             },
             protocol: {
@@ -345,7 +345,7 @@ const ProductDetail: React.FC = () => {
             ],
             usefulInfo: {
               title: 'Mekong Logistics Sync',
-              desc: 'Foodmax integrates with river barge logistics, allowing 1,000MT lots to move directly from processing plants to international container ports with zero land-transit friction.',
+              desc: 'FoodEra integrates with river barge logistics, allowing 1,000MT lots to move directly from processing plants to international container ports with zero land-transit friction.',
               points: ['Direct River-to-Port', 'Real-time Batch Tracking', 'FOB/CIF Transparency']
             },
             protocol: {
@@ -371,7 +371,7 @@ const ProductDetail: React.FC = () => {
             ],
             usefulInfo: {
               title: '密度与筛网规格',
-              desc: 'Foodmax 通过重力分选确保 S16 与 S18 批次豆密度更高，从而提升烘焙受热均匀性与成色一致性。',
+              desc: 'FoodEra 通过重力分选确保 S16 与 S18 批次豆密度更高，从而提升烘焙受热均匀性与成色一致性。',
               points: ['重力分选', 'SCA 杯测校准', '精品缺陷率 < 1%']
             },
             protocol: {
@@ -394,7 +394,7 @@ const ProductDetail: React.FC = () => {
             ],
             usefulInfo: {
               title: 'Density & Screen Sizing',
-              desc: 'Foodmax employs gravity separation tables to ensure S16 and S18 lots have high bean density, resulting in superior roaster heat transfer and uniform color.',
+              desc: 'FoodEra employs gravity separation tables to ensure S16 and S18 lots have high bean density, resulting in superior roaster heat transfer and uniform color.',
               points: ['Gravity Separation', 'SCA Cupping Calibration', 'Defect < 1% Specialty']
             },
             protocol: {
@@ -417,7 +417,7 @@ const ProductDetail: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-foodmax-forest transition-colors"
+            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-foodera-forest transition-colors"
           >
             <ArrowLeft size={16} /> {copy.backToList}
           </button>
@@ -434,7 +434,7 @@ const ProductDetail: React.FC = () => {
 
           <div className="flex flex-col animate-in fade-in slide-in-from-right duration-700">
             <div className="flex items-center gap-3 mb-6">
-              <span className="px-4 py-1.5 bg-foodmax-forest text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-sm">
+              <span className="px-4 py-1.5 bg-foodera-forest text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-sm">
                 {getCategoryLabel(product.category, locale)}
               </span>
               <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{localizedProduct?.subCategory || product.subCategory}</span>
@@ -445,7 +445,7 @@ const ProductDetail: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-auto">
               <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
                 <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-6 flex items-center gap-2">
-                  <FileText size={16} className="text-foodmax-forest" /> {copy.qualitySpecs}
+                  <FileText size={16} className="text-foodera-forest" /> {copy.qualitySpecs}
                 </h3>
                 <ul className="space-y-4">
                   {Object.entries(localizedProduct?.specifications || product.specifications).map(([key, val]) => (
@@ -458,18 +458,18 @@ const ProductDetail: React.FC = () => {
               </div>
               <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
                 <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-6 flex items-center gap-2">
-                  <Truck size={16} className="text-foodmax-forest" /> {copy.tradeLogistics}
+                  <Truck size={16} className="text-foodera-forest" /> {copy.tradeLogistics}
                 </h3>
                 <div className="space-y-6">
                   {packagingEntries.length > 0 && (
                     <div>
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.28em] text-foodmax-forest mb-3">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.28em] text-foodera-forest mb-3">
                         {copy.packagingSection}
                       </h4>
                       <ul className="space-y-3 text-xs text-gray-600">
                         {packagingEntries.map(([key, value]) => (
                           <li key={key} className="flex items-start gap-3 border-b border-gray-100 pb-3">
-                            <CheckCircle size={14} className="text-foodmax-lime mt-0.5 shrink-0" />
+                            <CheckCircle size={14} className="text-foodera-lime mt-0.5 shrink-0" />
                             <div className="space-y-1">
                               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">{key}</p>
                               <p className="font-bold leading-relaxed text-gray-700">{value as string}</p>
@@ -481,13 +481,13 @@ const ProductDetail: React.FC = () => {
                   )}
                   {paymentEntries.length > 0 && (
                     <div>
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.28em] text-foodmax-forest mb-3">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.28em] text-foodera-forest mb-3">
                         {copy.paymentSection}
                       </h4>
                       <ul className="space-y-3 text-xs text-gray-600">
                         {paymentEntries.map(([key, value]) => (
                           <li key={key} className="flex items-start gap-3 border-b border-gray-100 pb-3">
-                            <CheckCircle size={14} className="text-foodmax-lime mt-0.5 shrink-0" />
+                            <CheckCircle size={14} className="text-foodera-lime mt-0.5 shrink-0" />
                             <div className="space-y-1">
                               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">{key}</p>
                               <p className="font-bold leading-relaxed text-gray-700">{value as string}</p>
@@ -505,7 +505,7 @@ const ProductDetail: React.FC = () => {
               {hasProductPdf && (
                 <div className="md:col-span-2 bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
                   <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-4 flex items-center gap-2">
-                    <FileText size={16} className="text-foodmax-forest" /> {copy.productPdf}
+                    <FileText size={16} className="text-foodera-forest" /> {copy.productPdf}
                   </h3>
                   <p className="text-sm text-gray-500 font-medium mb-6">
                     {copy.productPdfDesc}
@@ -514,7 +514,7 @@ const ProductDetail: React.FC = () => {
                     href={product.pdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all"
                   >
                     {copy.openProductPdf} <ArrowRight size={16} />
                   </a>
@@ -530,7 +530,7 @@ const ProductDetail: React.FC = () => {
           ref={regionSectionRef}
           className="bg-gray-50 py-24 lg:py-32 border-t border-b border-gray-100 overflow-hidden relative"
         >
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-foodmax-forest/5 -z-0 skew-x-12 transform origin-top-right"></div>
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-foodera-forest/5 -z-0 skew-x-12 transform origin-top-right"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div
@@ -539,16 +539,16 @@ const ProductDetail: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-foodmax-forest text-white rounded-lg shadow-lg">
+                  <div className="p-2 bg-foodera-forest text-white rounded-lg shadow-lg">
                     <MapPin size={20} />
                   </div>
-                  <h2 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em]">
+                  <h2 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em]">
                     {locale === 'zh' ? '原产地情报' : 'Origin Intelligence'}
                   </h2>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-8 tracking-tighter">
                   {displayOriginData.title.split(' ')[0]}{' '}
-                  <span className="text-foodmax-forest">
+                  <span className="text-foodera-forest">
                     {displayOriginData.title.split(' ').slice(1).join(' ')}
                   </span>
                 </h2>
@@ -559,15 +559,15 @@ const ProductDetail: React.FC = () => {
                     <div
                       key={i}
                       style={{ transitionDelay: `${i * 200}ms` }}
-                      className={`bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-foodmax-lime/30 transition-all group transform ${
+                      className={`bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-foodera-lime/30 transition-all group transform ${
                         isSectionVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'
                       }`}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-lg font-black text-gray-900 group-hover:text-foodmax-forest transition-colors">
+                        <h4 className="text-lg font-black text-gray-900 group-hover:text-foodera-forest transition-colors">
                           {r.name}
                         </h4>
-                        <span className="text-[8px] font-black text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded uppercase tracking-widest">
+                        <span className="text-[8px] font-black text-foodera-forest bg-foodera-forest/5 px-2 py-1 rounded uppercase tracking-widest">
                           {r.tag}
                         </span>
                       </div>
@@ -583,34 +583,34 @@ const ProductDetail: React.FC = () => {
                 }`}
               >
                 <div className="bg-white p-10 rounded-[3rem] text-gray-900 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-500 border border-gray-100">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-foodmax-forest/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-foodera-forest/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                   <h4 className="text-2xl font-black mb-4 flex items-center gap-3">
-                    <Database size={24} className="text-foodmax-forest" /> {displayOriginData.usefulInfo.title}
+                    <Database size={24} className="text-foodera-forest" /> {displayOriginData.usefulInfo.title}
                   </h4>
                   <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium">{displayOriginData.usefulInfo.desc}</p>
 
                   <div className="space-y-3">
                     {displayOriginData.usefulInfo.points.map((pt, i) => (
                       <div key={i} className="flex items-center gap-3">
-                        <CheckCircle size={16} className="text-foodmax-lime" />
+                        <CheckCircle size={16} className="text-foodera-lime" />
                         <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{pt}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="relative aspect-video rounded-[3rem] overflow-hidden shadow-2xl group border-4 border-white flex items-center justify-center bg-foodmax-forest">
-                  <div className="absolute inset-0 bg-gradient-to-br from-foodmax-forest via-foodmax-forest to-[#004d2a]"></div>
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-foodmax-lime/10 rounded-full -mr-32 -mt-32 blur-[80px]"></div>
+                <div className="relative aspect-video rounded-[3rem] overflow-hidden shadow-2xl group border-4 border-white flex items-center justify-center bg-foodera-forest">
+                  <div className="absolute inset-0 bg-gradient-to-br from-foodera-forest via-foodera-forest to-[#004d2a]"></div>
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-foodera-lime/10 rounded-full -mr-32 -mt-32 blur-[80px]"></div>
 
                   <div className="relative z-10 p-8 text-center flex flex-col items-center">
                     <div className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 transition-transform">
-                      <displayOriginData.protocol.icon size={32} className="text-foodmax-lime" />
+                      <displayOriginData.protocol.icon size={32} className="text-foodera-lime" />
                     </div>
                     <h5 className="text-white text-2xl font-black tracking-tight mb-3">{displayOriginData.protocol.title}</h5>
                     <p className="text-white/70 text-sm font-medium max-w-sm leading-relaxed">{displayOriginData.protocol.desc}</p>
                     <div className="mt-8 flex items-center gap-2">
-                      <ShieldCheck size={16} className="text-foodmax-lime" />
+                      <ShieldCheck size={16} className="text-foodera-lime" />
                       <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
                         {locale === 'zh' ? '已验证出口工艺' : 'Verified Export Protocol'}
                       </span>
@@ -642,7 +642,7 @@ const ProductDetail: React.FC = () => {
               </div>
               <Link
                 to={isUsingPersonalizedRelated ? appRoutes.products : appRoutes.productsByCategory(product.category)}
-                className="inline-flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] group border-b-2 border-transparent hover:border-foodmax-lime transition-all pb-1"
+                className="inline-flex items-center gap-3 text-xs font-black text-foodera-forest uppercase tracking-[0.2em] group border-b-2 border-transparent hover:border-foodera-lime transition-all pb-1"
               >
                 {isUsingPersonalizedRelated
                   ? locale === 'zh'

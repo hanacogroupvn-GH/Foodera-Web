@@ -5,14 +5,14 @@ import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const enCopy = {
-  heroTitle: 'About Foodmax',
+  heroTitle: 'About FoodEra',
   heroDesc:
-    'Foodmax is dedicated to elevating Vietnamese agricultural products to the global marketplace. With deep respect for Vietnam’s farming traditions and a forward-looking mindset, we connect international buyers with reliable origin supply.',
+    'FoodEra is dedicated to elevating Vietnamese agricultural products to the global marketplace. With deep respect for Vietnam’s farming traditions and a forward-looking mindset, we connect international buyers with reliable origin supply.',
   heroAlt: 'Coffee beans',
   foundationEyebrow: 'Our Foundation',
   foundationTitle: 'Sustainable Value Across the Supply Chain',
   foundationTextOne:
-    'Founded with the vision of creating sustainable value across the supply chain, Foodmax works hand in hand with reputable growers, cooperatives, and processing facilities throughout Vietnam.',
+    'Founded with the vision of creating sustainable value across the supply chain, FoodEra works hand in hand with reputable growers, cooperatives, and processing facilities throughout Vietnam.',
   foundationTextTwo:
     'From sourcing and quality control to logistics, we carefully oversee each step to ensure our products consistently meet international expectations while also contributing value back to farming communities.',
   foundationAlt: 'Vietnamese agriculture',
@@ -49,7 +49,7 @@ const enCopy = {
   commitmentEyebrow: 'Our Commitment',
   commitmentTitle: 'Partnerships Built on Transparency',
   commitmentTextOne:
-    'At Foodmax, we believe strong partnerships are built on transparency, consistency, and mutual growth. Whether serving importers, distributors, or food manufacturers, we approach each collaboration with professionalism and long-term intent.',
+    'At FoodEra, we believe strong partnerships are built on transparency, consistency, and mutual growth. Whether serving importers, distributors, or food manufacturers, we approach each collaboration with professionalism and long-term intent.',
   commitmentTextTwo:
     'By combining local expertise with global standards, our mission is simple: deliver dependable agricultural solutions while sharing the true essence of Vietnam with customers around the world.',
   principlesEyebrow: 'Core Principles',
@@ -70,18 +70,18 @@ const enCopy = {
   closingEyebrow: 'Looking Forward',
   closingTitle: 'Sharing Vietnam’s Essence With The World',
   closingDesc:
-    'As we continue to grow, Foodmax remains guided by three core principles: quality without compromise, service with integrity, and partnerships that last.'
+    'As we continue to grow, FoodEra remains guided by three core principles: quality without compromise, service with integrity, and partnerships that last.'
 };
 
 const zhCopy = {
-  heroTitle: '关于 Foodmax',
+  heroTitle: '关于 FoodEra',
   heroDesc:
-    'Foodmax 致力于把越南优质农产品带向全球市场。我们尊重越南农业传统，同时以国际化视角连接全球采购商与值得信赖的原产地供应。',
+    'FoodEra 致力于把越南优质农产品带向全球市场。我们尊重越南农业传统，同时以国际化视角连接全球采购商与值得信赖的原产地供应。',
   heroAlt: '咖啡豆',
   foundationEyebrow: '我们的基础',
   foundationTitle: '贯穿供应链的可持续价值',
   foundationTextOne:
-    'Foodmax 以构建供应链长期价值为愿景，与越南各地可靠的种植者、合作社和加工工厂协同合作。',
+    'FoodEra 以构建供应链长期价值为愿景，与越南各地可靠的种植者、合作社和加工工厂协同合作。',
   foundationTextTwo:
     '从采购、质量控制到物流交付，我们对每个环节保持严格把关，确保产品持续符合国际市场的高标准要求，并让农业社区也从长期合作中获益。',
   foundationAlt: '越南农业',
@@ -117,7 +117,7 @@ const zhCopy = {
   commitmentEyebrow: '我们的承诺',
   commitmentTitle: '建立在透明度上的长期合作',
   commitmentTextOne:
-    'Foodmax 相信优秀合作关系来自透明、稳定和共同成长。无论客户是进口商、分销商还是食品制造商，我们都以长期合作视角推进每一个项目。',
+    'FoodEra 相信优秀合作关系来自透明、稳定和共同成长。无论客户是进口商、分销商还是食品制造商，我们都以长期合作视角推进每一个项目。',
   commitmentTextTwo:
     '通过把本地经验与国际标准结合，我们的目标很明确：持续输出可靠的农业供应解决方案，并让全球客户感受到越南农产品真正的价值。',
   principlesEyebrow: '核心原则',
@@ -138,17 +138,17 @@ const zhCopy = {
   closingEyebrow: '展望未来',
   closingTitle: '把越南的真实风味带向世界',
   closingDesc:
-    '在持续成长过程中，Foodmax 仍然坚持三项原则：质量不妥协、服务有诚信、合作可持续。'
+    '在持续成长过程中，FoodEra 仍然坚持三项原则：质量不妥协、服务有诚信、合作可持续。'
 };
 
 const AboutUs: React.FC = () => {
   const { locale } = useLocale();
 
   useDocumentMeta({
-    title: locale === 'zh' ? '关于 Foodmax' : 'About Foodmax',
+    title: locale === 'zh' ? '关于 FoodEra' : 'About FoodEra',
     description: locale === 'zh'
-      ? 'Foodmax 致力于将越南优质农产品（大米、咖啡、腰果）带向全球市场，提供可持续、透明的供应链服务。'
-      : 'Foodmax is dedicated to elevating Vietnamese agricultural products to the global marketplace. Premium rice, coffee & cashew with transparent supply chain.',
+      ? 'FoodEra 致力于将越南优质农产品（大米、咖啡、腰果）带向全球市场，提供可持续、透明的供应链服务。'
+      : 'FoodEra is dedicated to elevating Vietnamese agricultural products to the global marketplace. Premium rice, coffee & cashew with transparent supply chain.',
     canonicalUrl: `${BASE_URL}/about`,
     ogUrl: `${BASE_URL}/about`,
   });
@@ -168,7 +168,7 @@ const AboutUs: React.FC = () => {
               <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-8 tracking-tight leading-tight">
                 {copy.heroTitle}
               </h1>
-              <div className="h-1 w-24 bg-foodmax-lime mb-8" />
+              <div className="h-1 w-24 bg-foodera-lime mb-8" />
               <p className="text-lg md:text-2xl text-gray-600 font-medium leading-relaxed">{copy.heroDesc}</p>
             </div>
             <div className="lg:pl-8">
@@ -232,7 +232,7 @@ const AboutUs: React.FC = () => {
               const Icon = productIcons[index];
               return (
                 <div key={card.title} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                  <div className="w-12 h-12 bg-foodmax-forest/5 rounded-xl flex items-center justify-center text-foodmax-forest mb-5">
+                  <div className="w-12 h-12 bg-foodera-forest/5 rounded-xl flex items-center justify-center text-foodera-forest mb-5">
                     <Icon size={22} />
                   </div>
                   <h4 className="text-lg font-black text-gray-900 mb-2">{card.title}</h4>
@@ -261,8 +261,8 @@ const AboutUs: React.FC = () => {
                 {copy.commitmentTextTwo}
               </p>
             </div>
-            <div className="bg-foodmax-forest rounded-[2.5rem] p-10 md:p-12 text-white relative overflow-hidden">
-              <h4 className="text-[10px] font-black text-foodmax-lime uppercase tracking-[0.4em] mb-6">
+            <div className="bg-foodera-forest rounded-[2.5rem] p-10 md:p-12 text-white relative overflow-hidden">
+              <h4 className="text-[10px] font-black text-foodera-lime uppercase tracking-[0.4em] mb-6">
                 {copy.principlesEyebrow}
               </h4>
               <div className="space-y-4">
@@ -273,7 +273,7 @@ const AboutUs: React.FC = () => {
                       key={principle.title}
                       className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4"
                     >
-                      <Icon size={20} className="text-foodmax-lime" />
+                      <Icon size={20} className="text-foodera-lime" />
                       <div>
                         <p className="text-sm font-black uppercase tracking-widest">{principle.title}</p>
                         <p className="text-xs text-white/70 mt-1">{principle.desc}</p>
@@ -287,7 +287,7 @@ const AboutUs: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-24 bg-foodmax-forest text-white">
+      <section className="py-24 bg-foodera-forest text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-[10px] font-black text-white/70 uppercase tracking-[0.4em] mb-8">{copy.closingEyebrow}</h2>
           <h3 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">{copy.closingTitle}</h3>

@@ -65,14 +65,14 @@ const HeroSlider: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative h-[750px] overflow-hidden bg-foodmax-forest">
+    <div className="relative h-[750px] overflow-hidden bg-foodera-forest">
       {slides.map((slide, index) => (
         <div
           key={index}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === current ? 'opacity-100' : 'opacity-0'}`}
         >
-          {/* Branded Gradient Overlay - Matching Foodmax Forest */}
-          <div className="absolute inset-0 bg-gradient-to-t from-foodmax-forest via-foodmax-forest/40 to-transparent z-10"></div>
+          {/* Branded Gradient Overlay - Matching FoodEra Forest */}
+          <div className="absolute inset-0 bg-gradient-to-t from-foodera-forest via-foodera-forest/40 to-transparent z-10"></div>
           
           <img 
             src={slide.image} 
@@ -90,7 +90,7 @@ const HeroSlider: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
               <div className={`max-w-3xl mx-auto transform transition-all duration-1000 delay-300 ${index === current ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
                 <div className="flex justify-center mb-6">
-                  <div className="h-1.5 w-24 bg-foodmax-lime rounded-full shadow-[0_0_15px_rgba(140,198,63,0.5)]"></div>
+                  <div className="h-1.5 w-24 bg-foodera-lime rounded-full shadow-[0_0_15px_rgba(140,198,63,0.5)]"></div>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl tracking-tighter">
                   {slide.title}
@@ -101,7 +101,7 @@ const HeroSlider: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-6 justify-center">
                   <Link 
                     to={slide.link}
-                    className="px-10 py-5 bg-foodmax-lime text-foodmax-forest rounded-2xl font-black text-center hover:bg-white hover:text-foodmax-forest transition-all hover:scale-105 active:scale-95 shadow-2xl tracking-[0.2em] uppercase text-xs"
+                    className="px-10 py-5 bg-foodera-lime text-foodera-forest rounded-2xl font-black text-center hover:bg-white hover:text-foodera-forest transition-all hover:scale-105 active:scale-95 shadow-2xl tracking-[0.2em] uppercase text-xs"
                   >
                     {slide.cta}
                   </Link>
@@ -119,10 +119,10 @@ const HeroSlider: React.FC = () => {
       ))}
 
       {/* Nav Controls */}
-      <button onClick={prevSlide} className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/5 text-white border border-white/10 backdrop-blur-md hover:bg-foodmax-lime hover:text-foodmax-forest transition-all hidden md:block group">
+      <button onClick={prevSlide} className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/5 text-white border border-white/10 backdrop-blur-md hover:bg-foodera-lime hover:text-foodera-forest transition-all hidden md:block group">
         <ChevronLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
       </button>
-      <button onClick={nextSlide} className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/5 text-white border border-white/10 backdrop-blur-md hover:bg-foodmax-lime hover:text-foodmax-forest transition-all hidden md:block group">
+      <button onClick={nextSlide} className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/5 text-white border border-white/10 backdrop-blur-md hover:bg-foodera-lime hover:text-foodera-forest transition-all hidden md:block group">
         <ChevronRight size={28} className="group-hover:translate-x-1 transition-transform" />
       </button>
 
@@ -132,7 +132,7 @@ const HeroSlider: React.FC = () => {
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`h-1.5 rounded-full transition-all duration-500 ${i === current ? 'bg-foodmax-lime w-16 shadow-[0_0_10px_rgba(140,198,63,0.8)]' : 'bg-white/20 w-8 hover:bg-white/40'}`}
+            className={`h-1.5 rounded-full transition-all duration-500 ${i === current ? 'bg-foodera-lime w-16 shadow-[0_0_10px_rgba(140,198,63,0.8)]' : 'bg-white/20 w-8 hover:bg-white/40'}`}
           />
         ))}
       </div>

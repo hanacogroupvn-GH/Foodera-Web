@@ -11,7 +11,7 @@ interface DocumentMetaOptions {
 }
 
 const BASE_TITLE = 'FoodMax Official Site';
-const BASE_URL = 'https://foodmax.vn';
+const BASE_URL = 'https://foodera.vn';
 
 const setMetaTag = (attribute: 'name' | 'property', key: string, content: string) => {
   let element = document.querySelector(`meta[${attribute}="${key}"]`) as HTMLMetaElement | null;

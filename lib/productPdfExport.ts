@@ -569,7 +569,7 @@ export const buildProductPdfPrintHtml = (
   <body style="margin: 0; padding: 0;" class="pdf-root">
     <div class="page">
       <div class="banner">
-        <img src="${escapeHtml(assets.headerImageSrc)}" alt="Foodmax header" />
+        <img src="${escapeHtml(assets.headerImageSrc)}" alt="FoodEra header" />
       </div>
 
       <div class="content">
@@ -604,7 +604,7 @@ export const buildProductPdfPrintHtml = (
       </div>
 
       <div class="footer-banner">
-        <img src="${escapeHtml(assets.footerImageSrc)}" alt="Foodmax footer" />
+        <img src="${escapeHtml(assets.footerImageSrc)}" alt="FoodEra footer" />
       </div>
     </div>
 

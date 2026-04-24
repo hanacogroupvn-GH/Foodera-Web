@@ -51,7 +51,7 @@ const formatMarkdown = (text: string) => {
   if (!text) return '';
 
   let formatted = escapeHtml(text)
-    .replace(/### (.*?)(\n|$)/g, '<h4 class="text-sm font-black text-foodmax-forest uppercase tracking-wider mt-4 mb-2">$1</h4>')
+    .replace(/### (.*?)(\n|$)/g, '<h4 class="text-sm font-black text-foodera-forest uppercase tracking-wider mt-4 mb-2">$1</h4>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-black text-gray-900">$1</strong>')
     .replace(/^\* (.*?)(\n|$)/gm, '<li class="ml-4 mb-1 list-disc text-gray-600">$1</li>')
     .replace(/\n/g, '<br />');
@@ -87,7 +87,7 @@ const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en'
     return locale === 'zh'
       ? [
           '当前环境尚未配置实时市场情报服务。',
-          '### Foodmax 当前可用产品线',
+          '### FoodEra 当前可用产品线',
           '* **大米** 出口系列',
           '* **咖啡** 出口系列',
           '* **腰果** 出口系列',
@@ -95,7 +95,7 @@ const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en'
         ].join('\n')
       : [
           'Live market intelligence is not configured in this environment yet.',
-          '### Available Foodmax portfolios',
+          '### Available FoodEra portfolios',
           '* **Rice** export lines',
           '* **Coffee** export lines',
           '* **Cashew** export lines',
@@ -106,7 +106,7 @@ const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en'
   return (
     locale === 'zh'
       ? [
-          '当前环境未启用实时市场情报，但我仍可检索 Foodmax 现有产品目录。',
+          '当前环境未启用实时市场情报，但我仍可检索 FoodEra 现有产品目录。',
           '### 匹配到的目录产品',
           ...matches.map(
             (product) =>
@@ -115,7 +115,7 @@ const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en'
           '如需完整技术信息，请打开产品页；如需价格，请联系出口团队。'
         ]
       : [
-          'Live market intelligence is offline in this environment, but I can still search the current Foodmax catalog.',
+          'Live market intelligence is offline in this environment, but I can still search the current FoodEra catalog.',
           '### Matching catalog items',
           ...matches.map(
             (product) =>
@@ -135,10 +135,10 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
   const copy =
     locale === 'zh'
       ? {
-          introLive: '您好，我是 Foodmax 虚拟出口助手。我可以回答产品目录问题，并在需要时补充实时市场背景。',
-          introCatalog: '您好，我是 Foodmax 虚拟出口助手。当前环境未配置实时市场搜索，但我仍可帮助您浏览 Foodmax 当前目录。',
-          noResponse: '暂时无法生成回复。若需立即支持，请联系 export@foodmax.vn。',
-          serviceUnavailable: '实时情报服务暂时不可用。请稍后再试，或直接联系 export@foodmax.vn。',
+          introLive: '您好，我是 FoodEra 虚拟出口助手。我可以回答产品目录问题，并在需要时补充实时市场背景。',
+          introCatalog: '您好，我是 FoodEra 虚拟出口助手。当前环境未配置实时市场搜索，但我仍可帮助您浏览 FoodEra 当前目录。',
+          noResponse: '暂时无法生成回复。若需立即支持，请联系 export@foodera.vn。',
+          serviceUnavailable: '实时情报服务暂时不可用。请稍后再试，或直接联系 export@foodera.vn。',
           quickPrompts: ['查看大米产品', '查看咖啡产品', '查看腰果产品', '查找 ST25 香米'],
           quickPromptsLive: ['最新咖啡市场趋势', '2024 大米出口价格', '越南腰果产量', '欧盟进口法规'],
           title: '出口情报助手',
@@ -152,18 +152,18 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
           typingCatalog: '正在检索目录...',
           placeholder: '市场趋势、价格或产品线...',
           send: '发送消息',
-          footerLive: '由 Foodmax 目录与 Google 搜索支持',
-          footerCatalog: '由 Foodmax 目录支持',
+          footerLive: '由 FoodEra 目录与 Google 搜索支持',
+          footerCatalog: '由 FoodEra 目录支持',
           systemInstruction: '请以简体中文回答，保持专业、直接，并优先使用当前产品目录中的事实。'
         }
       : {
           introLive:
-            'Hello! I am your Foodmax Virtual Export Assistant. I can answer catalog questions and enrich them with live market context when needed.',
+            'Hello! I am your FoodEra Virtual Export Assistant. I can answer catalog questions and enrich them with live market context when needed.',
           introCatalog:
-            'Hello! I am your Foodmax Virtual Export Assistant. Live market search is not configured here, but I can still help you browse the current Foodmax catalog.',
-          noResponse: 'I could not generate a response. Please contact export@foodmax.vn for immediate assistance.',
+            'Hello! I am your FoodEra Virtual Export Assistant. Live market search is not configured here, but I can still help you browse the current FoodEra catalog.',
+          noResponse: 'I could not generate a response. Please contact export@foodera.vn for immediate assistance.',
           serviceUnavailable:
-            'The live intelligence service is temporarily unavailable. Please try again or contact export@foodmax.vn for direct support.',
+            'The live intelligence service is temporarily unavailable. Please try again or contact export@foodera.vn for direct support.',
           quickPrompts: ['Show rice products', 'Show coffee products', 'Show cashew products', 'Find ST25 rice'],
           quickPromptsLive: ['Latest Coffee Market Trends', 'Rice Export Prices 2024', 'Vietnam Cashew Crop Yields', 'EU Import Regulations'],
           title: 'Export Intelligence',
@@ -177,8 +177,8 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
           typingCatalog: 'Searching catalog...',
           placeholder: 'Market trends, prices, or catalog lines...',
           send: 'Send message',
-          footerLive: 'Powered by Foodmax Catalog and Google Search',
-          footerCatalog: 'Powered by Foodmax Catalog',
+          footerLive: 'Powered by FoodEra Catalog and Google Search',
+          footerCatalog: 'Powered by FoodEra Catalog',
           systemInstruction: 'Respond in English unless the user explicitly requests another language.'
         };
 
@@ -214,12 +214,12 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
 
   const systemInstruction = useMemo(
     () => `
-      You are the "Foodmax Virtual Export Assistant", a B2B intelligence agent.
+      You are the "FoodEra Virtual Export Assistant", a B2B intelligence agent.
 
       CORE MISSION:
-      Combine Foodmax's internal export data with live market context to provide useful trade support.
+      Combine FoodEra's internal export data with live market context to provide useful trade support.
 
-      INTERNAL KNOWLEDGE (FOODMAX):
+      INTERNAL KNOWLEDGE (FOOD ERA):
       - Vietnam-based agri-exporter specializing in Rice, Coffee, and Cashews.
       - Quality: ISO 22000, HACCP, FDA-aligned export operations.
       - Logistics: Ports include Cat Lai, Cai Mep, and Hai Phong. Shipping to 30+ countries.
@@ -230,7 +230,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
       - Be direct, technical, and commercially useful.
       - Use markdown for structure.
       - Never invent exact prices or claims not present in the catalog or live sources.
-      - If pricing is requested, explain that quotes are market-indexed and should be confirmed with export@foodmax.vn.
+      - If pricing is requested, explain that quotes are market-indexed and should be confirmed with export@foodera.vn.
       - If external live context is used, cite the grounded sources returned by the tool.
       - ${copy.systemInstruction}
     `,
@@ -331,12 +331,12 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
         isMinimized ? 'h-[76px]' : 'h-[650px] max-h-[85vh]'
       } md:w-[420px]`}
     >
-      <div className="relative shrink-0 overflow-hidden bg-foodmax-forest p-5">
+      <div className="relative shrink-0 overflow-hidden bg-foodera-forest p-5">
         <div className="absolute top-0 right-0 h-32 w-32 -mr-16 -mt-16 rounded-full bg-white/5 blur-2xl" />
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-inner backdrop-blur-md">
-              <Bot size={22} className="text-foodmax-lime" />
+              <Bot size={22} className="text-foodera-lime" />
             </div>
             <div>
               <h3 className="text-sm font-black uppercase tracking-wider text-white">{copy.title}</h3>
@@ -345,7 +345,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                   className={`h-1.5 w-1.5 rounded-full ${
                     hasLiveIntelligence
                       ? 'bg-blue-400 shadow-[0_0_8px_#60a5fa]'
-                      : 'bg-foodmax-lime shadow-[0_0_8px_rgba(140,198,63,0.8)]'
+                      : 'bg-foodera-lime shadow-[0_0_8px_rgba(140,198,63,0.8)]'
                   }`}
                 />
                 <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-white/50">
@@ -387,8 +387,8 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
                       message.role === 'assistant'
-                        ? 'border-gray-100 bg-white text-foodmax-forest'
-                        : 'border-transparent bg-foodmax-forest text-white'
+                        ? 'border-gray-100 bg-white text-foodera-forest'
+                        : 'border-transparent bg-foodera-forest text-white'
                     }`}
                   >
                     {message.role === 'assistant' ? <Sparkles size={16} /> : <User size={16} />}
@@ -398,7 +398,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                       className={`rounded-[1.5rem] border p-4 text-[13px] font-medium leading-relaxed shadow-sm md:p-5 md:text-sm ${
                         message.role === 'assistant'
                           ? 'rounded-tl-none border-gray-100 bg-white text-gray-700'
-                          : 'rounded-tr-none border-transparent bg-foodmax-forest text-white'
+                          : 'rounded-tr-none border-transparent bg-foodera-forest text-white'
                       }`}
                     >
                       {message.role === 'assistant' ? (
@@ -423,7 +423,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                               href={source.uri}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="group/link flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2 text-[10px] font-bold text-foodmax-forest transition-colors hover:text-foodmax-lime"
+                              className="group/link flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2 text-[10px] font-bold text-foodera-forest transition-colors hover:text-foodera-lime"
                             >
                               <span className="max-w-[85%] truncate">{source.title}</span>
                               <ExternalLink size={10} className="opacity-0 transition-opacity group-hover/link:opacity-100" />
@@ -438,11 +438,11 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
 
               {isTyping && (
                 <div className="flex items-start gap-3 animate-in fade-in duration-300">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-100 bg-white text-foodmax-forest shadow-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-100 bg-white text-foodera-forest shadow-sm">
                     <Sparkles size={16} />
                   </div>
                   <div className="flex items-center gap-2 rounded-[1.5rem] rounded-tl-none border border-gray-100 bg-white p-4 shadow-sm">
-                    <Loader2 size={16} className="animate-spin text-foodmax-lime" />
+                    <Loader2 size={16} className="animate-spin text-foodera-lime" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                       {hasLiveIntelligence ? copy.typingLive : copy.typingCatalog}
                     </span>
@@ -460,7 +460,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                   <button
                     key={prompt}
                     onClick={() => void handleSend(prompt)}
-                    className="whitespace-nowrap rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 transition-all hover:border-foodmax-lime/40 hover:bg-foodmax-lime/10 hover:text-foodmax-forest active:scale-95"
+                    className="whitespace-nowrap rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 transition-all hover:border-foodera-lime/40 hover:bg-foodera-lime/10 hover:text-foodera-forest active:scale-95"
                   >
                     {prompt}
                   </button>
@@ -480,7 +480,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                   }
                 }}
                 placeholder={copy.placeholder}
-                className="w-full rounded-2xl border border-transparent bg-gray-50 px-6 py-4 pr-14 text-sm font-medium outline-none transition-all focus:border-foodmax-forest/20 focus:bg-white focus:ring-4 focus:ring-foodmax-forest/5"
+                className="w-full rounded-2xl border border-transparent bg-gray-50 px-6 py-4 pr-14 text-sm font-medium outline-none transition-all focus:border-foodera-forest/20 focus:bg-white focus:ring-4 focus:ring-foodera-forest/5"
               />
               <button
                 onClick={() => void handleSend()}
@@ -488,7 +488,7 @@ const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {
                 className={`absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl transition-all ${
                   isTyping || !input.trim()
                     ? 'bg-gray-100 text-gray-300'
-                    : 'bg-foodmax-forest text-white shadow-lg shadow-foodmax-forest/20 hover:scale-105 active:scale-95'
+                    : 'bg-foodera-forest text-white shadow-lg shadow-foodera-forest/20 hover:scale-105 active:scale-95'
                 }`}
                 aria-label={copy.send}
               >

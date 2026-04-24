@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download, Sun, Moon } from 'lucide-react';
 import { Product } from '../types';
-import Logo from '../Logo-optimized.png';
+import Logo from '../logo.svg';
 import { getNewsPath } from '../lib/newsSeo';
 import { useData } from '../context/DataContext';
 import { useLocale } from '../context/LocaleContext';
@@ -260,16 +260,6 @@ const Navbar: React.FC = () => {
     setIsDarkMode(nextIsDark);
   };
 
-  const BrandLogo = () => (
-    <img
-      src={Logo}
-      alt="Foodmax"
-      className="h-8 w-auto md:h-10 object-contain"
-      loading="lazy"
-      decoding="async"
-    />
-  );
-
   return (
     <>
       <nav className="bg-white sticky top-0 z-50 shadow-sm">
@@ -277,28 +267,28 @@ const Navbar: React.FC = () => {
         <div className="bg-gray-50 border-b border-gray-100 py-2.5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <div className="flex items-center space-x-6">
-              <a href="mailto:export@foodmax.vn?cc=support@foodmax.vn" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-wider">
-                <Mail size={14} className="text-foodmax-lime" />
-                <span className="hidden sm:inline">export@foodmax.vn</span>
+              <a href="mailto:export@foodera.vn?cc=support@foodera.vn" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-wider">
+                <Mail size={14} className="text-foodera-lime" />
+                <span className="hidden sm:inline">export@foodera.vn</span>
               </a>
-              <a href="tel:+84964791902" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-wider">
-                <Phone size={14} className="text-foodmax-lime" />
-                <span className="hidden sm:inline">+84 964 791 902</span>
+              <a href="tel:+84319519329" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-wider">
+                <Phone size={14} className="text-foodera-lime" />
+                <span className="hidden sm:inline">(+84).319.519.329</span>
               </a>
             </div>
             
             <div className="flex items-center space-x-6">
-              <Link to={appRoutes.commercialTool} className="flex items-center gap-2 text-[11px] font-black text-foodmax-forest hover:text-foodmax-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+              <Link to={appRoutes.commercialTool} className="flex items-center gap-2 text-[11px] font-black text-foodera-forest hover:text-foodera-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                 <BarChart3 size={14} />
                 {copy.commercialTool}
               </Link>
               <button
                 onClick={handleThemeToggle}
-                className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest"
+                className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-widest"
                 aria-label={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
                 title={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
               >
-                {isDarkMode ? <Sun size={14} className="text-foodmax-lime" /> : <Moon size={14} className="text-foodmax-forest" />}
+                {isDarkMode ? <Sun size={14} className="text-foodera-lime" /> : <Moon size={14} className="text-foodera-forest" />}
                 {isDarkMode ? copy.themeLight : copy.themeDark}
               </button>
               <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -307,7 +297,7 @@ const Navbar: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setLocale('en')}
-                    className={`transition-colors ${locale === 'en' ? 'text-foodmax-forest' : 'hover:text-foodmax-forest'}`}
+                    className={`transition-colors ${locale === 'en' ? 'text-foodera-forest' : 'hover:text-foodera-forest'}`}
                   >
                     EN
                   </button>
@@ -315,7 +305,7 @@ const Navbar: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setLocale('zh')}
-                    className={`transition-colors ${locale === 'zh' ? 'text-foodmax-forest' : 'hover:text-foodmax-forest'}`}
+                    className={`transition-colors ${locale === 'zh' ? 'text-foodera-forest' : 'hover:text-foodera-forest'}`}
                   >
                     中文
                   </button>
@@ -331,7 +321,7 @@ const Navbar: React.FC = () => {
             <div className="flex justify-between h-20">
               <div className="flex items-center">
                 <Link to={appRoutes.home} className="flex-shrink-0 flex items-center">
-                  <BrandLogo />
+                  <img src={Logo} alt="FoodEra" className="h-8 w-auto md:h-10 object-contain" />
                 </Link>
               </div>
 
@@ -345,7 +335,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     to={appRoutes.products}
                     onClick={() => setIsMegaMenuOpen(false)}
-                    className={`flex items-center text-xs font-black transition-colors tracking-[0.2em] uppercase py-8 ${isMegaMenuOpen ? 'text-foodmax-forest' : 'text-gray-700 hover:text-foodmax-forest'}`}
+                    className={`flex items-center text-xs font-black transition-colors tracking-[0.2em] uppercase py-8 ${isMegaMenuOpen ? 'text-foodera-forest' : 'text-gray-700 hover:text-foodera-forest'}`}
                   >
                     {copy.products} <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
                   </Link>
@@ -358,8 +348,8 @@ const Navbar: React.FC = () => {
                           {megaMenuSections.length > 0 ? (
                             megaMenuSections.map((section, index) => (
                               <div key={section.category} className={`col-span-3 ${index > 0 ? 'border-l border-gray-100 pl-12' : ''}`}>
-                                <h3 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-foodmax-lime"></div>
+                                <h3 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-foodera-lime"></div>
                                   {section.title}
                                 </h3>
                                 <ul className="space-y-4">
@@ -370,7 +360,7 @@ const Navbar: React.FC = () => {
                                         className="block"
                                         onClick={() => setIsMegaMenuOpen(false)}
                                       >
-                                        <p className="text-sm font-black text-gray-900 group-hover/item:text-foodmax-forest transition-colors">
+                                        <p className="text-sm font-black text-gray-900 group-hover/item:text-foodera-forest transition-colors">
                                           {item.name}
                                         </p>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
@@ -393,10 +383,10 @@ const Navbar: React.FC = () => {
                           {/* Column 4: Featured Portfolio (Visual) */}
                           <div className="col-span-3 pl-4">
                             <div className="bg-gray-50 rounded-[2rem] p-8 h-full flex flex-col relative overflow-hidden group/featured">
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-foodmax-forest/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/featured:bg-foodmax-lime/10 transition-colors duration-700"></div>
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-foodera-forest/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/featured:bg-foodera-lime/10 transition-colors duration-700"></div>
                               
                               <div className="relative z-10 flex flex-col h-full">
-                                <span className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.3em] mb-4 block">
+                                <span className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.3em] mb-4 block">
                                   {copy.catalogHighlight}
                                 </span>
                                 {featuredProductDisplay ? (
@@ -426,29 +416,29 @@ const Navbar: React.FC = () => {
                                   {featuredProduct ? (
                                     <Link
                                       to={appRoutes.productById(featuredProduct.id)}
-                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
+                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodera-forest transition-all"
                                       onClick={() => setIsMegaMenuOpen(false)}
                                     >
                                       <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
                                         {copy.viewProductDetails}
                                       </span>
-                                      <ArrowRight size={14} className="text-foodmax-forest" />
+                                      <ArrowRight size={14} className="text-foodera-forest" />
                                     </Link>
                                   ) : (
                                     <Link
                                       to={appRoutes.products}
-                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodmax-forest transition-all"
+                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodera-forest transition-all"
                                       onClick={() => setIsMegaMenuOpen(false)}
                                     >
                                       <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
                                         {copy.browseFullCatalog}
                                       </span>
-                                      <ArrowRight size={14} className="text-foodmax-forest" />
+                                      <ArrowRight size={14} className="text-foodera-forest" />
                                     </Link>
                                   )}
                                   <Link 
                                     to={appRoutes.contact} 
-                                    className="flex items-center justify-between w-full p-4 bg-foodmax-forest text-white rounded-xl shadow-lg hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                                    className="flex items-center justify-between w-full p-4 bg-foodera-forest text-white rounded-xl shadow-lg hover:bg-foodera-lime hover:text-foodera-forest transition-all"
                                     onClick={() => setIsMegaMenuOpen(false)}
                                   >
                                     <span className="text-[10px] font-black uppercase tracking-widest">{copy.requestQuote}</span>
@@ -464,21 +454,21 @@ const Navbar: React.FC = () => {
                         <div className="mt-12 pt-8 border-t border-gray-100 flex items-center justify-between">
                           <div className="flex items-center gap-10">
                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodmax-forest"><Globe size={18} /></div>
+                                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodera-forest"><Globe size={18} /></div>
                                 <div>
                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{copy.globalLogistics}</p>
                                   <p className="text-[11px] font-bold text-gray-900 uppercase">{copy.shippingToCountries}</p>
                                 </div>
                              </div>
                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodmax-forest"><FileText size={18} /></div>
+                                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-foodera-forest"><FileText size={18} /></div>
                                 <div>
                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{copy.qcProtocol}</p>
                                   <p className="text-[11px] font-bold text-gray-900 uppercase">{copy.certified}</p>
                                 </div>
                              </div>
                           </div>
-                          <Link to={appRoutes.products} className="group flex items-center gap-3 text-xs font-black text-foodmax-forest uppercase tracking-[0.2em] hover:text-foodmax-lime transition-colors" onClick={() => setIsMegaMenuOpen(false)}>
+                          <Link to={appRoutes.products} className="group flex items-center gap-3 text-xs font-black text-foodera-forest uppercase tracking-[0.2em] hover:text-foodera-lime transition-colors" onClick={() => setIsMegaMenuOpen(false)}>
                             {copy.exploreFullCatalog} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                           </Link>
                         </div>
@@ -487,13 +477,13 @@ const Navbar: React.FC = () => {
                   )}
                 </div>
 
-                <Link to={appRoutes.news} className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.news}</Link>
-                <Link to={appRoutes.about} className="text-xs font-black text-gray-700 hover:text-foodmax-forest tracking-[0.2em] uppercase">{copy.about}</Link>
+                <Link to={appRoutes.news} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.news}</Link>
+                <Link to={appRoutes.about} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.about}</Link>
                 
               <div className="flex items-center space-x-6">
                 <button
                   onClick={handleThemeToggle}
-                  className="text-gray-500 hover:text-foodmax-forest transition-colors p-2 rounded-full hover:bg-gray-50"
+                  className="text-gray-500 hover:text-foodera-forest transition-colors p-2 rounded-full hover:bg-gray-50"
                   aria-label={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
                   title={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
                 >
@@ -501,11 +491,11 @@ const Navbar: React.FC = () => {
                 </button>
                 <button 
                   onClick={() => setIsSearchOpen(true)}
-                  className="text-gray-500 hover:text-foodmax-forest transition-colors p-2 rounded-full hover:bg-gray-50"
+                  className="text-gray-500 hover:text-foodera-forest transition-colors p-2 rounded-full hover:bg-gray-50"
                 >
                     <Search size={20} />
                   </button>
-                  <Link to={appRoutes.contact} className="px-7 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
+                  <Link to={appRoutes.contact} className="px-7 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
                     {copy.contact}
                   </Link>
                 </div>
@@ -532,7 +522,7 @@ const Navbar: React.FC = () => {
           <div className="lg:hidden bg-white fixed inset-0 z-[100] overflow-y-auto animate-in fade-in duration-200">
             <div className="p-6">
               <div className="flex justify-between items-center mb-12">
-                <BrandLogo />
+                <img src={Logo} alt="FoodEra" className="h-8 w-auto md:h-10 object-contain" />
                 <button onClick={() => setIsOpen(false)} className="p-2 text-gray-500"><X size={32} /></button>
               </div>
 
@@ -541,21 +531,21 @@ const Navbar: React.FC = () => {
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">
                     {locale === 'zh' ? '直贸窗口' : 'Direct Trading Desk'}
                   </p>
-                  <a href="mailto:export@foodmax.vn?cc=support@foodmax.vn" className="flex items-center gap-3 text-lg font-black text-gray-900">
-                    <Mail className="text-foodmax-forest" size={20} /> export@foodmax.vn
+                  <a href="mailto:export@foodera.vn?cc=support@foodera.vn" className="flex items-center gap-3 text-lg font-black text-gray-900">
+                    <Mail className="text-foodera-forest" size={20} /> export@foodera.vn
                   </a>
-                  <a href="tel:+84964791902" className="flex items-center gap-3 text-lg font-black text-gray-900">
-                    <Phone className="text-foodmax-forest" size={20} /> +84 964 791 902
+                  <a href="tel:+84319519329" className="flex items-center gap-3 text-lg font-black text-gray-900">
+                    <Phone className="text-foodera-forest" size={20} /> (+84).319.519.329
                   </a>
-                  <Link to={appRoutes.commercialTool} className="flex items-center gap-3 text-lg font-black text-foodmax-forest mt-4" onClick={() => setIsOpen(false)}>
+                  <Link to={appRoutes.commercialTool} className="flex items-center gap-3 text-lg font-black text-foodera-forest mt-4" onClick={() => setIsOpen(false)}>
                     <BarChart3 size={20} /> {copy.commercialTool}
                   </Link>
                   <div className="flex items-center gap-3 text-sm font-black text-gray-500 mt-4">
-                    <Globe size={18} className="text-foodmax-forest" />
+                    <Globe size={18} className="text-foodera-forest" />
                     <button
                       type="button"
                       onClick={() => setLocale('en')}
-                      className={locale === 'en' ? 'text-foodmax-forest' : ''}
+                      className={locale === 'en' ? 'text-foodera-forest' : ''}
                     >
                       EN
                     </button>
@@ -563,7 +553,7 @@ const Navbar: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setLocale('zh')}
-                      className={locale === 'zh' ? 'text-foodmax-forest' : ''}
+                      className={locale === 'zh' ? 'text-foodera-forest' : ''}
                     >
                       中文
                     </button>
@@ -575,7 +565,7 @@ const Navbar: React.FC = () => {
                   <Link to={appRoutes.products} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.products}</Link>
                   <Link to={appRoutes.news} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
                   <Link to={appRoutes.about} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.about}</Link>
-                  <Link to={appRoutes.contact} className="block w-full py-5 bg-foodmax-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
+                  <Link to={appRoutes.contact} className="block w-full py-5 bg-foodera-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
                     {copy.contactUs}
                   </Link>
                 </div>
@@ -591,7 +581,7 @@ const Navbar: React.FC = () => {
           <div className="h-24 flex items-center border-b border-gray-100 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between gap-8">
               <div className="flex items-center gap-4 flex-grow">
-                <Search size={28} className="text-foodmax-forest" />
+                <Search size={28} className="text-foodera-forest" />
                 <input 
                   ref={searchInputRef}
                   type="text" 
@@ -617,7 +607,7 @@ const Navbar: React.FC = () => {
                 <div className="space-y-10">
                   <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 flex items-center gap-2">
-                      <ShoppingBag size={14} className="text-foodmax-forest" /> 
+                      <ShoppingBag size={14} className="text-foodera-forest" /> 
                       {copy.portfolioMatches} ({filteredProducts.length})
                     </h3>
                     <div className="space-y-4">
@@ -627,17 +617,17 @@ const Navbar: React.FC = () => {
                         <button 
                           key={product.id} 
                           onClick={() => handleSearchNavigation(appRoutes.productById(product.id))}
-                          className="w-full text-left group flex items-center gap-6 p-4 rounded-2xl border border-gray-50 hover:border-foodmax-lime/30 hover:bg-foodmax-lime/5 transition-all"
+                          className="w-full text-left group flex items-center gap-6 p-4 rounded-2xl border border-gray-50 hover:border-foodera-lime/30 hover:bg-foodera-lime/5 transition-all"
                         >
                           <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                             <img src={product.image} className="w-full h-full object-cover" alt={localizedProduct.name} />
                           </div>
                           <div className="flex-grow">
-                            <span className="text-[9px] font-black text-foodmax-forest uppercase tracking-widest">{localizedProduct.subCategory}</span>
-                            <h4 className="text-lg font-black text-gray-900 group-hover:text-foodmax-forest transition-colors">{localizedProduct.name}</h4>
+                            <span className="text-[9px] font-black text-foodera-forest uppercase tracking-widest">{localizedProduct.subCategory}</span>
+                            <h4 className="text-lg font-black text-gray-900 group-hover:text-foodera-forest transition-colors">{localizedProduct.name}</h4>
                             <p className="text-xs text-gray-500 line-clamp-1">{localizedProduct.shortDescription}</p>
                           </div>
-                          <ArrowRight size={20} className="text-gray-300 group-hover:text-foodmax-forest transition-colors" />
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-foodera-forest transition-colors" />
                         </button>
                         );
                       })}
@@ -652,7 +642,7 @@ const Navbar: React.FC = () => {
                 <div className="space-y-10">
                   <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 flex items-center gap-2">
-                      <FileText size={14} className="text-foodmax-forest" /> 
+                      <FileText size={14} className="text-foodera-forest" /> 
                       {copy.marketInsights} ({filteredNews.length})
                     </h3>
                     <div className="space-y-6">
@@ -662,8 +652,8 @@ const Navbar: React.FC = () => {
                           onClick={() => handleSearchNavigation(getNewsPath(n))}
                           className="w-full text-left group border-b border-gray-100 pb-6 hover:translate-x-1 transition-transform"
                         >
-                          <span className="text-[9px] font-black text-foodmax-lime uppercase tracking-widest mb-1 block">{formatDisplayDate(n.date, locale)}</span>
-                          <h4 className="text-xl font-black text-gray-900 group-hover:text-foodmax-forest transition-colors mb-2">{n.title}</h4>
+                          <span className="text-[9px] font-black text-foodera-lime uppercase tracking-widest mb-1 block">{formatDisplayDate(n.date, locale)}</span>
+                          <h4 className="text-xl font-black text-gray-900 group-hover:text-foodera-forest transition-colors mb-2">{n.title}</h4>
                           <p className="text-sm text-gray-500 line-clamp-2">{n.excerpt}</p>
                         </button>
                       ))}
@@ -683,11 +673,11 @@ const Navbar: React.FC = () => {
                 <div>
                   <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-100 pb-4">{copy.quickBrowse}</h4>
                   <div className="flex flex-col gap-3">
-                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Rice'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.riceExportPortfolios}</button>
-                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Coffee'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.coffeeTradeLines}</button>
-                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Cashew'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.cashewKernelGrades}</button>
-                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Pepper'))} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.pepperOriginSeries}</button>
-                    <button onClick={() => handleSearchNavigation(appRoutes.news)} className="text-sm text-gray-500 hover:text-foodmax-forest text-left">{copy.marketAnalysisArchive}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Rice'))} className="text-sm text-gray-500 hover:text-foodera-forest text-left">{copy.riceExportPortfolios}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Coffee'))} className="text-sm text-gray-500 hover:text-foodera-forest text-left">{copy.coffeeTradeLines}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Cashew'))} className="text-sm text-gray-500 hover:text-foodera-forest text-left">{copy.cashewKernelGrades}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.productsByCategory('Pepper'))} className="text-sm text-gray-500 hover:text-foodera-forest text-left">{copy.pepperOriginSeries}</button>
+                    <button onClick={() => handleSearchNavigation(appRoutes.news)} className="text-sm text-gray-500 hover:text-foodera-forest text-left">{copy.marketAnalysisArchive}</button>
                   </div>
                 </div>
                 <div className="md:col-span-2">

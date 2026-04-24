@@ -144,7 +144,7 @@ const AdminDashboard: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `foodmax-export-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `foodera-export-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
   };
 
@@ -169,18 +169,18 @@ const AdminDashboard: React.FC = () => {
   const stats = [
     { label: copy.stats[0], val: products.length, icon: Package, color: 'bg-blue-500' },
     { label: copy.stats[1], val: news.length, icon: FileText, color: 'bg-purple-500' },
-    { label: copy.stats[2], val: '32', icon: Globe, color: 'bg-foodmax-forest' },
-    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: isTursoMode ? 'bg-foodmax-forest' : 'bg-orange-500' }
+    { label: copy.stats[2], val: '32', icon: Globe, color: 'bg-foodera-forest' },
+    { label: copy.stats[3], val: copy.localOffline, icon: Database, color: isTursoMode ? 'bg-foodera-forest' : 'bg-orange-500' }
   ];
 
   return (
     <div className="flex min-h-screen bg-gray-100 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-foodmax-forest text-white p-6 hidden lg:flex flex-col sticky top-0 h-screen">
+      <aside className="w-64 bg-foodera-forest text-white p-6 hidden lg:flex flex-col sticky top-0 h-screen">
         <div className="flex flex-col mb-10 px-4">
           <div className="flex items-center">
             <span className="text-xl font-[900]">Food</span>
-            <span className="text-xl font-[900] text-foodmax-lime">max</span>
+            <span className="text-xl font-[900] text-foodera-lime">max</span>
           </div>
           <span className="text-[8px] font-bold text-white/40 tracking-[0.2em] uppercase">{copy.staffPortal}</span>
         </div>
@@ -210,21 +210,21 @@ const AdminDashboard: React.FC = () => {
             <div className="relative">
               <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-black/20 group-hover:scale-105 transition-transform">
                 <div className="flex items-center relative">
-                  <span className="text-foodmax-forest font-[900] text-xl">F</span>
+                  <span className="text-foodera-forest font-[900] text-xl">F</span>
                   <div className="absolute -top-1.5 -right-1 flex gap-0.5 opacity-80 scale-75">
-                    <div className="w-1.5 h-2.5 bg-foodmax-lime rounded-full rotate-[-25deg]"></div>
+                    <div className="w-1.5 h-2.5 bg-foodera-lime rounded-full rotate-[-25deg]"></div>
                   </div>
                 </div>
               </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodmax-lime rounded-full flex items-center justify-center border-2 border-foodmax-forest shadow-md">
-                <LogOut size={10} className="text-foodmax-forest" />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
+                <LogOut size={10} className="text-foodera-forest" />
               </div>
             </div>
             <div className="text-left">
                <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{copy.operationsPortal}</p>
                <div className="flex items-center gap-1">
-                 <p className="text-xs font-black text-white group-hover:text-foodmax-lime transition-colors">{copy.exitHome}</p>
-                 <ExternalLink size={10} className="text-white/20 group-hover:text-foodmax-lime transition-colors" />
+                 <p className="text-xs font-black text-white group-hover:text-foodera-lime transition-colors">{copy.exitHome}</p>
+                 <ExternalLink size={10} className="text-white/20 group-hover:text-foodera-lime transition-colors" />
                </div>
             </div>
           </Link>
@@ -241,21 +241,21 @@ const AdminDashboard: React.FC = () => {
           <div className="flex gap-4 items-center">
              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
-                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
                   EN
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
                   {'\u4e2d\u6587'}
                 </button>
              </div>
              <button
                onClick={() => navigate(appRoutes.adminMapContent)}
-               className="px-6 py-3 border border-foodmax-forest/15 bg-white text-foodmax-forest rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-sm hover:border-foodmax-forest hover:bg-foodmax-forest hover:text-white transition-all"
+               className="px-6 py-3 border border-foodera-forest/15 bg-white text-foodera-forest rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-sm hover:border-foodera-forest hover:bg-foodera-forest hover:text-white transition-all"
              >
                 <MapPinned size={16} /> {copy.mapContent}
              </button>
-             <button onClick={() => navigate(appRoutes.adminInventory)} className="px-6 py-3 bg-foodmax-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
+             <button onClick={() => navigate(appRoutes.adminInventory)} className="px-6 py-3 bg-foodera-forest text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
                 <Plus size={16} /> {copy.newExport}
              </button>
           </div>
@@ -278,7 +278,7 @@ const AdminDashboard: React.FC = () => {
             {/* Backup Card */}
             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-foodmax-forest/5 text-foodmax-forest rounded-xl"><Database size={20} /></div>
+                <div className="p-3 bg-foodera-forest/5 text-foodera-forest rounded-xl"><Database size={20} /></div>
                 <h3 className="text-lg font-black tracking-tight">{copy.dataManagement}</h3>
               </div>
               
@@ -317,7 +317,7 @@ const AdminDashboard: React.FC = () => {
           <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{copy.verifiedInventory}</h3>
-              <Link to={appRoutes.adminInventory} className="text-xs font-black text-foodmax-forest hover:text-foodmax-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
+              <Link to={appRoutes.adminInventory} className="text-xs font-black text-foodera-forest hover:text-foodera-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
             </div>
             <div className="space-y-4">
               {products.slice(0, 6).map(p => (

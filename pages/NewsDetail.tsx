@@ -309,7 +309,7 @@ const NewsDetail: React.FC = () => {
         returnArchive: '返回新闻归档',
         backToInsights: '返回洞察列表',
         minRead: '分钟阅读',
-        marketIntel: 'Foodmax 市场情报',
+        marketIntel: 'FoodEra 市场情报',
         onThisPage: '本页目录',
         continuousBrief: '这篇文章以单篇连续简报形式呈现。',
         discussInsight: '咨询这篇洞察',
@@ -321,7 +321,7 @@ const NewsDetail: React.FC = () => {
         returnArchive: 'Return to Archive',
         backToInsights: 'Back to Insights',
         minRead: 'Min Read',
-        marketIntel: 'Foodmax Market Intelligence',
+        marketIntel: 'FoodEra Market Intelligence',
         onThisPage: 'On This Page',
         continuousBrief: 'This article is presented as a single continuous brief.',
         discussInsight: 'Discuss this insight',
@@ -365,7 +365,7 @@ const NewsDetail: React.FC = () => {
   }, [localizedArticle]);
 
   const blocks = useMemo(
-    () => createContentBlocks(paragraphs, localizedArticle?.title || article?.title || 'Foodmax article image'),
+    () => createContentBlocks(paragraphs, localizedArticle?.title || article?.title || 'FoodEra article image'),
     [article?.title, localizedArticle?.title, paragraphs]
   );
   const displayBlocks = useMemo(() => {
@@ -430,7 +430,7 @@ const NewsDetail: React.FC = () => {
 
     const previousTitle = document.title;
     const seoTitle = localizedArticle?.title || article.title;
-    const title = `${seoTitle} | ${locale === 'zh' ? 'Foodmax 资讯' : 'Foodmax News'}`;
+    const title = `${seoTitle} | ${locale === 'zh' ? 'FoodEra 资讯' : 'FoodEra News'}`;
     const description = (localizedArticle?.excerpt || paragraphs[0] || '').trim().slice(0, 160);
 
     document.title = title;
@@ -469,11 +469,11 @@ const NewsDetail: React.FC = () => {
       articleBody: paragraphs.join('\n\n'),
       author: {
         '@type': 'Organization',
-        name: 'Foodmax Trade Desk'
+        name: 'FoodEra Trade Desk'
       },
       publisher: {
         '@type': 'Organization',
-        name: 'Foodmax'
+        name: 'FoodEra'
       }
     });
 
@@ -515,7 +515,7 @@ const NewsDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <h1 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h1>
-        <button onClick={() => navigate(appRoutes.news)} className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-bold">
+        <button onClick={() => navigate(appRoutes.news)} className="px-8 py-3 bg-foodera-forest text-white rounded-xl font-bold">
           {copy.returnArchive}
         </button>
       </div>
@@ -526,20 +526,20 @@ const NewsDetail: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-white animate-in fade-in duration-500">
       <div className="bg-white/85 backdrop-blur border-b border-gray-100 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
-          <Link to={appRoutes.news} className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-foodmax-forest transition-colors uppercase tracking-widest">
+          <Link to={appRoutes.news} className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-widest">
             <ArrowLeft size={14} />
             {copy.backToInsights}
           </Link>
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="p-2 text-gray-400 hover:text-foodmax-forest transition-colors rounded-lg hover:bg-gray-50"
+              className="p-2 text-gray-400 hover:text-foodera-forest transition-colors rounded-lg hover:bg-gray-50"
               aria-label={locale === 'zh' ? '分享文章' : 'Share article'}
             >
               <Share2 size={18} />
             </button>
             <button
-              className="p-2 text-gray-400 hover:text-foodmax-forest transition-colors rounded-lg hover:bg-gray-50"
+              className="p-2 text-gray-400 hover:text-foodera-forest transition-colors rounded-lg hover:bg-gray-50"
               onClick={() => window.print()}
               aria-label={locale === 'zh' ? '打印文章' : 'Print article'}
             >
@@ -553,7 +553,7 @@ const NewsDetail: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="px-3 py-1 bg-foodmax-forest/10 text-foodmax-forest text-[10px] font-black uppercase tracking-widest rounded-full">
+              <span className="px-3 py-1 bg-foodera-forest/10 text-foodera-forest text-[10px] font-black uppercase tracking-widest rounded-full">
                 {getNewsCategoryLabel(article.category, locale)}
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400">
@@ -596,7 +596,7 @@ const NewsDetail: React.FC = () => {
                 onError={() => setIsImageBroken(true)}
               />
             ) : (
-              <div className="w-full h-[260px] md:h-[460px] bg-gradient-to-br from-foodmax-forest to-foodmax-lime p-8 flex items-end">
+              <div className="w-full h-[260px] md:h-[460px] bg-gradient-to-br from-foodera-forest to-foodera-lime p-8 flex items-end">
                 <p className="text-white text-2xl md:text-4xl font-black leading-tight max-w-3xl">{localizedArticle?.title || article.title}</p>
               </div>
             )}
@@ -648,7 +648,7 @@ const NewsDetail: React.FC = () => {
                     <a
                       key={heading.id}
                       href={`#${heading.id}`}
-                      className="flex items-start gap-2 text-sm font-bold text-gray-600 hover:text-foodmax-forest transition-colors leading-snug"
+                      className="flex items-start gap-2 text-sm font-bold text-gray-600 hover:text-foodera-forest transition-colors leading-snug"
                     >
                       <ChevronRight size={16} className="mt-0.5 flex-shrink-0" />
                       <span>{heading.text}</span>
@@ -662,7 +662,7 @@ const NewsDetail: React.FC = () => {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <Link
                   to={appRoutes.contact}
-                  className="w-full inline-flex items-center justify-center px-4 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg"
+                  className="w-full inline-flex items-center justify-center px-4 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-lg"
                 >
                   {copy.discussInsight}
                 </Link>
@@ -671,7 +671,7 @@ const NewsDetail: React.FC = () => {
           </div>
 
           <div className="sr-only" itemProp="author" itemScope itemType="https://schema.org/Organization">
-            <span itemProp="name">Foodmax Trade Desk</span>
+            <span itemProp="name">FoodEra Trade Desk</span>
           </div>
         </div>
       </article>
@@ -719,7 +719,7 @@ const NewsDetail: React.FC = () => {
                         loading="lazy"
                       />
                     </div>
-                    <h3 className="text-lg font-black text-gray-900 group-hover:text-foodmax-forest transition-colors leading-tight mb-2">
+                    <h3 className="text-lg font-black text-gray-900 group-hover:text-foodera-forest transition-colors leading-tight mb-2">
                       {related.title}
                     </h3>
                     <p className="text-sm text-gray-500 font-medium line-clamp-2">{related.excerpt}</p>

@@ -59,7 +59,7 @@ const isValidPdfUrl = (value: string): boolean => {
   }
 };
 
-const INVENTORY_DRAFT_KEY = 'foodmax_admin_inventory_draft_v1';
+const INVENTORY_DRAFT_KEY = 'foodera_admin_inventory_draft_v1';
 
 type InventoryDraft = {
   editingProductId: string | null;
@@ -406,7 +406,7 @@ const buildProductPdfPrintHtml = (product: Product, locale: SupportedLocale): st
         <div>
           <div class="brand">
             <span class="brand-mark"></span>
-            <span>Foodmax Export Sheet</span>
+            <span>FoodEra Export Sheet</span>
           </div>
           <h1>${escapeHtml(localized.name)}</h1>
           <div class="subline">${escapeHtml(localized.shortDescription || '')}</div>
@@ -437,7 +437,7 @@ const buildProductPdfPrintHtml = (product: Product, locale: SupportedLocale): st
           <div class="section-label">${escapeHtml(copy.overview)}</div>
           <div class="body-copy">${escapeHtml(localized.description || '')}</div>
         </div>
-        ${imageBlock || '<div class="hero-copy"><div class="section-label">Foodmax</div><div class="body-copy">Product image is not available for this export sheet.</div></div>'}
+        ${imageBlock || '<div class="hero-copy"><div class="section-label">FoodEra</div><div class="body-copy">Product image is not available for this export sheet.</div></div>'}
       </div>
 
       <div class="spec-card">
@@ -1628,7 +1628,7 @@ const AdminInventory: React.FC = () => {
       }
       
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      saveAs(zipBlob, `Foodmax-Products-${new Date().toISOString().slice(0,10)}.zip`);
+      saveAs(zipBlob, `FoodEra-Products-${new Date().toISOString().slice(0,10)}.zip`);
       toast.success(locale === 'zh' ? 'PDF 批量导出成功！' : 'Bulk PDF Export completed!', { id: toastId });
     } catch (error: any) {
       console.error(error);
@@ -1662,10 +1662,10 @@ const AdminInventory: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Mini Sidebar */}
-      <aside className="w-[5.5rem] bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
+      <aside className="w-[5.5rem] bg-foodera-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
         <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
-          <Link to={appRoutes.adminInventory} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><Package size={24} /></Link>
+          <Link to={appRoutes.adminInventory} className="p-3.5 bg-foodera-lime text-foodera-forest rounded-2xl shadow-xl shadow-foodera-lime/20 border border-foodera-lime/20"><Package size={24} /></Link>
           <Link
             to={appRoutes.adminMapContent}
             className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"
@@ -1685,11 +1685,11 @@ const AdminInventory: React.FC = () => {
           >
             <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
                <div className="flex items-center relative">
-                  <span className="text-foodmax-forest font-[900] text-xl">F</span>
+                  <span className="text-foodera-forest font-[900] text-xl">F</span>
                </div>
             </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodmax-lime rounded-full flex items-center justify-center border-2 border-foodmax-forest shadow-md">
-              <LogOut size={10} className="text-foodmax-forest" />
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
+              <LogOut size={10} className="text-foodera-forest" />
             </div>
             
             {/* Tooltip Label */}
@@ -1713,11 +1713,11 @@ const AdminInventory: React.FC = () => {
             <div className="flex w-full flex-wrap items-center gap-3 md:flex-nowrap xl:w-auto xl:flex-nowrap">
               <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
-                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
                   EN
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
                   {'\u4e2d\u6587'}
                 </button>
               </div>
@@ -1725,7 +1725,7 @@ const AdminInventory: React.FC = () => {
                 type="button"
                 onClick={handleReloadInventory}
                 disabled={isReloadingInventory || isBulkTranslating}
-                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:opacity-50 relative group"
+                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-foodera-forest hover:text-foodera-forest disabled:opacity-50 relative group"
               >
                 {isReloadingInventory ? <Loader2 size={20} className="animate-spin" /> : <RefreshCw size={20} />}
                 <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap w-max shadow-xl z-50 border border-gray-800">
@@ -1737,7 +1737,7 @@ const AdminInventory: React.FC = () => {
                 type="button"
                 onClick={handleBulkTranslateFiltered}
                 disabled={isBulkTranslating || isReloadingInventory}
-                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl border border-foodmax-forest/15 bg-foodmax-forest/5 text-foodmax-forest shadow-sm transition-all hover:bg-foodmax-forest hover:text-white disabled:opacity-50 relative group"
+                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl border border-foodera-forest/15 bg-foodera-forest/5 text-foodera-forest shadow-sm transition-all hover:bg-foodera-forest hover:text-white disabled:opacity-50 relative group"
               >
                 {isBulkTranslating ? <Loader2 size={20} className="animate-spin" /> : <Languages size={20} />}
                 <div className="absolute top-full mt-3 right-0 lg:left-1/2 lg:-translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap w-max shadow-xl z-50 border border-gray-800">
@@ -1752,7 +1752,7 @@ const AdminInventory: React.FC = () => {
                 type="button"
                 onClick={handleExportZip}
                 disabled={isExportingZip}
-                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl bg-white border border-gray-200 text-foodmax-forest shadow-sm transition-all hover:bg-gray-50 hover:text-foodmax-lime disabled:opacity-50 relative group"
+                className="flex shrink-0 items-center justify-center w-[3.25rem] h-[3.25rem] rounded-2xl bg-white border border-gray-200 text-foodera-forest shadow-sm transition-all hover:bg-gray-50 hover:text-foodera-lime disabled:opacity-50 relative group"
               >
                 {isExportingZip ? <Loader2 size={20} className="animate-spin" /> : <FileDown size={20} />}
                 <div className="absolute top-full mt-3 right-0 lg:left-1/2 lg:-translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap w-max shadow-xl z-50 border border-gray-800">
@@ -1763,7 +1763,7 @@ const AdminInventory: React.FC = () => {
 
               <button 
                 onClick={() => openModal()}
-                className="flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-foodmax-forest px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl transition-all hover:bg-foodmax-lime hover:text-foodmax-forest"
+                className="flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-foodera-forest px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl transition-all hover:bg-foodera-lime hover:text-foodera-forest"
               >
                 <Plus size={20} /> {copy.addCommodity}
               </button>
@@ -1783,14 +1783,14 @@ const AdminInventory: React.FC = () => {
                     value={csvSheetUrl}
                     onChange={(e) => setCsvSheetUrl(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0"
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                   />
                 </div>
               </div>
               <button
                 onClick={handleImportFromSheet}
                 disabled={isImportingCsv}
-                className="px-6 py-3 bg-foodmax-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                className="px-6 py-3 bg-foodera-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodera-lime hover:text-foodera-forest transition-all"
               >
                 {isImportingCsv ? copy.importing : copy.importLink}
               </button>
@@ -1823,7 +1823,7 @@ const AdminInventory: React.FC = () => {
                 placeholder={copy.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodera-forest/10 border-none text-sm font-medium"
               />
             </div>
           </div>
@@ -1833,7 +1833,7 @@ const AdminInventory: React.FC = () => {
               onClick={() => { setSelectedCategory('all'); setCurrentPage(1); }}
               className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
                 selectedCategory === 'all' 
-                ? 'border-foodmax-forest text-foodmax-forest' 
+                ? 'border-foodera-forest text-foodera-forest' 
                 : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
               }`}
             >
@@ -1845,7 +1845,7 @@ const AdminInventory: React.FC = () => {
                 onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
                 className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
                   selectedCategory === cat
-                  ? 'border-foodmax-forest text-foodmax-forest' 
+                  ? 'border-foodera-forest text-foodera-forest' 
                   : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
                 }`}
               >
@@ -1882,7 +1882,7 @@ const AdminInventory: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <span className="px-3 py-1 bg-foodmax-forest/5 text-foodmax-forest text-[10px] font-black uppercase tracking-widest rounded-lg">
+                      <span className="px-3 py-1 bg-foodera-forest/5 text-foodera-forest text-[10px] font-black uppercase tracking-widest rounded-lg">
                         {getCategoryLabel(p.category, locale)}
                       </span>
                       <p className="text-xs text-gray-400 font-bold mt-1">{localized.subCategory}</p>
@@ -1904,7 +1904,7 @@ const AdminInventory: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleExportProductPdf(p, 'en')}
-                          className="inline-flex items-center gap-2 rounded-xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-foodmax-forest transition-all hover:bg-foodmax-forest hover:text-white"
+                          className="inline-flex items-center gap-2 rounded-xl border border-foodera-forest/15 bg-foodera-forest/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-foodera-forest transition-all hover:bg-foodera-forest hover:text-white"
                           title={exportPdfEnButtonLabel}
                         >
                           <FileDown size={14} />
@@ -1913,7 +1913,7 @@ const AdminInventory: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleExportProductPdf(p, 'zh')}
-                          className="inline-flex items-center gap-2 rounded-xl border border-foodmax-lime/30 bg-foodmax-lime/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-foodmax-forest transition-all hover:bg-foodmax-lime hover:text-foodmax-forest"
+                          className="inline-flex items-center gap-2 rounded-xl border border-foodera-lime/30 bg-foodera-lime/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-foodera-forest transition-all hover:bg-foodera-lime hover:text-foodera-forest"
                           title={exportPdfCnButtonLabel}
                         >
                           <FileDown size={14} />
@@ -1921,14 +1921,14 @@ const AdminInventory: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => openModal(p)}
-                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm"
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodera-forest hover:text-white transition-all shadow-sm"
                         >
                           <Edit3 size={18} />
                         </button>
                         <button
                           onClick={() => handleTranslateExistingProduct(p)}
                           disabled={translatingItemId === p.id}
-                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm disabled:opacity-50"
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodera-forest hover:text-white transition-all shadow-sm disabled:opacity-50"
                           title={translateButtonLabel}
                         >
                           {translatingItemId === p.id ? <Loader2 size={18} className="animate-spin" /> : <Languages size={18} />}
@@ -1985,12 +1985,12 @@ const AdminInventory: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-end bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-3xl h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodmax-forest text-white">
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodera-forest text-white">
               <div>
                 <h2 className="text-xl font-black uppercase tracking-tight">
                   {editingProduct ? copy.editCommodity : copy.createCommodity}
                 </h2>
-                <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">Export Intelligence Update</p>
+                <p className="text-foodera-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">Export Intelligence Update</p>
               </div>
               <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X size={24} />
@@ -2010,7 +2010,7 @@ const AdminInventory: React.FC = () => {
                     onClick={() => setModalTab(tab)}
                     className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest rounded-t-xl transition-all ${
                       isActive
-                        ? 'bg-white text-foodmax-forest border border-gray-200 border-b-white -mb-px shadow-sm'
+                        ? 'bg-white text-foodera-forest border border-gray-200 border-b-white -mb-px shadow-sm'
                         : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
                     }`}
                   >
@@ -2027,14 +2027,14 @@ const AdminInventory: React.FC = () => {
               {/* Product SKU / ID - NOW MANUALLY EDITABLE */}
               <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
                 <div className="flex items-center gap-3">
-                   <div className="p-2 bg-foodmax-forest text-white rounded-lg"><Tag size={18} /></div>
+                   <div className="p-2 bg-foodera-forest text-white rounded-lg"><Tag size={18} /></div>
                    <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Unique Identifier (SKU / ID)</h3>
                 </div>
                 <input 
                   type="text" 
                   value={formData.id}
                   onChange={(e) => setFormData({...formData, id: e.target.value})}
-                  className="w-full px-4 py-4 bg-white border-2 border-transparent focus:border-foodmax-forest/20 rounded-xl outline-none text-sm font-black transition-all"
+                  className="w-full px-4 py-4 bg-white border-2 border-transparent focus:border-foodera-forest/20 rounded-xl outline-none text-sm font-black transition-all"
                   placeholder="e.g. RICE-JASMINE-001"
                   required
                 />
@@ -2062,7 +2062,7 @@ const AdminInventory: React.FC = () => {
                       value={formData.image}
                       onChange={(e) => setFormData({...formData, image: e.target.value})}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                       required
                     />
                     <div className="flex flex-wrap items-center gap-3">
@@ -2070,7 +2070,7 @@ const AdminInventory: React.FC = () => {
                         className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
                           isUploadingPrimaryImage
                             ? 'cursor-not-allowed border-gray-100 bg-gray-100 text-gray-400'
-                            : 'cursor-pointer border-gray-200 bg-white text-foodmax-forest hover:border-foodmax-forest/20 hover:bg-foodmax-forest/5'
+                            : 'cursor-pointer border-gray-200 bg-white text-foodera-forest hover:border-foodera-forest/20 hover:bg-foodera-forest/5'
                         }`}
                       >
                         {isUploadingPrimaryImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
@@ -2097,7 +2097,7 @@ const AdminInventory: React.FC = () => {
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.productPdfSection}</label>
                 <div className="flex items-start gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-5">
-                  <div className="p-2 bg-foodmax-forest text-white rounded-lg">
+                  <div className="p-2 bg-foodera-forest text-white rounded-lg">
                     <FileText size={16} />
                   </div>
                   <div className="flex-grow space-y-2">
@@ -2107,7 +2107,7 @@ const AdminInventory: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
                       placeholder={copy.productPdfPlaceholder}
                       className={`w-full px-4 py-3 bg-white rounded-xl border-2 outline-none text-sm font-medium ${
-                        hasInvalidPdfUrl ? 'border-red-300 focus:border-red-400' : 'border-transparent focus:border-foodmax-forest/20'
+                        hasInvalidPdfUrl ? 'border-red-300 focus:border-red-400' : 'border-transparent focus:border-foodera-forest/20'
                       }`}
                     />
                     {hasInvalidPdfUrl ? (
@@ -2162,7 +2162,7 @@ const AdminInventory: React.FC = () => {
                   <button 
                     type="button"
                     onClick={handleAddGalleryImage}
-                    className="px-4 py-3 bg-foodmax-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-colors"
+                    className="px-4 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-colors"
                   >
                     {copy.addPhoto}
                   </button>
@@ -2179,7 +2179,7 @@ const AdminInventory: React.FC = () => {
                     type="text" 
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
                     required
                   />
                 </div>
@@ -2188,7 +2188,7 @@ const AdminInventory: React.FC = () => {
                   <select 
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value as CategoryType})}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
                     {PRODUCT_CATEGORIES.map((category) => (
                       <option key={category} value={category}>{getCategoryLabel(category as CategoryType, locale)}</option>
@@ -2204,7 +2204,7 @@ const AdminInventory: React.FC = () => {
                     type="text" 
                     value={formData.subCategory}
                     onChange={(e) => setFormData({...formData, subCategory: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
                     placeholder={copy.subCategoryPlaceholder}
                     required
                   />
@@ -2214,7 +2214,7 @@ const AdminInventory: React.FC = () => {
                   <select
                     value={formData.isActive === false ? 'inactive' : 'active'}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
                     <option value="active">{activeStatusLabel}</option>
                     <option value="inactive">{inactiveStatusLabel}</option>
@@ -2229,7 +2229,7 @@ const AdminInventory: React.FC = () => {
                   type="text" 
                   value={formData.shortDescription}
                   onChange={(e) => setFormData({...formData, shortDescription: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                   placeholder={copy.shortDescriptionPlaceholder}
                   required
                 />
@@ -2241,7 +2241,7 @@ const AdminInventory: React.FC = () => {
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                  className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium resize-none"
                   placeholder={copy.descriptionPlaceholder}
                   required
                 />
@@ -2252,7 +2252,7 @@ const AdminInventory: React.FC = () => {
               <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest">{copy.translationSection}</h4>
                     <p className="mt-2 text-[11px] font-medium text-gray-500">
                       {copy.translationNote}
                     </p>
@@ -2264,7 +2264,7 @@ const AdminInventory: React.FC = () => {
                     type="button"
                     onClick={handleTranslateDraft}
                     disabled={isTranslatingDraft}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foodmax-forest transition-all hover:bg-foodmax-forest hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-foodera-forest/15 bg-foodera-forest/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foodera-forest transition-all hover:bg-foodera-forest hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isTranslatingDraft ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
                     {isTranslatingDraft ? translatingButtonLabel : translateButtonLabel}
@@ -2278,7 +2278,7 @@ const AdminInventory: React.FC = () => {
                       type="text"
                       value={formData.translations?.zh?.name || ''}
                       onChange={(e) => updateZhTranslation('name', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                       placeholder={copy.zhNamePlaceholder}
                     />
                   </div>
@@ -2288,7 +2288,7 @@ const AdminInventory: React.FC = () => {
                       type="text"
                       value={formData.translations?.zh?.subCategory || ''}
                       onChange={(e) => updateZhTranslation('subCategory', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                       placeholder={copy.zhSubCategoryPlaceholder}
                     />
                   </div>
@@ -2300,7 +2300,7 @@ const AdminInventory: React.FC = () => {
                     type="text"
                     value={formData.translations?.zh?.shortDescription || ''}
                     onChange={(e) => updateZhTranslation('shortDescription', e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                     placeholder={copy.zhShortDescriptionPlaceholder}
                   />
                 </div>
@@ -2311,7 +2311,7 @@ const AdminInventory: React.FC = () => {
                     rows={4}
                     value={formData.translations?.zh?.description || ''}
                     onChange={(e) => updateZhTranslation('description', e.target.value)}
-                    className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                    className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium resize-none"
                     placeholder={copy.zhDescriptionPlaceholder}
                   />
                 </div>
@@ -2324,14 +2324,14 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Hash size={14} className="text-foodmax-forest" /> {copy.specsTitle}
+                      <Hash size={14} className="text-foodera-forest" /> {copy.specsTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.specsDesc}</p>
                   </div>
                   <button 
                     type="button"
                     onClick={handleAddSpec}
-                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-[10px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest"
                   >
                     <PlusCircle size={16} /> {copy.addAttribute}
                   </button>
@@ -2346,7 +2346,7 @@ const AdminInventory: React.FC = () => {
                           value={key}
                           onChange={(e) => handleUpdateSpec(key, e.target.value, value as string)}
                           placeholder={copy.specsLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2355,7 +2355,7 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateSpec(key, key, e.target.value)}
                           placeholder={copy.specsValuePlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button 
@@ -2379,14 +2379,14 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Tag size={14} className="text-foodmax-forest" /> {copy.packagingTitle}
+                      <Tag size={14} className="text-foodera-forest" /> {copy.packagingTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.packagingDesc}</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddPackaging}
-                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-[10px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest"
                   >
                     <PlusCircle size={16} /> {copy.addPackagingAttribute}
                   </button>
@@ -2401,7 +2401,7 @@ const AdminInventory: React.FC = () => {
                           value={key}
                           onChange={(e) => handleUpdatePackaging(key, e.target.value, value as string)}
                           placeholder={copy.packagingLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2410,7 +2410,7 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdatePackaging(key, key, e.target.value)}
                           placeholder={copy.packagingValuePlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
@@ -2434,14 +2434,14 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Tag size={14} className="text-foodmax-forest" /> {copy.paymentTitle}
+                      <Tag size={14} className="text-foodera-forest" /> {copy.paymentTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.paymentDesc}</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddPayment}
-                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-[10px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest"
                   >
                     <PlusCircle size={16} /> {copy.addPaymentAttribute}
                   </button>
@@ -2456,7 +2456,7 @@ const AdminInventory: React.FC = () => {
                           value={key}
                           onChange={(e) => handleUpdatePayment(key, e.target.value, value as string)}
                           placeholder={copy.paymentLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-black uppercase tracking-widest outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2465,7 +2465,7 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdatePayment(key, key, e.target.value)}
                           placeholder={copy.paymentValuePlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
@@ -2489,14 +2489,14 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Hash size={14} className="text-foodmax-forest" /> {copy.zhSpecsTitle}
+                      <Hash size={14} className="text-foodera-forest" /> {copy.zhSpecsTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.zhSpecsDesc}</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddZhSpec}
-                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-[10px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest"
                   >
                     <PlusCircle size={16} /> {copy.addZhAttribute}
                   </button>
@@ -2511,7 +2511,7 @@ const AdminInventory: React.FC = () => {
                           value={key}
                           onChange={(e) => handleUpdateZhSpec(key, e.target.value, value as string)}
                           placeholder={copy.zhSpecsLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodera-forest"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2520,7 +2520,7 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateZhSpec(key, key, e.target.value)}
                           placeholder={copy.zhSpecsValuePlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
@@ -2544,14 +2544,14 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Tag size={14} className="text-foodmax-forest" /> {copy.zhPackagingTitle}
+                      <Tag size={14} className="text-foodera-forest" /> {copy.zhPackagingTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.zhPackagingDesc}</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddZhPackaging}
-                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-[10px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest"
                   >
                     <PlusCircle size={16} /> {copy.addZhPackagingAttribute}
                   </button>
@@ -2566,7 +2566,7 @@ const AdminInventory: React.FC = () => {
                           value={key}
                           onChange={(e) => handleUpdateZhPackaging(key, e.target.value, value as string)}
                           placeholder={copy.zhPackagingLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodera-forest"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2575,7 +2575,7 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateZhPackaging(key, key, e.target.value)}
                           placeholder={copy.zhPackagingValuePlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
@@ -2599,14 +2599,14 @@ const AdminInventory: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Tag size={14} className="text-foodmax-forest" /> {copy.zhPaymentTitle}
+                      <Tag size={14} className="text-foodera-forest" /> {copy.zhPaymentTitle}
                     </h4>
                     <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{copy.zhPaymentDesc}</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddZhPayment}
-                    className="flex items-center gap-2 text-[10px] font-black text-foodmax-forest hover:text-foodmax-lime transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-[10px] font-black text-foodera-forest hover:text-foodera-lime transition-colors uppercase tracking-widest"
                   >
                     <PlusCircle size={16} /> {copy.addZhPaymentAttribute}
                   </button>
@@ -2621,7 +2621,7 @@ const AdminInventory: React.FC = () => {
                           value={key}
                           onChange={(e) => handleUpdateZhPayment(key, e.target.value, value as string)}
                           placeholder={copy.zhPaymentLabelPlaceholder}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodmax-forest"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black tracking-widest outline-none focus:border-foodera-forest"
                         />
                       </div>
                       <div className="flex-[3]">
@@ -2630,7 +2630,7 @@ const AdminInventory: React.FC = () => {
                           value={value as string}
                           onChange={(e) => handleUpdateZhPayment(key, key, e.target.value)}
                           placeholder={copy.zhPaymentValuePlaceholder}
-                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodmax-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
+                          className="w-full px-4 py-3 bg-transparent border-2 border-transparent hover:border-gray-50 focus:bg-white focus:shadow-sm focus:border-foodera-forest/20 rounded-xl text-xs font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                       </div>
                       <button
@@ -2664,7 +2664,7 @@ const AdminInventory: React.FC = () => {
                 <button 
                   onClick={handleSave}
                   disabled={isSaving || isUploadingPrimaryImage}
-                  className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
+                  className="flex-[2] py-4 bg-foodera-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodera-lime hover:text-foodera-forest transition-all disabled:opacity-50"
                 >
                   {isSaving ? (
                     <Loader2 size={18} className="animate-spin" />

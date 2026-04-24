@@ -24,8 +24,8 @@ const Operations: React.FC = () => {
   useDocumentMeta({
     title: locale === 'zh' ? '运营与合规' : 'Operational Compliance',
     description: locale === 'zh'
-      ? 'Foodmax 国际出口的技术标准与贸易执行框架：ISO 22000、HACCP 认证、包装规格与 Incoterms 贸易条款。'
-      : 'Technical standards and trade frameworks for Foodmax exports: ISO 22000, HACCP, packaging specs, and Incoterms 2020.',
+      ? 'FoodEra 国际出口的技术标准与贸易执行框架：ISO 22000、HACCP 认证、包装规格与 Incoterms 贸易条款。'
+      : 'Technical standards and trade frameworks for FoodEra exports: ISO 22000, HACCP, packaging specs, and Incoterms 2020.',
     canonicalUrl: `${BASE_URL}/operations`,
     ogUrl: `${BASE_URL}/operations`,
   });
@@ -43,11 +43,11 @@ const enCopy = {
   heroTitle: 'Operational',
   heroAccent: 'Compliance',
   heroDesc:
-    'Technical standards and trade frameworks governing Foodmax international export activity. We maintain a rigorous, transparent, and verifiable operating model from origin to destination.',
+    'Technical standards and trade frameworks governing FoodEra international export activity. We maintain a rigorous, transparent, and verifiable operating model from origin to destination.',
   qualityLabel: 'Section 01 / Quality Standards',
   qualityTitle: 'The Architecture of Purity',
   qualityDesc:
-    'At Foodmax, quality is not a single inspection. It is a system. From moisture and admixture to sensory profile, our multi-stage verification process keeps every lot aligned with international food safety and procurement standards.',
+    'At FoodEra, quality is not a single inspection. It is a system. From moisture and admixture to sensory profile, our multi-stage verification process keeps every lot aligned with international food safety and procurement standards.',
   qualityItems: [
     {
       title: 'ISO 22000 & HACCP',
@@ -68,7 +68,7 @@ const enCopy = {
   ],
   batchTitle: 'Batch Sovereignty',
   batchDesc:
-    'Every lot is assigned a unique Foodmax Tracking ID, enabling full upstream visibility from farm cluster to final packing line.',
+    'Every lot is assigned a unique FoodEra Tracking ID, enabling full upstream visibility from farm cluster to final packing line.',
   admixture: 'Admixture Tolerance',
   verifiedBatches: 'Lab-Verified Batches',
   logisticsLabel: 'Section 02 / Global Logistics',
@@ -115,11 +115,11 @@ const enCopy = {
 const zhCopy = {
   heroTitle: '运营与合规',
   heroAccent: '合规',
-  heroDesc: 'Foodmax 国际出口业务所遵循的技术标准与贸易执行框架。我们在原产地到目的港之间维持严格、透明、可验证的运营体系。',
+  heroDesc: 'FoodEra 国际出口业务所遵循的技术标准与贸易执行框架。我们在原产地到目的港之间维持严格、透明、可验证的运营体系。',
   qualityLabel: '章节 01 / 质量标准',
   qualityTitle: '纯净标准的系统化架构',
   qualityDesc:
-    '在 Foodmax，质量不是单次检查，而是一套完整系统。从水分、杂质到感官表现，我们通过多阶段验证流程确保每一批次都满足国际食品安全与专业采购标准。',
+    '在 FoodEra，质量不是单次检查，而是一套完整系统。从水分、杂质到感官表现，我们通过多阶段验证流程确保每一批次都满足国际食品安全与专业采购标准。',
   qualityItems: [
     {
       title: 'ISO 22000 与 HACCP',
@@ -139,7 +139,7 @@ const zhCopy = {
     }
   ],
   batchTitle: '批次主权追踪',
-  batchDesc: '每一批货物都会分配唯一 Foodmax Tracking ID，支持从农场集群到最终包装线的完整追溯。',
+  batchDesc: '每一批货物都会分配唯一 FoodEra Tracking ID，支持从农场集群到最终包装线的完整追溯。',
   admixture: '混杂容忍度',
   verifiedBatches: '实验室验证批次',
   logisticsLabel: '章节 02 / 全球物流',
@@ -192,7 +192,7 @@ const zhCopy = {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-7xl font-black text-gray-900 mb-8 tracking-tighter leading-none">
-              {copy.heroTitle} <span className="text-foodmax-forest">{copy.heroAccent}</span>
+              {copy.heroTitle} <span className="text-foodera-forest">{copy.heroAccent}</span>
             </h1>
             <p className="text-xl text-gray-500 font-medium leading-relaxed">{copy.heroDesc}</p>
           </div>
@@ -204,10 +204,10 @@ const zhCopy = {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-foodmax-forest text-white rounded-lg">
+                <div className="p-2 bg-foodera-forest text-white rounded-lg">
                   <ShieldCheck size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em]">{copy.qualityLabel}</h2>
+                <h2 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em]">{copy.qualityLabel}</h2>
               </div>
               <h3 className="text-4xl font-black text-gray-900 mb-8 tracking-tight">{copy.qualityTitle}</h3>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed font-medium">{copy.qualityDesc}</p>
@@ -216,9 +216,9 @@ const zhCopy = {
                 {copy.qualityItems.map((item) => (
                   <div
                     key={item.title}
-                    className="flex gap-4 p-4 rounded-2xl border border-gray-100 hover:border-foodmax-lime/30 bg-white transition-all shadow-sm"
+                    className="flex gap-4 p-4 rounded-2xl border border-gray-100 hover:border-foodera-lime/30 bg-white transition-all shadow-sm"
                   >
-                    <BadgeCheck size={20} className="text-foodmax-lime flex-shrink-0 mt-1" />
+                    <BadgeCheck size={20} className="text-foodera-lime flex-shrink-0 mt-1" />
                     <div>
                       <h4 className="font-black text-gray-900 text-sm uppercase tracking-wider">{item.title}</h4>
                       <p className="text-sm text-gray-500">{item.desc}</p>
@@ -228,18 +228,18 @@ const zhCopy = {
               </div>
             </div>
             <div className="bg-gray-900 rounded-[3rem] p-12 text-white relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-foodmax-forest/20 rounded-full -mr-32 -mt-32 blur-3xl" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-foodera-forest/20 rounded-full -mr-32 -mt-32 blur-3xl" />
               <h4 className="text-xl font-black mb-6 flex items-center gap-2">
-                <Zap size={20} className="text-foodmax-lime" /> {copy.batchTitle}
+                <Zap size={20} className="text-foodera-lime" /> {copy.batchTitle}
               </h4>
               <p className="text-white/70 mb-8 leading-relaxed font-medium">{copy.batchDesc}</p>
               <div className="grid grid-cols-2 gap-6 pt-8 border-t border-white/10">
                 <div>
-                  <p className="text-3xl font-black text-foodmax-lime">0.01%</p>
+                  <p className="text-3xl font-black text-foodera-lime">0.01%</p>
                   <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">{copy.admixture}</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-foodmax-lime">100%</p>
+                  <p className="text-3xl font-black text-foodera-lime">100%</p>
                   <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">{copy.verifiedBatches}</p>
                 </div>
               </div>
@@ -252,10 +252,10 @@ const zhCopy = {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-2 bg-foodmax-forest text-white rounded-lg">
+              <div className="p-2 bg-foodera-forest text-white rounded-lg">
                 <Truck size={20} />
               </div>
-              <h2 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em]">{copy.logisticsLabel}</h2>
+              <h2 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em]">{copy.logisticsLabel}</h2>
             </div>
             <h3 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">{copy.logisticsTitle}</h3>
           </div>
@@ -263,7 +263,7 @@ const zhCopy = {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[Anchor, Globe, FileText].map((Icon, index) => (
               <div key={copy.logisticsCards[index].title} className="bg-white p-10 rounded-3xl shadow-sm border border-gray-200">
-                <Icon size={32} className="text-foodmax-forest mb-6" />
+                <Icon size={32} className="text-foodera-forest mb-6" />
                 <h4 className="text-xl font-black text-gray-900 mb-4 uppercase tracking-tighter">
                   {copy.logisticsCards[index].title}
                 </h4>
@@ -286,10 +286,10 @@ const zhCopy = {
             </div>
             <div className="order-1 lg:order-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-foodmax-forest text-white rounded-lg">
+                <div className="p-2 bg-foodera-forest text-white rounded-lg">
                   <Package size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-foodmax-forest uppercase tracking-[0.4em]">{copy.packagingLabel}</h2>
+                <h2 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em]">{copy.packagingLabel}</h2>
               </div>
               <h3 className="text-4xl font-black text-gray-900 mb-8 tracking-tight">{copy.packagingTitle}</h3>
               <p className="text-lg text-gray-600 mb-10 leading-relaxed font-medium">{copy.packagingDesc}</p>
@@ -300,7 +300,7 @@ const zhCopy = {
                   <ul className="space-y-2 text-sm text-gray-900 font-bold">
                     {copy.exportBulkItems.map((item) => (
                       <li key={item} className="flex items-center gap-2">
-                        <CheckCircle size={14} className="text-foodmax-lime" /> {item}
+                        <CheckCircle size={14} className="text-foodera-lime" /> {item}
                       </li>
                     ))}
                   </ul>
@@ -312,7 +312,7 @@ const zhCopy = {
                   <ul className="space-y-2 text-sm text-gray-900 font-bold">
                     {copy.retailItems.map((item) => (
                       <li key={item} className="flex items-center gap-2">
-                        <CheckCircle size={14} className="text-foodmax-lime" /> {item}
+                        <CheckCircle size={14} className="text-foodera-lime" /> {item}
                       </li>
                     ))}
                   </ul>
@@ -331,17 +331,17 @@ const zhCopy = {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-foodmax-lime text-foodmax-forest rounded-lg">
+              <div className="p-2 bg-foodera-lime text-foodera-forest rounded-lg">
                 <Scale size={20} />
               </div>
-              <h2 className="text-[10px] font-black text-foodmax-lime uppercase tracking-[0.4em]">{copy.termsLabel}</h2>
+              <h2 className="text-[10px] font-black text-foodera-lime uppercase tracking-[0.4em]">{copy.termsLabel}</h2>
             </div>
             <h3 className="text-4xl md:text-5xl font-black mb-10 tracking-tight">{copy.termsTitle}</h3>
             <p className="text-xl text-white/60 mb-12 leading-relaxed font-medium">{copy.termsDesc}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 border-t border-white/10 pt-10">
               <div className="space-y-6">
-                <h5 className="text-xs font-black text-foodmax-lime uppercase tracking-widest">{copy.incotermsTitle}</h5>
+                <h5 className="text-xs font-black text-foodera-lime uppercase tracking-widest">{copy.incotermsTitle}</h5>
                 <div className="flex flex-wrap gap-3">
                   {['FOB', 'CIF', 'CFR', 'DDP'].map((term) => (
                     <span
@@ -355,7 +355,7 @@ const zhCopy = {
                 <p className="text-sm text-white/40 leading-relaxed">{copy.incotermsDesc}</p>
               </div>
               <div className="space-y-6">
-                <h5 className="text-xs font-black text-foodmax-lime uppercase tracking-widest">{copy.settlementTitle}</h5>
+                <h5 className="text-xs font-black text-foodera-lime uppercase tracking-widest">{copy.settlementTitle}</h5>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
                     <span className="text-white/40 uppercase text-[10px] tracking-widest">{copy.instrumentOne}</span>
@@ -381,12 +381,12 @@ const zhCopy = {
           <h4 className="text-2xl font-black text-gray-900 mb-6">{copy.ctaTitle}</h4>
           <p className="text-gray-500 mb-10 font-medium">{copy.ctaDesc}</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to={appRoutes.contact} className="px-10 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-xl">
+            <Link to={appRoutes.contact} className="px-10 py-4 bg-foodera-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-xl">
               {copy.requestPdf}
             </Link>
             <a
-              href="mailto:export@foodmax.vn"
-              className="px-10 py-4 border-2 border-foodmax-forest text-foodmax-forest rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all"
+              href="mailto:export@foodera.vn"
+              className="px-10 py-4 border-2 border-foodera-forest text-foodera-forest rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all"
             >
               {copy.emailDesk}
             </a>

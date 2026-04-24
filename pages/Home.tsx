@@ -54,7 +54,7 @@ const enCopy = {
   exportLinesSubtitle: 'High-quality agricultural commodities, meticulously processed for the most demanding international markets.',
   viewAllCategories: 'View All Product Categories',
   operationsTitle: 'Operational Architecture',
-  operationsSubtitle: 'Commercial rigor and technical compliance defining the Foodmax export methodology.',
+  operationsSubtitle: 'Commercial rigor and technical compliance defining the FoodEra export methodology.',
   qualityStandards: 'Quality Standards',
   qualityDesc: 'Our "Zero-Defect" protocol integrates ISO 22000 and HACCP standards into every processing stage. We provide multi-layer lab verification for every batch.',
   qualityList: ['SGS / Vinacontrol Alignment', 'Phytosanitary Purity', 'Sensory Profile Calibration'],
@@ -119,7 +119,7 @@ const zhCopy = {
   exportLinesSubtitle: '面向高要求国际市场的高品质农产品。',
   viewAllCategories: '查看全部产品分类',
   operationsTitle: '运营体系架构',
-  operationsSubtitle: 'Foodmax 出口方法论中的商业严谨性与技术合规。',
+  operationsSubtitle: 'FoodEra 出口方法论中的商业严谨性与技术合规。',
   qualityStandards: '质量标准',
   qualityDesc: '我们的“零缺陷”协议把 ISO 22000 与 HACCP 标准嵌入每个加工环节，并为每批货提供多层实验室验证。',
   qualityList: ['SGS / Vinacontrol 对齐', '植物检疫纯度', '感官杯型校准'],
@@ -168,7 +168,7 @@ const Home: React.FC = () => {
   useDocumentMeta({
     title: locale === 'zh' ? '首页' : "FoodMax Official Site",
     description: locale === 'zh'
-      ? 'Foodmax 专注越南优质大米、咖啡与腰果出口，服务全球30+国家进口商。HACCP & ISO 22000 认证。'
+      ? 'FoodEra 专注越南优质大米、咖啡与腰果出口，服务全球30+国家进口商。HACCP & ISO 22000 认证。'
       : "Premium rice, specialty coffee & cashew kernels from Vietnam. HACCP & ISO 22000 certified. Serving importers in 30+ countries.",
     canonicalUrl: BASE_URL + '/',
     ogUrl: BASE_URL + '/',
@@ -194,7 +194,7 @@ const Home: React.FC = () => {
                 key={advantage.title}
                 className="group flex flex-col items-center rounded-3xl border border-gray-100 bg-gray-50 p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
               >
-                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-foodmax-forest text-white shadow-lg transition-colors group-hover:bg-foodmax-lime group-hover:text-foodmax-forest">
+                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-foodera-forest text-white shadow-lg transition-colors group-hover:bg-foodera-lime group-hover:text-foodera-forest">
                   <advantage.icon size={30} />
                 </div>
                 <h3 className="mb-4 text-xl font-black tracking-tight text-gray-900">{advantage.title}</h3>
@@ -220,7 +220,7 @@ const Home: React.FC = () => {
 
             {recommendedProducts.length > 0 && (
               <div className="mb-16">
-                <p className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">
+                <p className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest">
                   {locale === 'zh' ? 'äº§å“æŽ¨è' : 'Product Recommendations'}
                 </p>
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -233,7 +233,7 @@ const Home: React.FC = () => {
 
             {recommendedNews.length > 0 && (
               <div>
-                <p className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">
+                <p className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest">
                   {locale === 'zh' ? 'èµ„è®¯æŽ¨è' : 'Insight Recommendations'}
                 </p>
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
@@ -241,7 +241,7 @@ const Home: React.FC = () => {
                     <Link
                       key={`recommended-news-${item.id}`}
                       to={getNewsPath(item)}
-                      className="group overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 transition-all hover:border-foodmax-forest/30 hover:shadow-2xl"
+                      className="group overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 transition-all hover:border-foodera-forest/30 hover:shadow-2xl"
                       onClick={() => {
                         void trackEvent(
                           {
@@ -269,12 +269,12 @@ const Home: React.FC = () => {
                           decoding="async"
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
-                        <div className="absolute top-4 left-4 rounded-lg bg-foodmax-forest px-3 py-1 text-[10px] font-black uppercase tracking-widest text-foodmax-lime shadow-lg">
+                        <div className="absolute top-4 left-4 rounded-lg bg-foodera-forest px-3 py-1 text-[10px] font-black uppercase tracking-widest text-foodera-lime shadow-lg">
                           {formatDisplayDate(item.date, locale)}
                         </div>
                       </div>
                       <div className="p-8">
-                        <h3 className="mb-4 text-xl font-black leading-tight text-gray-900 transition-colors group-hover:text-foodmax-forest">
+                        <h3 className="mb-4 text-xl font-black leading-tight text-gray-900 transition-colors group-hover:text-foodera-forest">
                           {item.title}
                         </h3>
                         <p className="line-clamp-3 text-sm leading-relaxed text-gray-500">{item.excerpt}</p>
@@ -302,7 +302,7 @@ const Home: React.FC = () => {
           <div className="text-center">
             <Link
               to={appRoutes.products}
-              className="inline-flex items-center gap-2 rounded-2xl bg-foodmax-forest px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-foodmax-forest/20 transition-all hover:-translate-y-1 hover:bg-foodmax-lime hover:text-foodmax-forest"
+              className="inline-flex items-center gap-2 rounded-2xl bg-foodera-forest px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-foodera-forest/20 transition-all hover:-translate-y-1 hover:bg-foodera-lime hover:text-foodera-forest"
             >
               {copy.viewAllCategories}
             </Link>
@@ -318,10 +318,10 @@ const Home: React.FC = () => {
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div className="group relative overflow-hidden rounded-[2.5rem] bg-foodmax-forest p-10 text-white">
-              <div className="absolute top-0 right-0 h-32 w-32 -mr-16 -mt-16 rounded-full bg-foodmax-lime/10 blur-2xl" />
+            <div className="group relative overflow-hidden rounded-[2.5rem] bg-foodera-forest p-10 text-white">
+              <div className="absolute top-0 right-0 h-32 w-32 -mr-16 -mt-16 rounded-full bg-foodera-lime/10 blur-2xl" />
               <div className="mb-8 flex items-center gap-4">
-                <div className="rounded-xl bg-foodmax-lime p-3 text-foodmax-forest">
+                <div className="rounded-xl bg-foodera-lime p-3 text-foodera-forest">
                   <BadgeCheck size={24} />
                 </div>
                 <h4 className="text-xl font-black uppercase tracking-tighter">{copy.qualityStandards}</h4>
@@ -331,7 +331,7 @@ const Home: React.FC = () => {
               </p>
               <ul className="mb-10 space-y-3">
                 {copy.qualityList.map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-foodmax-lime">
+                  <li key={item} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-foodera-lime">
                     <CheckCircle size={14} />
                     {item}
                   </li>
@@ -339,7 +339,7 @@ const Home: React.FC = () => {
               </ul>
               <Link
                 to={appRoutes.operationsSection('quality')}
-                className="text-[10px] font-black uppercase tracking-[0.2em] text-foodmax-lime transition-colors hover:text-white"
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-foodera-lime transition-colors hover:text-white"
               >
                 {copy.technicalSpecs}
               </Link>
@@ -347,7 +347,7 @@ const Home: React.FC = () => {
 
             <div className="group rounded-[2.5rem] border border-gray-100 bg-gray-50 p-10">
               <div className="mb-8 flex items-center gap-4">
-                <div className="rounded-xl bg-foodmax-forest p-3 text-white">
+                <div className="rounded-xl bg-foodera-forest p-3 text-white">
                   <Anchor size={24} />
                 </div>
                 <h4 className="text-xl font-black uppercase tracking-tighter text-gray-900">{copy.logisticsTitle}</h4>
@@ -367,7 +367,7 @@ const Home: React.FC = () => {
               </div>
               <Link
                 to={appRoutes.operationsSection('logistics')}
-                className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-foodmax-forest"
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-foodera-forest"
               >
                 {copy.routeIntel}
               </Link>
@@ -375,7 +375,7 @@ const Home: React.FC = () => {
 
             <div className="group rounded-[2.5rem] border border-gray-100 bg-gray-50 p-10">
               <div className="mb-8 flex items-center gap-4">
-                <div className="rounded-xl bg-foodmax-forest p-3 text-white">
+                <div className="rounded-xl bg-foodera-forest p-3 text-white">
                   <Package size={24} />
                 </div>
                 <h4 className="text-xl font-black uppercase tracking-tighter text-gray-900">{copy.packagingTitle}</h4>
@@ -395,15 +395,15 @@ const Home: React.FC = () => {
               </div>
               <Link
                 to={appRoutes.operationsSection('packaging')}
-                className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-foodmax-forest"
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-foodera-forest"
               >
                 {copy.packagingManual}
               </Link>
             </div>
 
-            <div className="group relative rounded-[2.5rem] bg-foodmax-forest p-10 text-white">
+            <div className="group relative rounded-[2.5rem] bg-foodera-forest p-10 text-white">
               <div className="mb-8 flex items-center gap-4">
-                <div className="rounded-xl bg-foodmax-lime p-3 text-foodmax-forest">
+                <div className="rounded-xl bg-foodera-lime p-3 text-foodera-forest">
                   <CreditCard size={24} />
                 </div>
                 <h4 className="text-xl font-black uppercase tracking-tighter">{copy.tradeTitle}</h4>
@@ -423,7 +423,7 @@ const Home: React.FC = () => {
               </div>
               <Link
                 to={appRoutes.operationsSection('terms')}
-                className="text-[10px] font-black uppercase tracking-[0.2em] text-foodmax-lime transition-colors hover:text-white"
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-foodera-lime transition-colors hover:text-white"
               >
                 {copy.tradeFramework}
               </Link>
@@ -432,12 +432,12 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-foodmax-forest py-24 text-white">
+      <section className="relative overflow-hidden bg-foodera-forest py-24 text-white">
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-12 text-center md:grid-cols-4">
             {copy.stats.map((stat) => (
               <div key={stat.label} className="group">
-                <p className="mb-2 text-4xl font-black text-foodmax-lime drop-shadow-sm transition-transform group-hover:scale-105 md:text-6xl">
+                <p className="mb-2 text-4xl font-black text-foodera-lime drop-shadow-sm transition-transform group-hover:scale-105 md:text-6xl">
                   <Counter target={stat.target} suffix={stat.suffix} />
                 </p>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">{stat.label}</p>
@@ -457,7 +457,7 @@ const Home: React.FC = () => {
             {featuredNews.map((item) => (
               <div
                 key={item.id}
-                className="group cursor-pointer overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 transition-all hover:border-foodmax-forest/30 hover:shadow-2xl"
+                className="group cursor-pointer overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 transition-all hover:border-foodera-forest/30 hover:shadow-2xl"
               >
                 <div className="relative aspect-video overflow-hidden">
                   <img
@@ -467,18 +467,18 @@ const Home: React.FC = () => {
                     decoding="async"
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute top-4 left-4 rounded-lg bg-foodmax-forest px-3 py-1 text-[10px] font-black uppercase tracking-widest text-foodmax-lime shadow-lg">
+                  <div className="absolute top-4 left-4 rounded-lg bg-foodera-forest px-3 py-1 text-[10px] font-black uppercase tracking-widest text-foodera-lime shadow-lg">
                     {formatDisplayDate(item.date, locale)}
                   </div>
                 </div>
                 <div className="p-8">
-                  <h3 className="mb-4 text-xl font-black leading-tight text-gray-900 transition-colors group-hover:text-foodmax-forest">
+                  <h3 className="mb-4 text-xl font-black leading-tight text-gray-900 transition-colors group-hover:text-foodera-forest">
                     {item.title}
                   </h3>
                   <p className="mb-6 line-clamp-2 text-sm leading-relaxed text-gray-500">{item.excerpt}</p>
                   <Link
                     to={getNewsPath(item)}
-                    className="inline-flex items-center gap-2 text-sm font-black text-foodmax-forest transition-colors hover:text-foodmax-lime"
+                    className="inline-flex items-center gap-2 text-sm font-black text-foodera-forest transition-colors hover:text-foodera-lime"
                     onClick={() => {
                       void trackEvent(
                         {
@@ -514,12 +514,12 @@ const Home: React.FC = () => {
         />
         <div className="relative z-10 mx-auto max-w-6xl px-4">
           <div className="group relative overflow-hidden rounded-[4rem] border border-gray-100 bg-gray-50 p-12 text-center shadow-2xl md:p-24">
-            <div className="absolute top-0 right-0 h-64 w-64 -mr-32 -mt-32 rounded-full bg-foodmax-lime/10 blur-3xl transition-colors duration-1000 group-hover:bg-foodmax-lime/20" />
-            <div className="absolute bottom-0 left-0 h-64 w-64 -mb-32 -ml-32 rounded-full bg-foodmax-forest/5 blur-3xl transition-colors duration-1000 group-hover:bg-foodmax-forest/10" />
+            <div className="absolute top-0 right-0 h-64 w-64 -mr-32 -mt-32 rounded-full bg-foodera-lime/10 blur-3xl transition-colors duration-1000 group-hover:bg-foodera-lime/20" />
+            <div className="absolute bottom-0 left-0 h-64 w-64 -mb-32 -ml-32 rounded-full bg-foodera-forest/5 blur-3xl transition-colors duration-1000 group-hover:bg-foodera-forest/10" />
 
             <div className="relative z-10 mx-auto max-w-3xl">
               <h2 className="mb-8 text-4xl font-black leading-tight tracking-tighter text-gray-900 md:text-7xl">
-                {copy.ctaPrefix} <span className="text-foodmax-forest">{copy.ctaHighlight}</span>{copy.ctaSuffix}
+                {copy.ctaPrefix} <span className="text-foodera-forest">{copy.ctaHighlight}</span>{copy.ctaSuffix}
               </h2>
               <p className="mb-12 text-xl font-medium leading-relaxed text-gray-500">
                 {copy.ctaDesc}
@@ -527,13 +527,13 @@ const Home: React.FC = () => {
               <div className="flex flex-col items-center justify-center gap-6 sm:flex-row">
                 <Link
                   to={appRoutes.contact}
-                  className="flex items-center gap-3 rounded-2xl bg-foodmax-forest px-14 py-6 text-xs font-black uppercase tracking-[0.3em] text-white shadow-2xl shadow-foodmax-forest/20 transition-all hover:scale-105 hover:bg-foodmax-lime hover:text-foodmax-forest active:scale-95"
+                  className="flex items-center gap-3 rounded-2xl bg-foodera-forest px-14 py-6 text-xs font-black uppercase tracking-[0.3em] text-white shadow-2xl shadow-foodera-forest/20 transition-all hover:scale-105 hover:bg-foodera-lime hover:text-foodera-forest active:scale-95"
                 >
                   {copy.connectSales} <ArrowRight size={18} />
                 </Link>
                 <Link
                   to={appRoutes.products}
-                  className="rounded-2xl border-2 border-gray-200 bg-white px-14 py-6 text-xs font-black uppercase tracking-[0.3em] text-gray-400 transition-all hover:border-foodmax-forest hover:text-foodmax-forest"
+                  className="rounded-2xl border-2 border-gray-200 bg-white px-14 py-6 text-xs font-black uppercase tracking-[0.3em] text-gray-400 transition-all hover:border-foodera-forest hover:text-foodera-forest"
                 >
                   {copy.browseCatalog}
                 </Link>

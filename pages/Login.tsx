@@ -21,7 +21,7 @@ const Login: React.FC = () => {
     locale === 'zh'
       ? {
           title: `ç®¡ç†å'˜ç™»å½•`,
-          subtitle: `ä½¿ç"¨æ‚¨çš„ Foodmax ç®¡ç†å'˜è´¦æˆ·ç™»å½•`,
+          subtitle: `ä½¿ç"¨æ‚¨çš„ FoodEra ç®¡ç†å'˜è´¦æˆ·ç™»å½•`,
           email: `é‚®ç®±`,
           password: `å¯†ç `,
           emailPlaceholder: 'admin@company.com',
@@ -32,7 +32,7 @@ const Login: React.FC = () => {
         }
       : {
           title: 'Admin Login',
-          subtitle: 'Sign in with your Foodmax admin account',
+          subtitle: 'Sign in with your FoodEra admin account',
           email: 'Email',
           password: 'Password',
           emailPlaceholder: 'admin@company.com',

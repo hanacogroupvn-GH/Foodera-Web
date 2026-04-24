@@ -85,8 +85,8 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
       ? `${getCategoryLabel(activeCategory, locale)} ${locale === 'zh' ? '产品系列' : 'Portfolio'}`
       : (locale === 'zh' ? '出口产品目录' : 'Export Product Portfolios'),
     description: locale === 'zh'
-      ? `浏览 Foodmax 的${activeCategory ? getCategoryLabel(activeCategory, locale) : ''}出口产品，符合国际食品安全标准的优质农产品。`
-      : `Browse Foodmax ${activeCategory ? getCategoryLabel(activeCategory, locale) + ' ' : ''}export products. Premium agricultural commodities processed to global food safety standards.`,
+      ? `浏览 FoodEra 的${activeCategory ? getCategoryLabel(activeCategory, locale) : ''}出口产品，符合国际食品安全标准的优质农产品。`
+      : `Browse FoodEra ${activeCategory ? getCategoryLabel(activeCategory, locale) + ' ' : ''}export products. Premium agricultural commodities processed to global food safety standards.`,
     canonicalUrl: `${BASE_URL}${activeCategory ? appRoutes.productsByCategory(activeCategory) : appRoutes.products}`,
     ogUrl: `${BASE_URL}${activeCategory ? appRoutes.productsByCategory(activeCategory) : appRoutes.products}`,
   });
@@ -225,7 +225,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
           <aside className="lg:w-1/4">
             <div className="sticky top-32">
               <div className="flex items-center justify-between lg:hidden mb-6 p-5 bg-gray-50 rounded-2xl border border-gray-200 cursor-pointer" onClick={() => setShowFilters(!showFilters)}>
-                <span className="font-black text-gray-900 flex items-center gap-2"><Filter size={18} className="text-foodmax-forest" /> {copy.filters}</span>
+                <span className="font-black text-gray-900 flex items-center gap-2"><Filter size={18} className="text-foodera-forest" /> {copy.filters}</span>
                 {showFilters ? <X size={18} /> : <ChevronDown size={18} />}
               </div>
 
@@ -239,7 +239,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                         onClick={() => handleCategoryChange(cat)}
                         className={`px-5 py-2.5 text-left rounded-xl text-xs font-black transition-all ${
                           (cat === copy.all ? filterCategory === 'all' : filterCategory === normalizeProductCategorySlug(cat))
-                            ? 'bg-foodmax-forest text-white shadow-lg'
+                            ? 'bg-foodera-forest text-white shadow-lg'
                             : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                         }`}
                       >
@@ -255,7 +255,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                       <div className="flex flex-col gap-1">
                         <button 
                           onClick={() => handleSubCategoryChange('all')}
-                          className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterSub === 'all' ? 'text-foodmax-forest font-black bg-foodmax-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
+                          className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterSub === 'all' ? 'text-foodera-forest font-black bg-foodera-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
                         >
                           {copy.allVarieties}
                         </button>
@@ -265,7 +265,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                               key={line}
                               onClick={() => handleSubCategoryChange(line)}
                               className={`block w-full text-xs text-left px-3 py-2 rounded-lg transition-all ${
-                                filterSub === line.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
+                                filterSub === line.toLowerCase() ? 'bg-foodera-forest/5 text-foodera-forest font-black' : 'text-gray-400 hover:text-gray-700'
                               }`}
                             >
                               {localizeProduct({
@@ -289,12 +289,12 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                 {(activeCategoryKey === 'rice' || activeCategoryKey === 'coffee') && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4 flex items-center gap-2">
-                      <Settings2 size={12} className="text-foodmax-lime" /> {copy.processingMethod}
+                      <Settings2 size={12} className="text-foodera-lime" /> {copy.processingMethod}
                     </h4>
                     <div className="flex flex-col gap-1">
                        <button 
                           onClick={() => setFilterProcessing('all')}
-                          className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterProcessing === 'all' ? 'text-foodmax-forest font-black bg-foodmax-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
+                          className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterProcessing === 'all' ? 'text-foodera-forest font-black bg-foodera-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
                         >
                           {copy.allProcesses}
                         </button>
@@ -303,7 +303,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                             key={method}
                             onClick={() => setFilterProcessing(method.toLowerCase())}
                             className={`block w-full text-xs text-left px-3 py-2 rounded-lg transition-all ${
-                              filterProcessing === method.toLowerCase() ? 'bg-foodmax-forest/5 text-foodmax-forest font-black' : 'text-gray-400 hover:text-gray-700'
+                              filterProcessing === method.toLowerCase() ? 'bg-foodera-forest/5 text-foodera-forest font-black' : 'text-gray-400 hover:text-gray-700'
                             }`}
                           >
                             {getLocalizedFilterValue(method, locale)}
@@ -341,7 +341,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                       <button
                         onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                         disabled={safeCurrentPage === 1}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodera-forest hover:text-foodera-forest disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ChevronLeft size={14} />
                         {copy.prev}
@@ -352,8 +352,8 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                           onClick={() => setCurrentPage(page)}
                           className={`h-11 min-w-11 rounded-xl px-4 text-xs font-black transition-all ${
                             safeCurrentPage === page
-                              ? 'bg-foodmax-forest text-white shadow-lg'
-                              : 'border border-gray-200 text-gray-600 hover:border-foodmax-forest hover:text-foodmax-forest'
+                              ? 'bg-foodera-forest text-white shadow-lg'
+                              : 'border border-gray-200 text-gray-600 hover:border-foodera-forest hover:text-foodera-forest'
                           }`}
                         >
                           {page}
@@ -362,7 +362,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                       <button
                         onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                         disabled={safeCurrentPage === totalPages}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodmax-forest hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-gray-600 transition-all hover:border-foodera-forest hover:text-foodera-forest disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {copy.next}
                         <ChevronRight size={14} />
@@ -378,7 +378,7 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                 <p className="text-gray-500 mb-10">{copy.emptyDesc}</p>
                 <button 
                   onClick={handleClearFilters}
-                  className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-black hover:bg-foodmax-lime hover:text-foodmax-forest transition-colors shadow-lg"
+                  className="px-8 py-3 bg-foodera-forest text-white rounded-xl font-black hover:bg-foodera-lime hover:text-foodera-forest transition-colors shadow-lg"
                 >
                   {copy.clearAllFilters}
                 </button>

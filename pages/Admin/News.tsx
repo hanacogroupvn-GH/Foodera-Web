@@ -36,7 +36,7 @@ import {
   MapPinned
 } from 'lucide-react';
 
-const NEWS_DRAFT_KEY = 'foodmax_admin_news_draft_v1';
+const NEWS_DRAFT_KEY = 'foodera_admin_news_draft_v1';
 
 type NewsDraft = {
   editingItemId: string | null;
@@ -644,10 +644,10 @@ const AdminNews: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Mini Sidebar */}
-      <aside className="w-[5.5rem] bg-foodmax-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
+      <aside className="w-[5.5rem] bg-foodera-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
         <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
         <div className="flex flex-col gap-6 flex-grow">
-          <Link to={appRoutes.adminNews} className="p-3.5 bg-foodmax-lime text-foodmax-forest rounded-2xl shadow-xl shadow-foodmax-lime/20 border border-foodmax-lime/20"><FileText size={24} /></Link>
+          <Link to={appRoutes.adminNews} className="p-3.5 bg-foodera-lime text-foodera-forest rounded-2xl shadow-xl shadow-foodera-lime/20 border border-foodera-lime/20"><FileText size={24} /></Link>
           <Link
             to={appRoutes.adminMapContent}
             className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"
@@ -667,11 +667,11 @@ const AdminNews: React.FC = () => {
           >
             <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
                <div className="flex items-center relative">
-                  <span className="text-foodmax-forest font-[900] text-xl">F</span>
+                  <span className="text-foodera-forest font-[900] text-xl">F</span>
                </div>
             </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodmax-lime rounded-full flex items-center justify-center border-2 border-foodmax-forest shadow-md">
-              <LogOut size={10} className="text-foodmax-forest" />
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
+              <LogOut size={10} className="text-foodera-forest" />
             </div>
             
             {/* Tooltip Label */}
@@ -694,17 +694,17 @@ const AdminNews: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
-                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodmax-forest' : ''}>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
                   EN
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodmax-forest' : ''}>
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
                   {'\u4e2d\u6587'}
                 </button>
               </div>
               <button 
                 onClick={() => openModal()}
-                className="px-8 py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                className="px-8 py-4 bg-foodera-forest text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 shadow-xl hover:bg-foodera-lime hover:text-foodera-forest transition-all"
               >
                 <Plus size={20} /> {copy.createPost}
               </button>
@@ -724,14 +724,14 @@ const AdminNews: React.FC = () => {
                     value={csvSheetUrl}
                     onChange={(e) => setCsvSheetUrl(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0"
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                   />
                 </div>
               </div>
               <button
                 onClick={handleImportFromSheet}
                 disabled={isImportingCsv}
-                className="px-6 py-3 bg-foodmax-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodmax-lime hover:text-foodmax-forest transition-all"
+                className="px-6 py-3 bg-foodera-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-60 hover:bg-foodera-lime hover:text-foodera-forest transition-all"
               >
                 {isImportingCsv ? copy.importing : copy.importLink}
               </button>
@@ -780,7 +780,7 @@ const AdminNews: React.FC = () => {
                 placeholder={copy.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/10 border-none text-sm font-medium"
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-foodera-forest/10 border-none text-sm font-medium"
               />
             </div>
           </div>
@@ -814,7 +814,7 @@ const AdminNews: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <span className="px-3 py-1 bg-foodmax-forest/5 text-foodmax-forest text-[9px] font-black uppercase tracking-widest rounded-lg">
+                      <span className="px-3 py-1 bg-foodera-forest/5 text-foodera-forest text-[9px] font-black uppercase tracking-widest rounded-lg">
                         {getNewsCategoryLabel(item.category, locale)}
                       </span>
                     </td>
@@ -832,7 +832,7 @@ const AdminNews: React.FC = () => {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2 text-gray-500">
-                        <Calendar size={14} className="text-foodmax-lime" />
+                        <Calendar size={14} className="text-foodera-lime" />
                         <span className="text-[10px] font-black uppercase tracking-widest">{formatDisplayDate(item.date, locale)}</span>
                       </div>
                     </td>
@@ -847,14 +847,14 @@ const AdminNews: React.FC = () => {
                         </Link>
                         <button 
                           onClick={() => openModal(item)}
-                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm"
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodera-forest hover:text-white transition-all shadow-sm"
                         >
                           <Edit3 size={18} />
                         </button>
                         <button
                           onClick={() => handleTranslateExistingItem(item)}
                           disabled={translatingItemId === item.id}
-                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodmax-forest hover:text-white transition-all shadow-sm disabled:opacity-50"
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodera-forest hover:text-white transition-all shadow-sm disabled:opacity-50"
                           title={translateButtonLabel}
                         >
                           {translatingItemId === item.id ? <Loader2 size={18} className="animate-spin" /> : <Languages size={18} />}
@@ -886,12 +886,12 @@ const AdminNews: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-end bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-3xl h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodmax-forest text-white">
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodera-forest text-white">
               <div>
                 <h2 className="text-xl font-black uppercase tracking-tight">
                   {editingItem ? copy.editInsight : copy.composeInsight}
                 </h2>
-                <p className="text-foodmax-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">{copy.modalSubtitle}</p>
+                <p className="text-foodera-lime/60 text-[10px] font-bold uppercase tracking-widest mt-1">{copy.modalSubtitle}</p>
               </div>
               <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X size={24} />
@@ -911,7 +911,7 @@ const AdminNews: React.FC = () => {
                       onClick={() => setModalTab(tab)}
                       className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest rounded-t-xl transition-all ${
                         isActive
-                          ? 'bg-white text-foodmax-forest border border-gray-200 border-b-white -mb-px shadow-sm'
+                          ? 'bg-white text-foodera-forest border border-gray-200 border-b-white -mb-px shadow-sm'
                           : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
                       }`}
                     >
@@ -942,7 +942,7 @@ const AdminNews: React.FC = () => {
                       value={formData.image}
                       onChange={(e) => setFormData({...formData, image: e.target.value})}
                       placeholder={copy.coverUrlPlaceholder}
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                       required
                     />
                     <div className="flex flex-wrap items-center gap-3">
@@ -950,7 +950,7 @@ const AdminNews: React.FC = () => {
                         className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
                           isUploadingCoverImage
                             ? 'cursor-not-allowed border-gray-100 bg-gray-100 text-gray-400'
-                            : 'cursor-pointer border-gray-200 bg-white text-foodmax-forest hover:border-foodmax-forest/20 hover:bg-foodmax-forest/5'
+                            : 'cursor-pointer border-gray-200 bg-white text-foodera-forest hover:border-foodera-forest/20 hover:bg-foodera-forest/5'
                         }`}
                       >
                         {isUploadingCoverImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
@@ -986,7 +986,7 @@ const AdminNews: React.FC = () => {
                       slug: hasCustomSlug ? (prev.slug || '') : normalizeNewsSlug(nextTitle)
                     }));
                   }}
-                  className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-lg font-black"
+                  className="w-full px-4 py-4 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-lg font-black"
                   placeholder={copy.headlinePlaceholder}
                   required
                 />
@@ -1002,11 +1002,11 @@ const AdminNews: React.FC = () => {
                     setHasCustomSlug(rawSlug.trim().length > 0);
                     setFormData((prev) => ({ ...prev, slug: rawSlug }));
                   }}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
                   placeholder="incoterms-explained-a-practical-guide"
                 />
                 <p className="text-[10px] text-gray-500 font-semibold">
-                  {copy.canonicalUrlLabel}: <span className="text-foodmax-forest">/news/{slugPreview}</span>
+                  {copy.canonicalUrlLabel}: <span className="text-foodera-forest">/news/{slugPreview}</span>
                 </p>
               </div>
 
@@ -1016,7 +1016,7 @@ const AdminNews: React.FC = () => {
                   <select 
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value as NewsCategory})}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
                     {categories.map(c => <option key={c} value={c}>{getNewsCategoryLabel(c, locale)}</option>)}
                   </select>
@@ -1027,7 +1027,7 @@ const AdminNews: React.FC = () => {
                     type="text" 
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
                     placeholder={copy.releaseDatePlaceholder}
                     required
                   />
@@ -1040,7 +1040,7 @@ const AdminNews: React.FC = () => {
                   <select
                     value={formData.isActive === false ? 'inactive' : 'active'}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-bold cursor-pointer"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
                     <option value="active">{activeStatusLabel}</option>
                     <option value="inactive">{inactiveStatusLabel}</option>
@@ -1053,7 +1053,7 @@ const AdminNews: React.FC = () => {
                     rows={3}
                     value={formData.excerpt}
                     onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium resize-none"
                     placeholder={copy.excerptPlaceholder}
                     required
                   />
@@ -1068,13 +1068,13 @@ const AdminNews: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.fullContentLabel}</label>
-                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.fullContentHint}</span>
+                  <span className="text-[9px] font-bold text-foodera-forest bg-foodera-forest/5 px-2 py-1 rounded">{copy.fullContentHint}</span>
                 </div>
                 <textarea 
                   rows={20}
                   value={contentString}
                   onChange={(e) => setContentString(e.target.value)}
-                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
+                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
                   placeholder="Draft your professional analysis here..."
                   required
                 />
@@ -1088,7 +1088,7 @@ const AdminNews: React.FC = () => {
               <div className="space-y-6 rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest">{copy.translationSection}</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest">{copy.translationSection}</h4>
                   <p className="mt-2 text-[11px] font-medium text-gray-500">
                     {copy.translationNote}
                   </p>
@@ -1100,7 +1100,7 @@ const AdminNews: React.FC = () => {
                     type="button"
                     onClick={handleTranslateDraft}
                     disabled={isTranslatingDraft}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-foodmax-forest/15 bg-foodmax-forest/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foodmax-forest transition-all hover:bg-foodmax-forest hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-foodera-forest/15 bg-foodera-forest/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-foodera-forest transition-all hover:bg-foodera-forest hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isTranslatingDraft ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
                     {isTranslatingDraft ? translatingButtonLabel : translateButtonLabel}
@@ -1124,7 +1124,7 @@ const AdminNews: React.FC = () => {
                         }
                       }))
                     }
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium"
                     placeholder="中文标题"
                   />
                 </div>
@@ -1146,7 +1146,7 @@ const AdminNews: React.FC = () => {
                         }
                       }))
                     }
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-sm font-medium resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-medium resize-none"
                     placeholder="中文摘要"
                   />
                 </div>
@@ -1155,13 +1155,13 @@ const AdminNews: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.zhContentLabel}</label>
-                  <span className="text-[9px] font-bold text-foodmax-forest bg-foodmax-forest/5 px-2 py-1 rounded">{copy.zhContentHint}</span>
+                  <span className="text-[9px] font-bold text-foodera-forest bg-foodera-forest/5 px-2 py-1 rounded">{copy.zhContentHint}</span>
                 </div>
                 <textarea
                   rows={12}
                   value={zhContentString}
                   onChange={(e) => setZhContentString(e.target.value)}
-                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodmax-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
+                  className="w-full px-4 py-5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-base font-medium resize-none leading-relaxed"
                   placeholder="中文正文内容..."
                 />
               </div>
@@ -1197,7 +1197,7 @@ const AdminNews: React.FC = () => {
               <button 
                 onClick={handleSave}
                 disabled={isSaving || isUploadingCoverImage}
-                className="flex-[2] py-4 bg-foodmax-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all disabled:opacity-50"
+                className="flex-[2] py-4 bg-foodera-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-foodera-lime hover:text-foodera-forest transition-all disabled:opacity-50"
               >
                 {isSaving ? (
                   <Loader2 size={18} className="animate-spin" />

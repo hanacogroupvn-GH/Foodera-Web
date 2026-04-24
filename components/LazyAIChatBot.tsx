@@ -12,8 +12,8 @@ const LazyAIChatBot: React.FC = () => {
       setOpenRequestId((current) => current + 1);
     };
 
-    window.addEventListener('toggle-foodmax-chat', handleToggle);
-    return () => window.removeEventListener('toggle-foodmax-chat', handleToggle);
+    window.addEventListener('toggle-foodera-chat', handleToggle);
+    return () => window.removeEventListener('toggle-foodera-chat', handleToggle);
   }, []);
 
   if (!shouldLoad) {

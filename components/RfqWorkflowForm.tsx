@@ -304,12 +304,12 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
   return (
     <section className="bg-white py-24 lg:py-32 border-t border-gray-100">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="bg-white border-2 border-foodmax-forest p-8 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden">
+        <div className="bg-white border-2 border-foodera-forest p-8 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-56 h-56 bg-gray-50 rounded-full -mr-20 -mt-20" />
 
           <div className="relative z-10">
             <div className="max-w-3xl mb-10">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foodmax-forest mb-4">{copy.kicker}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest mb-4">{copy.kicker}</p>
               <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">{copy.title}</h2>
               <p className="text-sm md:text-base text-gray-500 font-medium leading-relaxed">
                 {copy.subtitle}
@@ -333,7 +333,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                     <select
                       value={nextProductId}
                       onChange={(event) => setNextProductId(event.target.value)}
-                      className="min-w-[220px] rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 outline-none focus:border-foodmax-forest"
+                      className="min-w-[220px] rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 outline-none focus:border-foodera-forest"
                       disabled={availableProducts.length === 0}
                     >
                       {availableProducts.length === 0 ? (
@@ -350,7 +350,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                       type="button"
                       onClick={addSelectedProduct}
                       disabled={!nextProductId || availableProducts.length === 0}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-foodmax-forest px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-foodmax-lime hover:text-foodmax-forest disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-foodera-forest px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-foodera-lime hover:text-foodera-forest disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Plus size={16} /> {copy.addProduct}
                     </button>
@@ -367,7 +367,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                       <div key={item.productId} className="rounded-[1.5rem] border border-gray-200 bg-white p-5 shadow-sm">
                         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                           <div className="min-w-0">
-                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-foodmax-forest mb-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-foodera-forest mb-2">
                               {copy.productLabelPrefix} {index + 1}
                             </p>
                             <h4 className="text-xl font-black text-gray-900">
@@ -395,7 +395,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                             value={item.targetSpecs || ''}
                             onChange={(event) => updateTargetSpecs(item.productId, event.target.value)}
                             placeholder={copy.targetSpecsPlaceholder}
-                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm font-medium text-gray-700 outline-none transition-colors focus:border-foodmax-forest focus:bg-white resize-none"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm font-medium text-gray-700 outline-none transition-colors focus:border-foodera-forest focus:bg-white resize-none"
                           />
                         </div>
                       </div>
@@ -411,7 +411,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                   required
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="email"
@@ -419,21 +419,21 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="text"
                   placeholder={copy.companyName}
                   value={companyName}
                   onChange={(event) => setCompanyName(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="text"
                   placeholder={copy.phoneWhatsapp}
                   value={phoneWhatsapp}
                   onChange={(event) => setPhoneWhatsapp(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="text"
@@ -441,13 +441,13 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                   required
                   value={destinationPort}
                   onChange={(event) => setDestinationPort(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <select
                   value={incoterm}
                   onChange={(event) => setIncoterm(event.target.value)}
                   required
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 >
                   {INCOTERM_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -461,33 +461,33 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                   required
                   value={monthlyVolume}
                   onChange={(event) => setMonthlyVolume(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="text"
                   placeholder={copy.packaging}
                   value={packaging}
                   onChange={(event) => setPackaging(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="text"
                   placeholder={copy.paymentTerms}
                   value={paymentTerms}
                   onChange={(event) => setPaymentTerms(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <input
                   type="text"
                   placeholder={copy.certificationNeeded}
                   value={certificationNeeded}
                   onChange={(event) => setCertificationNeeded(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white"
                 />
                 <select
                   value={timeline}
                   onChange={(event) => setTimeline(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white md:col-span-2"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white md:col-span-2"
                 >
                   {TIMELINE_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -505,7 +505,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                       {copy.attachmentsDesc}
                     </p>
                   </div>
-                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-700 transition-all hover:border-foodmax-forest hover:text-foodmax-forest">
+                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-700 transition-all hover:border-foodera-forest hover:text-foodera-forest">
                     {isUploadingAttachment ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                     {isUploadingAttachment ? copy.uploading : copy.uploadFiles}
                     <input
@@ -558,7 +558,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                   required
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
-                  className="w-full rounded-[1.75rem] border border-gray-200 bg-gray-50 px-6 py-5 text-sm font-medium outline-none focus:border-foodmax-forest focus:bg-white resize-none"
+                  className="w-full rounded-[1.75rem] border border-gray-200 bg-gray-50 px-6 py-5 text-sm font-medium outline-none focus:border-foodera-forest focus:bg-white resize-none"
                 />
               </div>
 
@@ -567,7 +567,7 @@ const RfqWorkflowForm: React.FC<RfqWorkflowFormProps> = ({
                 className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${
                   inquirySent
                     ? 'bg-green-500 text-white'
-                    : 'bg-foodmax-forest text-white hover:bg-foodmax-forest/90 active:scale-[0.98]'
+                    : 'bg-foodera-forest text-white hover:bg-foodera-forest/90 active:scale-[0.98]'
                 } ${(sending || isUploadingAttachment) ? 'opacity-80 cursor-not-allowed' : ''}`}
               >
                 {inquirySent ? (

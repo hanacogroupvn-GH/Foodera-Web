@@ -2,10 +2,11 @@ import React from 'react';
 import 'leaflet/dist/leaflet.css';
 
 import '../components/interactive-map.css';
+import '../components/product-tab-map.css';
 import InteractiveMapExplorer from '../components/InteractiveMapExplorer';
 import { useLocale } from '../context/LocaleContext';
 
-const MAP_COPYRIGHT = '\u00A9 2026 Foodmax Agriculture Export Co., Ltd. All Rights Reserved.';
+const MAP_COPYRIGHT = '\u00A9 2026 VIET NAM FOOD ERA COMPANY LIMITED All Rights Reserved.';
 
 const CommercialTool: React.FC = () => {
   const { locale } = useLocale();
@@ -13,8 +14,8 @@ const CommercialTool: React.FC = () => {
   const copy =
     locale === 'zh'
       ? {
-          brandEyebrow: 'Foodmax Origin Desk',
-          brandAlt: 'Foodmax',
+          brandEyebrow: 'FoodEra Origin Desk',
+          brandAlt: 'FoodEra',
           copyrightLabel: MAP_COPYRIGHT,
           brandTitle: 'è¶Šå—ç§æ¤åŒº',
           backLabel: 'è¿”å›ž',
@@ -60,8 +61,8 @@ const CommercialTool: React.FC = () => {
           panelCloseAria: 'å…³é—­çœåŸŸè¯¦æƒ…'
         }
       : {
-          brandEyebrow: 'Foodmax Origin Desk',
-          brandAlt: 'Foodmax',
+          brandEyebrow: 'FoodEra Origin Desk',
+          brandAlt: 'FoodEra',
           copyrightLabel: MAP_COPYRIGHT,
           brandTitle: 'Vietnam Growing Areas',
           backLabel: 'Back',
@@ -107,7 +108,7 @@ const CommercialTool: React.FC = () => {
           panelCloseAria: 'Close province details'
         };
 
-  return <InteractiveMapExplorer copy={copy} />;
+  return <InteractiveMapExplorer copy={copy} locale={locale} />;
 };
 
 export default CommercialTool;

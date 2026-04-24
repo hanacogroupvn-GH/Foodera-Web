@@ -33,7 +33,7 @@ export const uploadToCloudinary = async (
 
   validateImageFile(file);
 
-  const folder = ['foodmax-cms', ...folderSegments.map((segment) => segment.replace(/[^a-z0-9_-]/gi, '_'))]
+  const folder = ['foodera-cms', ...folderSegments.map((segment) => segment.replace(/[^a-z0-9_-]/gi, '_'))]
     .filter(Boolean)
     .join('/');
 

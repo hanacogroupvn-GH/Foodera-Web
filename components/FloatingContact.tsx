@@ -25,7 +25,7 @@ const FloatingContact: React.FC = () => {
   };
 
   const toggleChat = () => {
-    window.dispatchEvent(new CustomEvent('toggle-foodmax-chat'));
+    window.dispatchEvent(new CustomEvent('toggle-foodera-chat'));
   };
 
   return (
@@ -34,7 +34,7 @@ const FloatingContact: React.FC = () => {
       <button
         onClick={toggleChat}
         aria-label={copy.openAssistant}
-        className="group pointer-events-auto relative w-12 h-12 sm:w-14 sm:h-14 bg-foodmax-forest text-white rounded-2xl flex items-center justify-center shadow-2xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all duration-500 hover:scale-110 active:scale-90 border border-white/10 animate-float"
+        className="group pointer-events-auto relative w-12 h-12 sm:w-14 sm:h-14 bg-foodera-forest text-white rounded-2xl flex items-center justify-center shadow-2xl hover:bg-foodera-lime hover:text-foodera-forest transition-all duration-500 hover:scale-110 active:scale-90 border border-white/10 animate-float"
       >
         <Bot size={24} className="group-hover:rotate-12 transition-transform duration-300" />
         
@@ -44,14 +44,14 @@ const FloatingContact: React.FC = () => {
           <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45 border-r border-t border-white/10"></div>
         </span>
         
-        <span className="absolute -top-1 -right-1 w-4 h-4 bg-foodmax-lime rounded-full border-2 border-foodmax-forest animate-pulse"></span>
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-foodera-lime rounded-full border-2 border-foodera-forest animate-pulse"></span>
       </button>
 
       {/* Back to Top Button */}
       <button
         onClick={scrollToTop}
         aria-label={copy.backToTop}
-        className="group pointer-events-auto relative w-12 h-12 sm:w-14 sm:h-14 bg-white text-foodmax-forest rounded-2xl flex items-center justify-center shadow-xl hover:bg-gray-50 transition-all duration-500 hover:scale-110 active:scale-90 border border-gray-100"
+        className="group pointer-events-auto relative w-12 h-12 sm:w-14 sm:h-14 bg-white text-foodera-forest rounded-2xl flex items-center justify-center shadow-xl hover:bg-gray-50 transition-all duration-500 hover:scale-110 active:scale-90 border border-gray-100"
       >
         <ArrowUp size={24} className="group-hover:-translate-y-1 transition-transform duration-300" />
         

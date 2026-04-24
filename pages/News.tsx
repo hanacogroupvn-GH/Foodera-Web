@@ -29,8 +29,8 @@ const News: React.FC = () => {
   useDocumentMeta({
     title: locale === 'zh' ? '新闻与洞察' : 'News & Insights',
     description: locale === 'zh'
-      ? '关于全球农产品趋势、贸易动态与 Foodmax 企业进展的专业市场分析与行业洞察。'
-      : 'Professional perspectives on global agricultural trends, trade activities, and Foodmax corporate developments.',
+      ? '关于全球农产品趋势、贸易动态与 FoodEra 企业进展的专业市场分析与行业洞察。'
+      : 'Professional perspectives on global agricultural trends, trade activities, and FoodEra corporate developments.',
     canonicalUrl: `${BASE_URL}/news`,
     ogUrl: `${BASE_URL}/news`,
   });
@@ -42,7 +42,7 @@ const News: React.FC = () => {
     ? {
         all: '全部',
         title: '新闻与洞察',
-        subtitle: '关于全球农产品趋势、贸易动态与 Foodmax 企业进展的专业观点。',
+        subtitle: '关于全球农产品趋势、贸易动态与 FoodEra 企业进展的专业观点。',
         category: '分类：',
         year: '年份：',
         latestFirst: '最新优先',
@@ -60,7 +60,7 @@ const News: React.FC = () => {
     : {
         all: 'All',
         title: 'News & Insights',
-        subtitle: 'Professional perspectives on global agricultural trends, trade activities, and Foodmax corporate developments.',
+        subtitle: 'Professional perspectives on global agricultural trends, trade activities, and FoodEra corporate developments.',
         category: 'Category:',
         year: 'Year:',
         latestFirst: 'Latest First',
@@ -152,8 +152,8 @@ const News: React.FC = () => {
                   onClick={() => setActiveCategory(cat)}
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${
                     activeCategory === cat 
-                      ? 'bg-foodmax-forest text-white border-foodmax-forest shadow-lg' 
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-foodmax-forest hover:text-foodmax-forest'
+                      ? 'bg-foodera-forest text-white border-foodera-forest shadow-lg' 
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-foodera-forest hover:text-foodera-forest'
                   }`}
                 >
                   {cat === 'All' ? copy.all : getNewsCategoryLabel(cat as NewsCategory, locale)}
@@ -179,7 +179,7 @@ const News: React.FC = () => {
 
               <button 
                 onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
-                className="flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-foodmax-forest transition-colors"
+                className="flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-foodera-forest transition-colors"
               >
                 <ArrowUpDown size={14} />
                 {sortOrder === 'newest' ? copy.latestFirst : copy.oldestFirst}
@@ -228,20 +228,20 @@ const News: React.FC = () => {
                     </div>
                     <div className="flex flex-1 flex-col">
                     <div className="flex items-center gap-3 mb-4">
-                      <span className="text-[10px] font-black text-foodmax-forest uppercase tracking-widest px-2 py-1 bg-foodmax-forest/5 rounded">
+                      <span className="text-[10px] font-black text-foodera-forest uppercase tracking-widest px-2 py-1 bg-foodera-forest/5 rounded">
                         {getNewsCategoryLabel(item.category, locale)}
                       </span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         {formatDisplayDate(item.date, locale)}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-foodmax-forest transition-colors leading-tight">
+                    <h3 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-foodera-forest transition-colors leading-tight">
                       {item.title}
                     </h3>
                     <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3 font-medium text-justify [text-align:justify] [text-justify:inter-word] flex-1">
                       {item.excerpt}
                     </p>
-                    <span className="inline-flex items-center gap-1 text-xs font-black text-foodmax-forest uppercase tracking-widest group-hover:gap-2 transition-all">
+                    <span className="inline-flex items-center gap-1 text-xs font-black text-foodera-forest uppercase tracking-widest group-hover:gap-2 transition-all">
                       {copy.readFull} <ChevronRight size={14} />
                     </span>
                     </div>
@@ -255,7 +255,7 @@ const News: React.FC = () => {
               <p className="text-gray-500 mb-8">{copy.noResultsDesc}</p>
               <button 
                 onClick={() => { setActiveCategory('All'); setActiveYear('All'); }}
-                className="px-8 py-3 bg-foodmax-forest text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-lg"
+                className="px-8 py-3 bg-foodera-forest text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-lg"
               >
                 {copy.clearAllFilters}
               </button>
@@ -273,9 +273,9 @@ const News: React.FC = () => {
             <input 
               type="email" 
               placeholder={copy.businessEmail} 
-              className="flex-grow px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-foodmax-forest/20 focus:border-foodmax-forest transition-all"
+              className="flex-grow px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest transition-all"
             />
-            <button className="px-10 py-4 bg-foodmax-forest text-white font-black rounded-xl hover:bg-foodmax-lime hover:text-foodmax-forest transition-all shadow-lg uppercase text-xs tracking-widest">
+            <button className="px-10 py-4 bg-foodera-forest text-white font-black rounded-xl hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-lg uppercase text-xs tracking-widest">
               {copy.subscribe}
             </button>
           </form>

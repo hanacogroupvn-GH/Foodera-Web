@@ -60,12 +60,12 @@ class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBo
     return (
       <div className="flex min-h-screen items-center justify-center bg-white px-6 py-16">
         <div className="relative max-w-xl overflow-hidden rounded-[2.5rem] border border-gray-100 bg-gray-50 p-10 shadow-2xl">
-          <div className="absolute left-0 top-0 h-40 w-40 -translate-x-1/3 -translate-y-1/3 rounded-full bg-foodmax-forest/10 blur-3xl" />
+          <div className="absolute left-0 top-0 h-40 w-40 -translate-x-1/3 -translate-y-1/3 rounded-full bg-foodera-forest/10 blur-3xl" />
           <div className="relative">
             <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-600 shadow-sm">
               <AlertTriangle size={30} />
             </div>
-            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.35em] text-foodmax-forest">
+            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.35em] text-foodera-forest">
               {copy.eyebrow}
             </p>
             <h1 className="mb-4 text-3xl font-black tracking-tight text-gray-900">
@@ -77,14 +77,14 @@ class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBo
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={this.handleReload}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-foodmax-forest px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-foodmax-lime hover:text-foodmax-forest"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-foodera-forest px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-foodera-lime hover:text-foodera-forest"
               >
                 <RefreshCcw size={16} />
                 {copy.reload}
               </button>
               <button
                 onClick={this.handleHome}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-gray-700 transition-all hover:border-foodmax-forest hover:text-foodmax-forest"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-gray-700 transition-all hover:border-foodera-forest hover:text-foodera-forest"
               >
                 <Home size={16} />
                 {copy.home}
