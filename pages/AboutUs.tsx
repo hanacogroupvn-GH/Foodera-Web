@@ -1,298 +1,427 @@
-import React from 'react';
-import { ShieldCheck, Globe, Handshake, Leaf, Wheat, Coffee } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import {
+  Globe, Handshake, Leaf, ShieldCheck, Sprout, Factory, PackageCheck, Ship,
+  Target, Eye, Gem, TrendingUp, Droplet, MapPin, ClipboardCheck, FileCheck, Truck
+} from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
 import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
-import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
+import '../components/about-us.css';
 
-const enCopy = {
-  heroTitle: 'About FoodEra',
-  heroDesc:
-    'FoodEra is dedicated to elevating Vietnamese agricultural products to the global marketplace. With deep respect for Vietnam’s farming traditions and a forward-looking mindset, we connect international buyers with reliable origin supply.',
-  heroAlt: 'Coffee beans',
-  foundationEyebrow: 'Our Foundation',
-  foundationTitle: 'Sustainable Value Across the Supply Chain',
-  foundationTextOne:
-    'Founded with the vision of creating sustainable value across the supply chain, FoodEra works hand in hand with reputable growers, cooperatives, and processing facilities throughout Vietnam.',
-  foundationTextTwo:
-    'From sourcing and quality control to logistics, we carefully oversee each step to ensure our products consistently meet international expectations while also contributing value back to farming communities.',
-  foundationAlt: 'Vietnamese agriculture',
-  productsEyebrow: 'Core Products',
-  productsTitle: 'Vietnam’s Most Sought-After Exports',
-  productsDesc:
-    'Each product is selected not only for commercial relevance, but for its ability to represent Vietnam’s agricultural strength and distinctive flavor profiles.',
-  productCards: [
-    {
-      title: 'Premium Rice',
-      desc: 'Carefully selected varieties with consistent grain quality and aroma.'
-    },
-    {
-      title: 'Coffee Beans',
-      desc: 'High-grade beans with balanced profiles and export-ready consistency.'
-    },
-    {
-      title: 'Coconut Milk',
-      desc: 'Rich, creamy formulations produced to international food standards.'
-    },
-    {
-      title: 'Black & White Pepper',
-      desc: 'Aromatic, clean, and carefully processed to preserve flavor.'
-    },
-    {
-      title: 'Cashew Kernels',
-      desc: 'High-grade kernels with strict quality control and uniform grading.'
-    },
-    {
-      title: 'Global Market Fit',
-      desc: 'Specifications tailored for importers, distributors, and manufacturers.'
-    }
-  ],
-  commitmentEyebrow: 'Our Commitment',
-  commitmentTitle: 'Partnerships Built on Transparency',
-  commitmentTextOne:
-    'At FoodEra, we believe strong partnerships are built on transparency, consistency, and mutual growth. Whether serving importers, distributors, or food manufacturers, we approach each collaboration with professionalism and long-term intent.',
-  commitmentTextTwo:
-    'By combining local expertise with global standards, our mission is simple: deliver dependable agricultural solutions while sharing the true essence of Vietnam with customers around the world.',
-  principlesEyebrow: 'Core Principles',
-  principles: [
-    {
-      title: 'Quality Without Compromise',
-      desc: 'Consistent standards from farm to shipment.'
-    },
-    {
-      title: 'Service With Integrity',
-      desc: 'Responsible sourcing and responsive support.'
-    },
-    {
-      title: 'Partnerships That Last',
-      desc: 'Mutual growth with a long-term focus.'
-    }
-  ],
-  closingEyebrow: 'Looking Forward',
-  closingTitle: 'Sharing Vietnam’s Essence With The World',
-  closingDesc:
-    'As we continue to grow, FoodEra remains guided by three core principles: quality without compromise, service with integrity, and partnerships that last.'
-};
+/* ────────────────────────────────────────
+   Scroll-triggered fade-in
+   ──────────────────────────────────────── */
+function FadeIn({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
 
-const zhCopy = {
-  heroTitle: '关于 FoodEra',
-  heroDesc:
-    'FoodEra 致力于把越南优质农产品带向全球市场。我们尊重越南农业传统，同时以国际化视角连接全球采购商与值得信赖的原产地供应。',
-  heroAlt: '咖啡豆',
-  foundationEyebrow: '我们的基础',
-  foundationTitle: '贯穿供应链的可持续价值',
-  foundationTextOne:
-    'FoodEra 以构建供应链长期价值为愿景，与越南各地可靠的种植者、合作社和加工工厂协同合作。',
-  foundationTextTwo:
-    '从采购、质量控制到物流交付，我们对每个环节保持严格把关，确保产品持续符合国际市场的高标准要求，并让农业社区也从长期合作中获益。',
-  foundationAlt: '越南农业',
-  productsEyebrow: '核心产品',
-  productsTitle: '越南最受欢迎的出口品类',
-  productsDesc: '我们选择每一项产品，不只看商业价值，也看它是否足以代表越南农业的风味、稳定性与竞争力。',
-  productCards: [
-    {
-      title: '优质大米',
-      desc: '精选稻种，兼顾稳定粒型、香气与出口一致性。'
-    },
-    {
-      title: '咖啡豆',
-      desc: '覆盖商业级与精品级批次，风味平衡，便于国际采购。'
-    },
-    {
-      title: '椰奶制品',
-      desc: '符合国际食品标准的浓郁配方，适合餐饮与工业应用。'
-    },
-    {
-      title: '黑胡椒与白胡椒',
-      desc: '香气纯净，处理规范，能够稳定保留辛香表现。'
-    },
-    {
-      title: '腰果仁',
-      desc: '高等级选品，等级统一，质量控制严格。'
-    },
-    {
-      title: '全球市场适配',
-      desc: '可根据进口商、分销商和食品制造商需求定制规格。'
-    }
-  ],
-  commitmentEyebrow: '我们的承诺',
-  commitmentTitle: '建立在透明度上的长期合作',
-  commitmentTextOne:
-    'FoodEra 相信优秀合作关系来自透明、稳定和共同成长。无论客户是进口商、分销商还是食品制造商，我们都以长期合作视角推进每一个项目。',
-  commitmentTextTwo:
-    '通过把本地经验与国际标准结合，我们的目标很明确：持续输出可靠的农业供应解决方案，并让全球客户感受到越南农产品真正的价值。',
-  principlesEyebrow: '核心原则',
-  principles: [
-    {
-      title: '质量不妥协',
-      desc: '从农场到装运的每一个节点都保持一致标准。'
-    },
-    {
-      title: '服务有诚信',
-      desc: '坚持负责任采购，并提供响应快速的客户支持。'
-    },
-    {
-      title: '合作可持续',
-      desc: '以长期增长和互利关系为导向。'
-    }
-  ],
-  closingEyebrow: '展望未来',
-  closingTitle: '把越南的真实风味带向世界',
-  closingDesc:
-    '在持续成长过程中，FoodEra 仍然坚持三项原则：质量不妥协、服务有诚信、合作可持续。'
-};
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          el.classList.add('about-fade--visible');
+          io.unobserve(el);
+        }
+      },
+      { threshold: 0.12 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
+  return <div ref={ref} className={`about-fade ${className}`}>{children}</div>;
+}
+
+/* ────────────────────────────────────────
+   Decorative leaf SVG
+   ──────────────────────────────────────── */
+function LeafDeco({ pos }: { pos: 'tr' | 'bl' }) {
+  return (
+    <svg className={`about-leaf-deco about-leaf-deco--${pos}`} viewBox="0 0 200 200" fill="none">
+      <path d="M100 10C100 10 30 60 20 130C10 200 100 190 100 190C100 190 190 200 180 130C170 60 100 10 100 10Z" fill="#1B6B3A" />
+      <path d="M100 10C100 10 100 100 100 190" stroke="#8BC34A" strokeWidth="2" opacity="0.5" />
+    </svg>
+  );
+}
+
+/* ────────────────────────────────────────
+   Section heading helper
+   ──────────────────────────────────────── */
+function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="about-heading">
+      <div className="about-heading__ornament">
+        <span className="about-heading__line about-heading__line--left" />
+        <Leaf size={16} color="#1B6B3A" />
+        <span className="about-heading__line about-heading__line--right" />
+      </div>
+      <h2 className="about-heading__title">{title}</h2>
+      {subtitle && <p className="about-heading__subtitle">{subtitle}</p>}
+      <div className="about-heading__leaf-sep"></div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   ABOUT US PAGE
+   ══════════════════════════════════════════ */
 const AboutUs: React.FC = () => {
   const { locale } = useLocale();
 
   useDocumentMeta({
     title: locale === 'zh' ? '关于 FoodEra' : 'About FoodEra',
-    description: locale === 'zh'
-      ? 'FoodEra 致力于将越南优质农产品（大米、咖啡、腰果）带向全球市场，提供可持续、透明的供应链服务。'
-      : 'FoodEra is dedicated to elevating Vietnamese agricultural products to the global marketplace. Premium rice, coffee & cashew with transparent supply chain.',
+    description:
+      locale === 'zh'
+        ? 'FoodEra 致力于将越南优质农产品带向全球市场。'
+        : 'FoodEra — professional sourcing partner & exporter based in Vietnam, bridging local producers and global markets.',
     canonicalUrl: `${BASE_URL}/about`,
     ogUrl: `${BASE_URL}/about`,
   });
 
-  const rawCopy = locale === 'zh' ? zhCopy : enCopy;
-  const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
-
-  const productIcons = [Wheat, Coffee, Leaf, Leaf, Leaf, Globe];
-  const principleIcons = [ShieldCheck, Leaf, Handshake];
-
   return (
-    <div className="bg-white min-h-screen animate-in fade-in duration-700 font-sans">
-      <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 border-b border-gray-100 overflow-hidden">
+    <div className="bg-white min-h-screen font-sans" style={{ paddingTop: '80px' }}>
+
+      {/* ═══════════════════════════════════════
+          SECTION 1 — Who We Are
+          ═══════════════════════════════════════ */}
+      <section className="about-section" id="who-we-are">
+        <LeafDeco pos="tr" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div className="max-w-3xl">
-              <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-8 tracking-tight leading-tight">
-                {copy.heroTitle}
-              </h1>
-              <div className="h-1 w-24 bg-foodera-lime mb-8" />
-              <p className="text-lg md:text-2xl text-gray-600 font-medium leading-relaxed">{copy.heroDesc}</p>
-            </div>
-            <div className="lg:pl-8">
-              <div className="aspect-[4/5] bg-gray-100 rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
-                <img
-                  src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&q=80&w=1200"
-                  alt={copy.heroAlt}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gray-50 -z-0 hidden lg:block" />
-      </section>
+          <FadeIn>
+            <div className="who-grid">
+              <div className="who-content">
+                <h1>Who We Are?</h1>
 
-      <section className="py-20 md:py-24 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div className="order-2 lg:order-1">
-              <div className="aspect-[4/5] bg-gray-100 rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
-                <img
-                  src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&q=80&w=1200"
-                  alt={copy.foundationAlt}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">
-                {copy.foundationEyebrow}
-              </h2>
-              <h3 className="text-3xl md:text-4xl font-black text-gray-900 mb-6 tracking-tight">
-                {copy.foundationTitle}
-              </h3>
-              <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed font-medium">
-                {copy.foundationTextOne}
-              </p>
-              <p className="text-base md:text-lg text-gray-600 leading-relaxed font-medium">
-                {copy.foundationTextTwo}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 md:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">
-              {copy.productsEyebrow}
-            </h2>
-            <h3 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">{copy.productsTitle}</h3>
-            <p className="text-base md:text-lg text-gray-500 mt-4 max-w-3xl mx-auto font-medium">
-              {copy.productsDesc}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {copy.productCards.map((card, index) => {
-              const Icon = productIcons[index];
-              return (
-                <div key={card.title} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                  <div className="w-12 h-12 bg-foodera-forest/5 rounded-xl flex items-center justify-center text-foodera-forest mb-5">
-                    <Icon size={22} />
-                  </div>
-                  <h4 className="text-lg font-black text-gray-900 mb-2">{card.title}</h4>
-                  <p className="text-sm text-gray-500 font-medium">{card.desc}</p>
+                <div className="who-blurb">
+                  <div className="who-blurb__icon"><Globe size={22} /></div>
+                  <p className="who-blurb__text">
+                    FoodEra is a <strong>professional sourcing partner &amp; exporter</strong> based in
+                    Vietnam, bridging the gap between local producers and global markets.
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
-      <section className="py-20 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div>
-              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">
-                {copy.commitmentEyebrow}
-              </h2>
-              <h3 className="text-3xl md:text-5xl font-black text-gray-900 mb-6 tracking-tight">
-                {copy.commitmentTitle}
-              </h3>
-              <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed font-medium">
-                {copy.commitmentTextOne}
-              </p>
-              <p className="text-base md:text-lg text-gray-600 leading-relaxed font-medium">
-                {copy.commitmentTextTwo}
-              </p>
-            </div>
-            <div className="bg-foodera-forest rounded-[2.5rem] p-10 md:p-12 text-white relative overflow-hidden">
-              <h4 className="text-[10px] font-black text-foodera-lime uppercase tracking-[0.4em] mb-6">
-                {copy.principlesEyebrow}
-              </h4>
-              <div className="space-y-4">
-                {copy.principles.map((principle, index) => {
-                  const Icon = principleIcons[index];
-                  return (
-                    <div
-                      key={principle.title}
-                      className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4"
-                    >
-                      <Icon size={20} className="text-foodera-lime" />
-                      <div>
-                        <p className="text-sm font-black uppercase tracking-widest">{principle.title}</p>
-                        <p className="text-xs text-white/70 mt-1">{principle.desc}</p>
-                      </div>
+                <div className="who-blurb">
+                  <div className="who-blurb__icon"><Handshake size={22} /></div>
+                  <p className="who-blurb__text">
+                    We work with <strong>multiple qualified suppliers</strong>, allowing us to
+                    provide <strong>flexible sourcing solutions</strong>, adapt to <strong>different
+                      specifications</strong>, and maintain <strong>stable supply</strong> for
+                    international buyers.
+                  </p>
+                </div>
+
+                <div className="who-features">
+                  {[
+                    { icon: <Handshake size={18} />, title: 'Reliable Partner', desc: 'Long-term cooperation based on trust.' },
+                    { icon: <ShieldCheck size={18} />, title: 'Quality Focused', desc: 'Committed to consistent quality and compliance.' },
+                    { icon: <Leaf size={18} />, title: 'Sustainable Mindset', desc: 'Supporting responsible sourcing and growth.' },
+                    { icon: <Globe size={18} />, title: 'Global Reach', desc: 'Delivering value to markets worldwide.' },
+                  ].map((f) => (
+                    <div key={f.title} className="who-feature">
+                      <div className="who-feature__icon">{f.icon}</div>
+                      <div className="who-feature__title">{f.title}</div>
+                      <div className="who-feature__desc">{f.desc}</div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              <div className="who-image">
+                <img src="/media/about/hero-agriculture.png" alt="Vietnamese agriculture" loading="eager" />
               </div>
             </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
 
-      <section className="py-24 bg-foodera-forest text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-[10px] font-black text-white/70 uppercase tracking-[0.4em] mb-8">{copy.closingEyebrow}</h2>
-          <h3 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">{copy.closingTitle}</h3>
-          <p className="text-lg text-white/80 mb-10 font-medium leading-relaxed">{copy.closingDesc}</p>
-          <div className="pt-10 border-t border-white/15 mt-10" />
+      {/* ═══════════════════════════════════════
+          SECTION 2 — Our Story
+          ═══════════════════════════════════════ */}
+      <section className="about-section about-section--alt" id="our-story">
+        <LeafDeco pos="bl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <div className="story-grid">
+              <div className="story-image">
+                <img src="/media/about/rice-field-story.png" alt="Vietnamese rice field" loading="lazy" />
+              </div>
+
+              <div className="story-content">
+                <h2>Our Story</h2>
+
+                <div className="story-timeline">
+                  <div className="story-item">
+                    <div className="story-item__dot"><Sprout size={14} /></div>
+                    <h3 className="story-item__title">FoodEra was built on a simple realization</h3>
+                    <ul className="story-item__list">
+                      <li>Vietnam has strong agricultural production, but connecting that supply to international markets is not always straightforward.</li>
+                      <li>Buyers often face challenges in consistency, traceability, and reliable execution. At the same time, many farmers and processors lack direct access to global markets.</li>
+                    </ul>
+                  </div>
+
+                  <div className="story-item">
+                    <div className="story-item__dot"><Handshake size={14} /></div>
+                    <h3 className="story-item__title">We saw an opportunity to bridge this gap</h3>
+                    <ul className="story-item__list">
+                      <li>From the beginning, FoodEra has focused on working closely with both state and private partners — from farms to processing facilities — to build a structured and dependable supply chain.</li>
+                      <li>This approach allows us to not only match product specifications and volumes, but also ensure better coordination, transparency, and stability across each shipment.</li>
+                      <li>Sustainability, traceability, and quality assurance are not just commitments — they are built into how we operate.</li>
+                    </ul>
+                  </div>
+
+                  <div className="story-item">
+                    <div className="story-item__dot"><TrendingUp size={14} /></div>
+                    <h3 className="story-item__title">Looking ahead</h3>
+                    <ul className="story-item__list">
+                      <li>We believe that in agricultural trade, long-term success is not driven by price alone, but by consistency, trust, and the ability to deliver as promised.</li>
+                      <li>Today, FoodEra continues to grow with the same mindset: to be a reliable sourcing partner for buyers who value stability, clarity, and long-term cooperation.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SECTION 3 — What We Do
+          ═══════════════════════════════════════ */}
+      <section className="about-section" id="what-we-do">
+        <LeafDeco pos="tr" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <Heading title="What We Do" subtitle="Delivering quality, reliability, and trust at every step" />
+
+            <div className="services-grid">
+              {[
+                {
+                  icon: <Sprout size={28} />,
+                  cls: 'service-card__icon--green',
+                  title: 'Sourcing',
+                  num: '01',
+                  desc: 'Partnering with qualified suppliers, both state & private companies, to ensure a stable supply and flexible sourcing solutions.',
+                },
+                {
+                  icon: <ClipboardCheck size={28} />,
+                  cls: 'service-card__icon--dark',
+                  title: 'Quality Control',
+                  num: '02',
+                  desc: 'Conducting pre-shipment inspections to ensure product consistency and specification compliance.',
+                },
+                {
+                  icon: <Truck size={28} />,
+                  cls: 'service-card__icon--lime',
+                  title: 'Logistics',
+                  num: '03',
+                  desc: 'Managing documentation and shipment to ensure smooth, efficient, and reliable delivery.',
+                },
+              ].map((s) => (
+                <div key={s.title} className="service-card">
+                  <div className={`service-card__icon ${s.cls}`}>{s.icon}</div>
+                  <h3 className="service-card__title">{s.title}</h3>
+                  <div className="service-card__divider" />
+                  <p className="service-card__desc">{s.desc}</p>
+                  <div className="service-card__num">{s.num}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SECTION 4 — Mission & Vision
+          ═══════════════════════════════════════ */}
+      <section className="about-section about-section--alt" id="mission-vision">
+        <LeafDeco pos="bl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <div className="mv-header">
+              <h2>Our Mission<br />&amp; Vision</h2>
+              <div className="mv-header__bar" />
+              <p>Committed to quality, reliability, and long-term partnerships.</p>
+            </div>
+
+            <div className="mv-cards">
+              <div className="mv-card">
+                <div className="mv-card__icon"><Target size={22} /></div>
+                <h3 className="mv-card__title">Mission</h3>
+                <ul className="mv-card__list">
+                  <li><ShieldCheck size={15} color="#1B6B3A" /> Deliver consistent quality aligned with buyer requirements</li>
+                  <li><ShieldCheck size={15} color="#1B6B3A" /> Support buyers with flexible sourcing and clear communication</li>
+                  <li><ShieldCheck size={15} color="#1B6B3A" /> Build long-term cooperation based on trust and execution</li>
+                </ul>
+              </div>
+
+              <div className="mv-card">
+                <div className="mv-card__icon"><Eye size={22} /></div>
+                <h3 className="mv-card__title">Vision</h3>
+                <p className="mv-card__text">
+                  To become a trusted sourcing partner connecting Vietnam's agricultural products to global markets.
+                </p>
+              </div>
+            </div>
+
+            <div className="mv-values">
+              {[
+                { icon: <Handshake size={20} />, title: 'Trust', desc: 'Building reliable relationships' },
+                { icon: <Gem size={20} />, title: 'Quality', desc: 'Ensuring excellence in every step' },
+                { icon: <Globe size={20} />, title: 'Growth', desc: 'Growing together for a sustainable future' },
+              ].map((v) => (
+                <div key={v.title} className="mv-value">
+                  <div className="mv-value__icon">{v.icon}</div>
+                  <div className="mv-value__title">{v.title}</div>
+                  <div className="mv-value__desc">{v.desc}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SECTION 5 — Supply Chain Management
+          ═══════════════════════════════════════ */}
+      <section className="about-section" id="supply-chain">
+        <LeafDeco pos="tr" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <Heading
+              title="Supply Chain Management"
+              subtitle="From farm to global market – managed with care, delivered with trust"
+            />
+
+            <div className="supply-flow">
+              {[
+                { icon: <Sprout size={26} />, num: '01', title: 'Farm', desc: 'Sourcing high-quality raw materials from trusted farms.' },
+                { icon: <Factory size={26} />, num: '02', title: 'Processing', desc: 'Ensuring cleanliness, safety, and efficiency through modern processing.' },
+                { icon: <ShieldCheck size={26} />, num: '03', title: 'QC', desc: 'Strict quality control at every step to meet international standards.' },
+                { icon: <PackageCheck size={26} />, num: '04', title: 'Packing', desc: 'Careful packing to protect product quality and ensure safety during transit.' },
+                { icon: <Ship size={26} />, num: '05', title: 'Export', desc: 'Timely delivery to global markets with complete documentation and reliable logistics.' },
+              ].flatMap((step, i, arr) => {
+                const el = (
+                  <div key={step.title} className="supply-step">
+                    <div className="supply-step__badge">{step.num}</div>
+                    <div className="supply-step__circle">{step.icon}</div>
+                    <h3 className="supply-step__title">{step.title}</h3>
+                    <p className="supply-step__desc">{step.desc}</p>
+                  </div>
+                );
+                return i < arr.length - 1 ? [el, <div key={`c${i}`} className="supply-connector" />] : [el];
+              })}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SECTION 6 — Quality Control
+          ═══════════════════════════════════════ */}
+      <section className="about-section about-section--alt" id="quality-control">
+        <LeafDeco pos="bl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <Heading title="Quality Control" />
+
+            <div className="qc-grid">
+              {[
+                { num: '01', icon: <ClipboardCheck size={18} />, title: 'Pre-shipment inspection', desc: 'by third-party (SGS, Vinacontrol)' },
+                { num: '02', icon: <FileCheck size={18} />, title: 'Specification compliance monitoring', desc: '' },
+                { num: '03', icon: <Droplet size={18} />, title: 'Moisture, grading, and foreign matter control', desc: '' },
+                { num: '04', icon: <MapPin size={18} />, title: 'Traceability from farm to port', desc: '' },
+              ].map((item) => (
+                <div key={item.num} className="qc-card">
+                  <div className="qc-card__badge">{item.num}</div>
+                  <div>
+                    <div className="qc-card__title">{item.title}</div>
+                    {item.desc && <div className="qc-card__desc">{item.desc}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SECTION 7 — International Standards
+          ═══════════════════════════════════════ */}
+      <section className="about-section" id="international-standards">
+        <LeafDeco pos="tr" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <Heading
+              title="International Standard"
+              subtitle="Committed to global quality, food safety, and sustainable development"
+            />
+
+            <div className="standards-grid">
+              {[
+                { img: '/media/about/cert-iso22000.png', title: 'ISO 22000', desc: 'Food Safety Management System' },
+                { img: '/media/about/cert-haccp.avif', title: 'HACCP', desc: 'Hazard Analysis and Critical Control Points' },
+                { img: '/media/about/cert-rainforest.png', title: 'Rainforest Alliance', desc: 'Sustainable Agriculture & Responsible Sourcing' },
+                { img: '/media/about/cert-fda.jpg', title: 'FDA', desc: 'U.S. Food and Drug Administration' },
+                { img: '/media/about/cert-4c.png', title: '40 Years of Experience', desc: 'Delivering Quality Products to Global Markets' },
+              ].map((s) => (
+                <div key={s.title} className="standard-card">
+                  <img className="standard-card__img" src={s.img} alt={s.title} loading="lazy" />
+                  <div className="standard-card__title">{s.title}</div>
+                  <div className="standard-card__desc">{s.desc}</div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SECTION 8 — Product Portfolio
+          ═══════════════════════════════════════ */}
+      <section className="about-section about-section--alt" id="product-portfolio" style={{ paddingBottom: '5rem' }}>
+        <LeafDeco pos="bl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <FadeIn>
+            <Heading
+              title="Product Portfolio"
+              subtitle="Quality agricultural products, carefully sourced and processed to meet global standards."
+            />
+
+            <div className="portfolio-grid">
+              {[
+                {
+                  img: '/media/migrated/products/33b07f55-c6e6-493b-9de3-67d1c6674399-9e43d8f3be87.png',
+                  name: 'Rice',
+                  desc: 'Premium-quality rice with excellent grain quality, aroma, and taste.',
+                },
+                {
+                  img: '/media/migrated/products/9a8cac7b-0a16-4d78-924e-404902dcd52c-3f1f026fc1bb.png',
+                  name: 'Coffee',
+                  desc: 'Sustainably sourced coffee beans with rich flavor and consistent quality.',
+                },
+                {
+                  img: '/media/migrated/products/cashew-ww240-0c42769fe4d5.png',
+                  name: 'Cashew',
+                  desc: 'High-quality cashews, carefully processed for great taste and freshness.',
+                },
+                {
+                  img: '/media/pepper/pure-pepper.jpg',
+                  name: 'Pepper',
+                  desc: 'Premium black pepper with strong aroma and consistent pungency.',
+                },
+              ].map((p) => (
+                <div key={p.name} className="portfolio-card">
+                  <div className="portfolio-card__img-wrap">
+                    <img src={p.img} alt={p.name} loading="lazy" />
+                  </div>
+                  <div className="portfolio-card__body">
+                    <h3 className="portfolio-card__name">{p.name}</h3>
+                    <p className="portfolio-card__desc">{p.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
         </div>
       </section>
     </div>

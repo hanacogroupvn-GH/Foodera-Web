@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { ArrowLeft, Check, TrendingUp, Truck, Globe, Users, Mountain, Thermometer, Droplets, Target, Info, Sun, Map as MapIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../logo-header.svg";
+const Logo = "/logo-era.png";
 import { appRoutes } from "../lib/routes";
 import { CATEGORY_TABS, CATEGORY_BI_DATA, CATEGORY_TO_REGIONS } from "../interactive-map/data/region-infographic-data";
 import StaticMapView from "./StaticMapView";
@@ -178,7 +178,7 @@ export default function ProductInfographicMap({ copy, locale = "en" }) {
             <button type="button" className="ptm-back-btn" onClick={handleBack} aria-label={copy?.backAria ?? "Back"}>
               <ArrowLeft size={18} />
             </button>
-            <img src={Logo} alt="FoodEra" className="ptm-logo" loading="eager" />
+            <img src={Logo} alt="FoodEra" className="ptm-logo" style={{ transform: 'scale(1.6)', transformOrigin: 'left center' }} loading="eager" />
             <div className="ptm-header-title-group">
               <h1 className="ptm-header-title">{t(data.heroTitle, locale)}</h1>
               <span className="ptm-header-subtitle">{t(data.heroSubtitle, locale)}</span>

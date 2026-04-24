@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe, Facebook, Linkedin, Youtube, Shield } from 'lucide-react';
-import Logo from '../logo.svg';
+const Logo = '/logo-footer.png';
 import { useLocale } from '../context/LocaleContext';
 import { appRoutes } from '../lib/routes';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';

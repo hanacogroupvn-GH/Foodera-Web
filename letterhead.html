@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodEra - Letterhead</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      position: relative;
+      padding: 0;
+    }
+
+    /* ===== HEADER / LETTERHEAD ===== */
+    .letterhead-header {
+      padding: 28px 40px 22px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 4px solid;
+      border-image: linear-gradient(to right, #1a6b3c, #8cc63f, #1a6b3c) 1;
+    }
+
+    .logo-section {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-section img {
+      height: 72px;
+      width: auto;
+    }
+
+    .info-section {
+      flex: 1;
+      padding: 0 30px;
+      text-align: center;
+    }
+
+    .company-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: #1a5c2e;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: #2d7a3f;
+      font-weight: 500;
+    }
+
+    .info-row .bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2d7a3f;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .info-row-inline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      font-size: 13px;
+      color: #2d7a3f;
+      font-weight: 500;
+    }
+
+    .info-row-inline .info-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .qr-section {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .qr-section img {
+      width: 78px;
+      height: 78px;
+    }
+
+    /* ===== FOOTER ===== */
+    .letterhead-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1a6b3c;
+      color: #ffffff;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 0 0 0 0;
+    }
+
+    .footer-person {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .footer-person .name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .footer-person .title {
+      font-size: 11px;
+      font-weight: 500;
+      color: #8cc63f;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .footer-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .footer-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .footer-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    /* ===== BODY CONTENT AREA ===== */
+    .page-body {
+      padding: 40px;
+      min-height: calc(297mm - 130px - 70px);
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .page {
+        box-shadow: none;
+        width: 100%;
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- HEADER -->
+    <div class="letterhead-header">
+      <div class="logo-section">
+        <img src="logo-header.svg" alt="FoodEra Logo">
+      </div>
+
+      <div class="info-section">
+        <div class="company-name">FoodEra Company Limited</div>
+        <div class="info-row">
+          <span class="bullet"></span>
+          <span>51 Street No.10, An Khanh Ward, Ho Chi Minh City, Vietnam</span>
+        </div>
+        <div class="info-row-inline">
+          <div class="info-item">
+            <span class="bullet"></span>
+            <span>Mobile: (+84).964.791.902</span>
+          </div>
+          <div class="info-item">
+            <span class="bullet"></span>
+            <span>Email: export@foodmax.vn</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <img src="qr.png" alt="QR Code">
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="page-body">
+      <!-- Content goes here -->
+    </div>
+
+    <!-- FOOTER -->
+    <div class="letterhead-footer">
+      <div class="footer-person">
+        <span class="name">Mr. Brian Ho</span>
+        <span class="title">Export Manager</span>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-label">Email</span>
+        <span class="footer-value">brian.ho@foodmax.vn</span>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-label">Phone / WhatsApp</span>
+        <span class="footer-value">(+84) 964.791.902</span>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-label">Website</span>
+        <span class="footer-value">www.foodmax.vn</span>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-label">TaxCode</span>
+        <span class="footer-value">0317552680</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
