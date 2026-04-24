@@ -78,8 +78,8 @@
 .ptm-map-col {
   position: sticky;
   top: 100px;
-  height: calc(100vh - 120px);
-  min-height: 760px;
+  height: calc(100vh - 160px);
+  min-height: 500px;
   max-height: 950px;
   border-radius: 16px; overflow: hidden;
   border: 1px solid rgba(45,95,46,0.1);
@@ -98,8 +98,8 @@
 }
 .ptm-cards-col { 
   min-width: 0; 
-  height: calc(100vh - 120px);
-  min-height: 760px;
+  height: calc(100vh - 160px);
+  min-height: 500px;
   max-height: 950px;
   overflow-y: auto;
   padding-right: 12px;

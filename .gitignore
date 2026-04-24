@@ -29,3 +29,6 @@ tmp/*.sqlite3
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify

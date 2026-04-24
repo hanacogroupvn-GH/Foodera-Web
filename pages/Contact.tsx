@@ -216,7 +216,7 @@ const zhCopy = {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{copy.phoneWhatsapp}</h3>
               <p className="text-sm text-gray-500 mb-4">{copy.hotline}</p>
-              <p className="text-lg font-bold text-foodera-forest">(+84).319.519.329</p>
+              <p className="text-lg font-bold text-foodera-forest">+84 964 791 902</p>
               <p className="text-xs text-gray-400 mt-2">{copy.available24}</p>
             </div>
           </div>

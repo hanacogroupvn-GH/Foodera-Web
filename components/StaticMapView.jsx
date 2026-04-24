@@ -47,8 +47,8 @@ function getProvinceStyle(feature, highlightedRegion, hoveredProvinceId, highlig
 
   if (isHovered) {
     return {
-      color: "#133f6d",
-      weight: 2.8,
+      color: "#1a3a2a",
+      weight: 2.5,
       fillColor: regionMeta.color,
       fillOpacity: 1,
     };
@@ -80,8 +80,8 @@ function getProvinceStyle(feature, highlightedRegion, hoveredProvinceId, highlig
 function getHoveredStyle(feature) {
   const regionMeta = getProvinceRegionMeta(feature?.properties?.id);
   return {
-    color: "#133f6d",
-    weight: 2.8,
+    color: "#1a3a2a",
+    weight: 2.5,
     fillColor: regionMeta.color,
     fillOpacity: 1,
   };
@@ -254,10 +254,10 @@ export default function StaticMapView({ highlightedRegion, highlightedRegions, o
         wheelPxPerZoomLevel={120}
         zoomControl={false}
         attributionControl={false}
-        scrollWheelZoom
-        doubleClickZoom
-        touchZoom
-        dragging
+        scrollWheelZoom={false}
+        doubleClickZoom={false}
+        touchZoom={false}
+        dragging={false}
         boxZoom={false}
         keyboard={false}
         className="ig-leaflet-map"

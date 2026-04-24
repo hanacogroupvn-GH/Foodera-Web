@@ -93,7 +93,7 @@ const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={20} className="text-foodera-forest flex-shrink-0" />
-                <span className="text-foodera-forest/80">(+84).319.519.329</span>
+                <span className="text-foodera-forest/80">+84 964 791 902</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={20} className="text-foodera-forest flex-shrink-0" />

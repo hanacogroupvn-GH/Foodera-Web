@@ -10,7 +10,7 @@ interface DocumentMetaOptions {
   canonicalUrl?: string;
 }
 
-const BASE_TITLE = 'FoodMax Official Site';
+const BASE_TITLE = 'FoodEra Official Site';
 const BASE_URL = 'https://foodera.vn';
 
 const setMetaTag = (attribute: 'name' | 'property', key: string, content: string) => {

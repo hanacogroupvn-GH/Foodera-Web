@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { ArrowLeft, Check, TrendingUp, Truck, Globe, Users, Mountain, Thermometer, Droplets, Target, Info, Sun, Map as MapIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../logo.svg";
+import Logo from "../logo-header.svg";
 import { appRoutes } from "../lib/routes";
 import { CATEGORY_TABS, CATEGORY_BI_DATA, CATEGORY_TO_REGIONS } from "../interactive-map/data/region-infographic-data";
 import StaticMapView from "./StaticMapView";

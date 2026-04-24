@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, ShoppingBag, Download, Sun, Moon } from 'lucide-react';
 import { Product } from '../types';
-import Logo from '../logo.svg';
+import Logo from '../logo-header.svg';
 import { getNewsPath } from '../lib/newsSeo';
 import { useData } from '../context/DataContext';
 import { useLocale } from '../context/LocaleContext';
@@ -271,9 +271,9 @@ const Navbar: React.FC = () => {
                 <Mail size={14} className="text-foodera-lime" />
                 <span className="hidden sm:inline">export@foodera.vn</span>
               </a>
-              <a href="tel:+84319519329" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-wider">
+              <a href="tel:+84964791902" className="flex items-center gap-2 text-[11px] font-bold text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-wider">
                 <Phone size={14} className="text-foodera-lime" />
-                <span className="hidden sm:inline">(+84).319.519.329</span>
+                <span className="hidden sm:inline">+84 964 791 902</span>
               </a>
             </div>
             
@@ -534,8 +534,8 @@ const Navbar: React.FC = () => {
                   <a href="mailto:export@foodera.vn?cc=support@foodera.vn" className="flex items-center gap-3 text-lg font-black text-gray-900">
                     <Mail className="text-foodera-forest" size={20} /> export@foodera.vn
                   </a>
-                  <a href="tel:+84319519329" className="flex items-center gap-3 text-lg font-black text-gray-900">
-                    <Phone className="text-foodera-forest" size={20} /> (+84).319.519.329
+                  <a href="tel:+84964791902" className="flex items-center gap-3 text-lg font-black text-gray-900">
+                    <Phone className="text-foodera-forest" size={20} /> +84 964 791 902
                   </a>
                   <Link to={appRoutes.commercialTool} className="flex items-center gap-3 text-lg font-black text-foodera-forest mt-4" onClick={() => setIsOpen(false)}>
                     <BarChart3 size={20} /> {copy.commercialTool}
