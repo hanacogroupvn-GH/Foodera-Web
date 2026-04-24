@@ -32,3 +32,5 @@ tmp/*.sqlite3
 
 # Local Netlify folder
 .netlify
+.venv
+
