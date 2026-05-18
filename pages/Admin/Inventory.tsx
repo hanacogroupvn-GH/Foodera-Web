@@ -17,8 +17,8 @@ import { appRoutes } from '../../lib/routes';
 import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePlaceNames';
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateProductToChinese } from '../../lib/zhTranslation';
-import pdfFooterImage from '../../pdf-footer-current.png?inline';
-import pdfHeaderImage from '../../pdf-header.png?inline';
+import pdfFooterImage from '../../pdf-footer-current.png';
+import pdfHeaderImage from '../../FOODERA-header.jpg';
 import {
   Package, 
   Search, 
@@ -46,6 +46,7 @@ import {
   FileDown,
   MapPinned
 } from 'lucide-react';
+import { AdminSidebar } from '../../components/AdminSidebar';
 
 const isValidPdfUrl = (value: string): boolean => {
   const trimmed = value.trim();
@@ -726,7 +727,9 @@ const AdminInventory: React.FC = () => {
   const itemsPerPage = 10;
   const [isExportingZip, setIsExportingZip] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive'>('active');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hasDraftToRestore, setHasDraftToRestore] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
@@ -761,21 +764,14 @@ const AdminInventory: React.FC = () => {
   });
   const hasInvalidPdfUrl = Boolean(formData.pdfUrl?.trim()) && !isValidPdfUrl(formData.pdfUrl || '');
 
+  // Check for unsaved draft on mount (but don't auto-open — prompt user instead)
   useEffect(() => {
     const draft = readInventoryDraft();
-    if (!draft) return;
-
-    if (draft.editingProductId) {
-      const existingProduct = products.find((item) => item.id === draft.editingProductId);
-      setEditingProduct(existingProduct || ({ id: draft.editingProductId } as Product));
-    } else {
-      setEditingProduct(null);
-    }
-
-    setFormData(preserveVietnamesePlaceNamesDeep(draft.formData));
-    setNewGalleryUrl(draft.newGalleryUrl);
-    setIsModalOpen(true);
+    if (draft) setHasDraftToRestore(true);
   }, []);
+
+  // Draft is intentionally NOT auto-restored on mount to prevent form from
+  // re-opening when the user navigates back to this page from elsewhere.
 
   useEffect(() => {
     if (!isModalOpen) {
@@ -792,7 +788,8 @@ const AdminInventory: React.FC = () => {
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  const filteredProducts = products.filter((p) => {
+  // Base filter: search + category (no status)
+  const baseFilteredProducts = products.filter((p) => {
     const matchesSearch =
       !normalizedSearchTerm ||
       p.name.toLowerCase().includes(normalizedSearchTerm) ||
@@ -804,9 +801,38 @@ const AdminInventory: React.FC = () => {
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const activeCount = baseFilteredProducts.filter((p) => p.isActive !== false).length;
+  const inactiveCount = baseFilteredProducts.filter((p) => p.isActive === false).length;
+
+  // Apply status filter on top of base
+  const filteredProducts = baseFilteredProducts.filter((p) =>
+    statusFilter === 'active' ? p.isActive !== false : p.isActive === false
+  );
+
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
   const bulkTranslateTargets = useMemo(() => filteredProducts.slice(), [filteredProducts]);
+
+  const handleRestoreDraft = () => {
+    const draft = readInventoryDraft();
+    if (!draft) return;
+    if (draft.editingProductId) {
+      const existingProduct = products.find((item) => item.id === draft.editingProductId);
+      setEditingProduct(existingProduct || ({ id: draft.editingProductId } as Product));
+    } else {
+      setEditingProduct(null);
+    }
+    setFormData(preserveVietnamesePlaceNamesDeep(draft.formData));
+    setNewGalleryUrl(draft.newGalleryUrl);
+    setHasDraftToRestore(false);
+    setIsModalOpen(true);
+  };
+
+  const handleDiscardDraft = () => {
+    clearInventoryDraft();
+    setHasDraftToRestore(false);
+  };
 
   const openModal = (product?: Product) => {
     
@@ -832,7 +858,7 @@ const AdminInventory: React.FC = () => {
         subCategory: '',
         description: '',
         shortDescription: '',
-        image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1200',
+        image: '',
         pdfUrl: '',
         gallery: [],
         specifications: { 'Broken': '5.0% Max', 'Moisture': '14.0% Max' },
@@ -1655,54 +1681,29 @@ const AdminInventory: React.FC = () => {
     popup.document.close();
   };
 
+  useEffect(() => {
+    if (window.location.hash === '#create') {
+      openModal();
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleExit = () => {
     logout();
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
-      {/* Mini Sidebar */}
-      <aside className="w-[5.5rem] bg-foodera-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
-        <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"><ChevronLeft size={24} /></Link>
-        <div className="flex flex-col gap-6 flex-grow">
-          <Link to={appRoutes.adminInventory} className="p-3.5 bg-foodera-lime text-foodera-forest rounded-2xl shadow-xl shadow-foodera-lime/20 border border-foodera-lime/20"><Package size={24} /></Link>
-          <Link
-            to={appRoutes.adminMapContent}
-            className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5"
-            title={locale === 'zh' ? '地图内容' : 'Map Content'}
-          >
-            <MapPinned size={24} />
-          </Link>
-        </div>
+      <AdminSidebar
+        onLogout={handleExit}
+        onOpenInventoryForm={() => openModal()}
+        onCloseInventoryForm={closeModal}
+        isInventoryFormOpen={isModalOpen}
+      />
 
-        {/* Mini Branded Exit Button */}
-        <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
-          <Link
-            to={appRoutes.home}
-            onClick={handleExit}
-            className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
-            title={locale === 'zh' ? copy.exitHome : 'Exit to Homepage'}
-          >
-            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
-               <div className="flex items-center relative">
-                  <span className="text-foodera-forest font-[900] text-xl">F</span>
-               </div>
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
-              <LogOut size={10} className="text-foodera-forest" />
-            </div>
-            
-            {/* Tooltip Label */}
-            <div className="absolute left-full ml-4 py-2 px-3 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl">
-              {copy.exitHome}
-              <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-            </div>
-          </Link>
-        </div>
-      </aside>
-
-      <main className="flex-grow p-8 md:p-12 overflow-y-auto">
-        {/* ... (Existing main content remains identical) */}
+      {isModalOpen ? null : (
+        <main className="flex-grow p-8 md:p-12 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-12 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
@@ -1770,6 +1771,39 @@ const AdminInventory: React.FC = () => {
             </div>
           </div>
 
+          {/* ── Draft Recovery Banner ────────────────────── */}
+          {hasDraftToRestore && (
+            <div className="mb-6 flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                <FileText size={18} className="text-amber-600" />
+              </div>
+              <div className="flex-grow min-w-0">
+                <p className="text-sm font-black text-amber-900">
+                  Bạn có bản nháp chưa lưu
+                </p>
+                <p className="text-xs text-amber-700 font-medium mt-0.5">
+                  Tiếp tục chỉnh sửa bài viết đã lưu trước đó, hoặc bỏ qua để bắt đầu mới.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleRestoreDraft}
+                  className="px-4 py-2 bg-foodera-forest text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-sm"
+                >
+                  Tiếp tục chỉnh sửa
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDiscardDraft}
+                  className="px-4 py-2 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 hover:text-gray-700 transition-all"
+                >
+                  Bỏ qua
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-end gap-3">
               <div className="flex-grow space-y-2">
@@ -1827,6 +1861,52 @@ const AdminInventory: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Status Tabs: Active / Inactive */}
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => { setStatusFilter('active'); setCurrentPage(1); }}
+              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.16em] transition-all border ${
+                statusFilter === 'active'
+                  ? 'bg-foodera-forest text-white border-foodera-forest shadow-lg'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-foodera-forest/30 hover:text-foodera-forest'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className={`inline-flex items-center justify-center w-2 h-2 rounded-full ${
+                  statusFilter === 'active' ? 'bg-foodera-lime' : 'bg-green-400'
+                }`} />
+                Active
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                statusFilter === 'active' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {activeCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setStatusFilter('inactive'); setCurrentPage(1); }}
+              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.16em] transition-all border ${
+                statusFilter === 'inactive'
+                  ? 'bg-gray-700 text-white border-gray-700 shadow-lg'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-700'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-gray-400" />
+                Inactive
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                statusFilter === 'inactive' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {inactiveCount}
+              </span>
+            </button>
+          </div>
+
           {/* Category Tabs */}
           <div className="flex border-b border-gray-200 mb-8 overflow-x-auto hide-scrollbar gap-1">
             <button
@@ -1979,13 +2059,13 @@ const AdminInventory: React.FC = () => {
             )}
           </div>
         </div>
-      </main>
+        </main>
+      )}
 
-      {/* Modal remains identical */}
+      {/* ── Full-page Form ─────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-end bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-3xl h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-foodera-forest text-white">
+        <main className="flex-grow flex flex-col overflow-hidden bg-white">
+          <div className="bg-foodera-forest text-white px-10 py-6 flex items-center justify-between flex-shrink-0">
               <div>
                 <h2 className="text-xl font-black uppercase tracking-tight">
                   {editingProduct ? copy.editCommodity : copy.createCommodity}
@@ -2674,8 +2754,7 @@ const AdminInventory: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+        </main>
       )}
     </div>
   );

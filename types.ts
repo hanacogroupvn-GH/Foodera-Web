@@ -1,7 +1,7 @@
 
 export type CategoryType = 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture' | 'Pepper';
 
-export type NewsCategory = 'Market Insights' | 'Company Updates' | 'Sustainability' | 'Events';
+export type NewsCategory = 'Product' | 'Logistics' | 'Market Insight';
 
 export type SupportedLocale = 'en' | 'zh';
 export type ContentLocale = Exclude<SupportedLocale, 'en'>;
@@ -61,6 +61,8 @@ export interface NewsItem {
   excerpt: string;
   content: string[];
   image: string;
+  imageAlt?: string;
+  scheduledAt?: string;
   translations?: Partial<Record<ContentLocale, NewsTranslation>>;
 }
 

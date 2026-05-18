@@ -2,6 +2,11 @@ import { NewsItem, Product } from '../types';
 
 export const isContentActive = <T extends { isActive?: boolean }>(item: T) => item.isActive !== false;
 
+const isNewsPublished = (item: NewsItem) => {
+  if (!item.scheduledAt) return true;
+  return new Date(item.scheduledAt).getTime() <= Date.now();
+};
+
 export const getActiveProducts = (products: Product[]) => products.filter(isContentActive);
 
-export const getActiveNews = (news: NewsItem[]) => news.filter(isContentActive);
+export const getActiveNews = (news: NewsItem[]) => news.filter((item) => isContentActive(item) && isNewsPublished(item));

@@ -23,7 +23,7 @@ const DEFAULT_PRODUCT_IMAGE =
 const DEFAULT_NEWS_IMAGE =
   'https://images.unsplash.com/photo-1592910129881-892bbe239cc0?auto=format&fit=crop&q=80&w=1200';
 
-const NEWS_CATEGORIES: NewsCategory[] = ['Market Insights', 'Company Updates', 'Sustainability', 'Events'];
+const NEWS_CATEGORIES: NewsCategory[] = ['Product', 'Logistics', 'Market Insight'];
 
 const normalizeKey = (value: string): string =>
   value
@@ -130,10 +130,9 @@ const parseContentParagraphs = (raw: string): string[] => {
 
 const parseNewsCategory = (raw: string): NewsCategory => {
   const value = raw.trim().toLowerCase();
-  if (value.includes('company')) return 'Company Updates';
-  if (value.includes('sustain')) return 'Sustainability';
-  if (value.includes('event')) return 'Events';
-  return 'Market Insights';
+  if (value.includes('product')) return 'Product';
+  if (value.includes('logistic') || value.includes('shipping') || value.includes('supply')) return 'Logistics';
+  return 'Market Insight';
 };
 
 const parseOptionalBoolean = (raw: string): boolean | undefined => {

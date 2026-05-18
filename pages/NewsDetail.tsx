@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight, Home, Megaphone, Tag, Anchor } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import AppShellLoader from '../components/AppShellLoader';
@@ -12,7 +12,14 @@ import { appRoutes } from '../lib/routes';
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
   | { type: 'image'; src: string; alt: string; caption?: string }
-  | { type: 'paragraph'; text: string };
+  | { type: 'paragraph'; text: string }
+  | { type: 'cta'; text: string; link: string }
+  | { type: 'tag'; keyword: string }
+  | { type: 'anchor'; name: string }
+  | { type: 'quote'; text: string }
+  | { type: 'bullet'; text: string }
+  | { type: 'separator' }
+  | { type: 'table'; header: string[]; rows: string[][] };
 
 const stripSectionPrefix = (value: string) => {
   return value.replace(/^(section|chapter|part)\s*\d+\s*[:\-]?\s*/i, '').trim();
@@ -39,6 +46,26 @@ const toSafeImageUrl = (value: string): string | null => {
   }
 
   return null;
+};
+
+/**
+ * If the URL is a Cloudinary image, inject transformation params to get an
+ * OG-optimised 940x492 crop. Otherwise return the original URL.
+ * Ref: https://cloudinary.com/documentation/image_transformation_reference
+ */
+const toCloudinaryOgUrl = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('cloudinary.com') && parsed.pathname.includes('/image/upload/')) {
+      return parsed.href.replace(
+        '/image/upload/',
+        '/image/upload/c_fill,w_940,h_492,q_auto,f_auto/'
+      );
+    }
+  } catch {
+    // not a valid URL, return as-is
+  }
+  return url;
 };
 
 const IMAGE_MARKER_REGEX = /\[\[IMAGE:([\s\S]*?)\]\]/i;
@@ -88,9 +115,65 @@ const extractInlineImageMarker = (
 const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
 
-  paragraphs.forEach((raw, index) => {
-    const text = raw.trim();
-    if (!text) return;
+  for (let index = 0; index < paragraphs.length; index++) {
+    const text = paragraphs[index].trim();
+    if (!text) continue;
+
+    // ── CTA Block: [[CTA:text|link]] ──
+    const ctaMatch = text.match(/\[\[CTA:(.*?)\|(.*?)\]\]/i);
+    if (ctaMatch) {
+      blocks.push({ type: 'cta', text: ctaMatch[1].trim(), link: ctaMatch[2].trim() });
+      continue;
+    }
+
+    // ── TAG: [[TAG:keyword]] ──
+    const tagMatch = text.match(/\[\[TAG:(.*?)\]\]/i);
+    if (tagMatch) {
+      blocks.push({ type: 'tag', keyword: tagMatch[1].trim() });
+      continue;
+    }
+
+    // ── ANCHOR: [[ANCHOR:name]] ──
+    const anchorMatch = text.match(/\[\[ANCHOR:(.*?)\]\]/i);
+    if (anchorMatch) {
+      blocks.push({ type: 'anchor', name: anchorMatch[1].trim() });
+      continue;
+    }
+
+    // ── Separator ──
+    if (text === '---') {
+      blocks.push({ type: 'separator' });
+      continue;
+    }
+
+    // ── Quote ──
+    if (text.startsWith('> ')) {
+      blocks.push({ type: 'quote', text: text.slice(2) });
+      continue;
+    }
+
+    // ── Bullet ──
+    if (text.startsWith('• ')) {
+      blocks.push({ type: 'bullet', text: text.slice(2) });
+      continue;
+    }
+
+    // ── Table (detect pipe-delimited rows) ──
+    if (text.startsWith('|') && text.endsWith('|')) {
+      const tableLines: string[] = [text];
+      while (index + 1 < paragraphs.length && paragraphs[index + 1].trim().startsWith('|') && paragraphs[index + 1].trim().endsWith('|')) {
+        index++;
+        tableLines.push(paragraphs[index].trim());
+      }
+      const dataRows = tableLines
+        .filter(r => !/^\|[\s\-:|]+\|$/.test(r))
+        .map(r => r.split('|').slice(1, -1).map(c => c.trim()));
+      if (dataRows.length > 0) {
+        const [header, ...rows] = dataRows;
+        blocks.push({ type: 'table', header, rows });
+      }
+      continue;
+    }
 
     // Marker syntax: [[IMAGE:https://...|Alt text|Optional caption]]
     const parsedMarker = extractInlineImageMarker(text, defaultImageAlt);
@@ -109,7 +192,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
       if (parsedMarker.after) {
         blocks.push({ type: 'paragraph', text: parsedMarker.after });
       }
-      return;
+      continue;
     }
 
     const numberedLabelWithBodyMatch = text.match(
@@ -205,7 +288,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
     }
 
     blocks.push({ type: 'paragraph', text });
-  });
+  }
 
   return blocks;
 };
@@ -313,7 +396,11 @@ const NewsDetail: React.FC = () => {
         onThisPage: '本页目录',
         continuousBrief: '这篇文章以单篇连续简报形式呈现。',
         discussInsight: '咨询这篇洞察',
-        relatedInsights: '相关文章'
+        relatedInsights: '相关文章',
+        home: '首页',
+        newsAndInsights: '新闻与洞察',
+        writtenBy: '作者',
+        authorName: 'FoodEra Trade Desk',
       }
     : {
         loader: 'Loading article...',
@@ -325,7 +412,11 @@ const NewsDetail: React.FC = () => {
         onThisPage: 'On This Page',
         continuousBrief: 'This article is presented as a single continuous brief.',
         discussInsight: 'Discuss this insight',
-        relatedInsights: 'Related Insights'
+        relatedInsights: 'Related Insights',
+        home: 'Home',
+        newsAndInsights: 'News & Insights',
+        writtenBy: 'By',
+        authorName: 'FoodEra Trade Desk',
       };
   const personalizedRelatedNews = useMemo(
     () => (article ? personalizedNews.filter((item) => item.id !== article.id).slice(0, 3) : []),
@@ -384,6 +475,24 @@ const NewsDetail: React.FC = () => {
   const publishedIso = article ? toIsoDate(article.date) : null;
   const canonicalPath = article ? getNewsPath(article) : '';
   const canonicalUrl = typeof window !== 'undefined' && canonicalPath ? `${window.location.origin}${canonicalPath}` : '';
+
+  // Reading progress bar
+  const [readProgress, setReadProgress] = useState(0);
+  const articleRef = useRef<HTMLElement>(null);
+  const handleScroll = useCallback(() => {
+    if (!articleRef.current) return;
+    const el = articleRef.current;
+    const rect = el.getBoundingClientRect();
+    const articleTop = rect.top + window.scrollY;
+    const articleHeight = el.offsetHeight;
+    const scrolled = window.scrollY - articleTop;
+    const progress = Math.min(100, Math.max(0, (scrolled / (articleHeight - window.innerHeight)) * 100));
+    setReadProgress(progress);
+  }, []);
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -448,8 +557,13 @@ const NewsDetail: React.FC = () => {
     appendMetaTag('name', 'twitter:title', title);
 
     if (article.image) {
-      appendMetaTag('property', 'og:image', article.image);
-      appendMetaTag('name', 'twitter:image', article.image);
+      const ogImage = toCloudinaryOgUrl(article.image);
+      appendMetaTag('property', 'og:image', ogImage);
+      appendMetaTag('property', 'og:image:width', '940');
+      appendMetaTag('property', 'og:image:height', '492');
+      appendMetaTag('property', 'og:image:alt', article.imageAlt || seoTitle);
+      appendMetaTag('name', 'twitter:image', ogImage);
+      appendMetaTag('name', 'twitter:image:alt', article.imageAlt || seoTitle);
     }
 
     if (canonicalUrl) {
@@ -462,7 +576,15 @@ const NewsDetail: React.FC = () => {
       '@type': 'NewsArticle',
       headline: seoTitle,
       description,
-      image: article.image ? [article.image] : undefined,
+      image: article.image
+        ? [{
+            '@type': 'ImageObject',
+            url: toCloudinaryOgUrl(article.image),
+            width: 940,
+            height: 492,
+            caption: article.imageAlt || seoTitle
+          }]
+        : undefined,
       datePublished: publishedIso || undefined,
       dateModified: publishedIso || undefined,
       mainEntityOfPage: canonicalUrl || undefined,
@@ -524,6 +646,14 @@ const NewsDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-white animate-in fade-in duration-500">
+      {/* Reading progress bar */}
+      <div className="fixed top-0 left-0 w-full h-[3px] z-50 bg-transparent pointer-events-none">
+        <div
+          className="h-full bg-gradient-to-r from-foodera-forest to-foodera-lime transition-[width] duration-150 ease-out"
+          style={{ width: `${readProgress}%` }}
+        />
+      </div>
+
       <div className="bg-white/85 backdrop-blur border-b border-gray-100 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
           <Link to={appRoutes.news} className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-widest">
@@ -549,7 +679,34 @@ const NewsDetail: React.FC = () => {
         </div>
       </div>
 
-      <article className="py-10 md:py-14" itemScope itemType="https://schema.org/NewsArticle">
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+        <ol className="flex items-center gap-1.5 text-xs font-bold text-gray-400" itemScope itemType="https://schema.org/BreadcrumbList">
+          <li className="inline-flex items-center gap-1" itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+            <Link to={appRoutes.home} itemProp="item" className="inline-flex items-center gap-1 hover:text-foodera-forest transition-colors">
+              <Home size={12} />
+              <span itemProp="name">{copy.home}</span>
+            </Link>
+            <meta itemProp="position" content="1" />
+          </li>
+          <ChevronRight size={10} className="text-gray-300" />
+          <li className="inline-flex items-center" itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+            <Link to={appRoutes.news} itemProp="item" className="hover:text-foodera-forest transition-colors">
+              <span itemProp="name">{copy.newsAndInsights}</span>
+            </Link>
+            <meta itemProp="position" content="2" />
+          </li>
+          <ChevronRight size={10} className="text-gray-300" />
+          <li className="inline-flex items-center" itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+            <span itemProp="name" className="text-gray-600 truncate max-w-[200px] md:max-w-[400px]">
+              {localizedArticle?.title || article.title}
+            </span>
+            <meta itemProp="position" content="3" />
+          </li>
+        </ol>
+      </nav>
+
+      <article ref={articleRef} className="py-10 md:py-14" itemScope itemType="https://schema.org/NewsArticle">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -577,19 +734,32 @@ const NewsDetail: React.FC = () => {
 
             {localizedArticle?.excerpt?.trim() && (
               <p
-                className="text-lg md:text-2xl text-gray-600 leading-relaxed mb-10 font-medium max-w-3xl text-justify [text-align:justify] [text-justify:inter-word]"
+                className="text-lg md:text-2xl text-gray-600 leading-relaxed mb-8 font-medium max-w-3xl text-justify [text-align:justify] [text-justify:inter-word]"
                 itemProp="description"
               >
                 {localizedArticle?.excerpt}
               </p>
             )}
+
+            {/* Author info block */}
+            <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-100" itemProp="author" itemScope itemType="https://schema.org/Organization">
+              <div className="w-11 h-11 rounded-full bg-foodera-forest/10 flex items-center justify-center flex-shrink-0">
+                <img src="/logo-era.png" alt="FoodEra" className="w-7 h-7 object-contain" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-gray-900" itemProp="name">{copy.authorName}</p>
+                <p className="text-xs text-gray-400 font-medium">
+                  {copy.writtenBy} • {formatDisplayDate(article.date, locale)}
+                </p>
+              </div>
+            </div>
           </div>
 
           <figure className="w-full overflow-hidden rounded-3xl mb-14 border border-gray-100 shadow-xl bg-white">
             {!isImageBroken && article.image ? (
               <img
                 src={article.image}
-                alt={localizedArticle?.title || article.title}
+                alt={article.imageAlt || localizedArticle?.title || article.title}
                 className="w-full h-[260px] md:h-[460px] object-cover"
                 itemProp="image"
                 loading="eager"
@@ -601,42 +771,140 @@ const NewsDetail: React.FC = () => {
               </div>
             )}
             <figcaption className="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-              {copy.marketIntel}
+              {article.imageAlt || copy.marketIntel}
             </figcaption>
           </figure>
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-12">
             <section className="min-w-0">
-              <div className="space-y-7" itemProp="articleBody">
-                {displayBlocks.map((block, idx) =>
-                  block.type === 'heading' ? (
-                    <h2 key={`${block.id}-${idx}`} id={block.id} className="text-2xl md:text-3xl font-black text-gray-900 pt-4">
-                      {block.text}
-                    </h2>
-                  ) : block.type === 'image' ? (
-                    <figure key={`image-${idx}`} className="my-12 w-full max-w-3xl mx-auto rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-md">
-                      <img
-                        src={block.src}
-                        alt={block.alt}
-                        className="w-full h-auto object-cover"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      {block.caption && (
-                        <figcaption className="px-4 py-3 text-xs font-medium text-gray-500 border-t border-gray-100 text-center">
-                          {block.caption}
-                        </figcaption>
-                      )}
-                    </figure>
-                  ) : (
-                    <p
-                      key={`paragraph-${idx}`}
-                      className="text-lg md:text-[1.32rem] text-gray-700 leading-relaxed font-medium text-justify [text-align:justify] [text-justify:inter-word]"
-                    >
-                      {block.text}
-                    </p>
-                  )
-                )}
+              <div itemProp="articleBody">
+                {displayBlocks.map((block, idx) => {
+                  const isFirstParagraph = block.type === 'paragraph' && idx === displayBlocks.findIndex(b => b.type === 'paragraph');
+
+                  switch (block.type) {
+                    case 'heading':
+                      return (
+                        <div key={`${block.id}-${idx}`} className="mt-12 mb-5">
+                          <div className="w-10 h-1 bg-foodera-lime rounded-full mb-4" />
+                          <h2 id={block.id} className="text-2xl md:text-3xl font-black text-gray-900">
+                            {block.text}
+                          </h2>
+                        </div>
+                      );
+
+                    case 'image':
+                      return (
+                        <figure key={`image-${idx}`} className="my-12 w-full max-w-3xl mx-auto rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-md">
+                          <img
+                            src={block.src}
+                            alt={block.alt}
+                            className="w-full h-auto object-cover"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          {block.caption && (
+                            <figcaption className="px-4 py-3 text-xs font-medium text-gray-500 border-t border-gray-100 text-center">
+                              {block.caption}
+                            </figcaption>
+                          )}
+                        </figure>
+                      );
+
+                    case 'cta':
+                      return (
+                        <div key={`cta-${idx}`} className="my-12 rounded-2xl bg-gradient-to-r from-foodera-forest to-foodera-forest/80 p-8 md:p-10 text-center">
+                          <p className="text-white text-lg md:text-xl font-bold mb-5">{block.text}</p>
+                          <Link
+                            to={block.link}
+                            className="inline-flex items-center gap-2 px-8 py-4 bg-foodera-lime text-foodera-forest rounded-xl font-black text-sm uppercase tracking-widest hover:bg-white transition-colors shadow-lg"
+                          >
+                            <Megaphone size={18} />
+                            {block.link === '/contact' ? (locale === 'zh' ? '联系我们' : 'Contact Us') : block.link}
+                          </Link>
+                        </div>
+                      );
+
+                    case 'tag':
+                      return (
+                        <span key={`tag-${idx}`} className="inline-flex items-center gap-1.5 px-4 py-2 bg-foodera-forest/10 text-foodera-forest rounded-full text-xs font-black uppercase tracking-wider my-3 mr-2">
+                          <Tag size={14} />{block.keyword}
+                        </span>
+                      );
+
+                    case 'anchor':
+                      return <div key={`anchor-${idx}`} id={block.name} className="h-0" aria-hidden />;
+
+                    case 'quote':
+                      return (
+                        <blockquote key={`quote-${idx}`} className="border-l-4 border-foodera-forest pl-6 py-3 my-8 text-lg italic text-gray-600 font-medium">
+                          {block.text}
+                        </blockquote>
+                      );
+
+                    case 'bullet':
+                      return (
+                        <div key={`bullet-${idx}`} className="flex gap-3 mb-3 text-lg text-gray-700">
+                          <span className="text-foodera-forest font-bold mt-1">•</span>
+                          <span className="font-medium">{block.text}</span>
+                        </div>
+                      );
+
+                    case 'separator':
+                      return <hr key={`hr-${idx}`} className="my-10 border-gray-200" />;
+
+                    case 'table':
+                      return (
+                        <div key={`table-${idx}`} className="my-8 overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+                          <table className="w-full text-sm">
+                            <thead className="bg-foodera-forest/5">
+                              <tr>
+                                {block.header.map((h, hi) => (
+                                  <th key={hi} className="px-5 py-3.5 text-left text-xs font-black uppercase tracking-wider text-foodera-forest border-b border-gray-200">{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {block.rows.map((row, ri) => (
+                                <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50/70'}>
+                                  {row.map((cell, ci) => (
+                                    <td key={ci} className="px-5 py-3.5 text-gray-700 font-medium border-b border-gray-100">{cell}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+
+                    case 'paragraph': {
+                      // Render inline markdown: bold, italic, links
+                      let html = block.text;
+                      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                      html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-foodera-forest underline hover:text-foodera-lime transition-colors" target="_blank" rel="noopener noreferrer">$1</a>');
+                      const hasInlineFormatting = html !== block.text;
+
+                      return hasInlineFormatting ? (
+                        <p
+                          key={`paragraph-${idx}`}
+                          className={`text-lg md:text-[1.32rem] text-gray-700 leading-[1.85] font-medium text-justify [text-align:justify] [text-justify:inter-word] mb-6${
+                            isFirstParagraph ? ' first-letter:text-[3.2rem] first-letter:font-[900] first-letter:text-foodera-forest first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-none' : ''
+                          }`}
+                          dangerouslySetInnerHTML={{ __html: html }}
+                        />
+                      ) : (
+                        <p
+                          key={`paragraph-${idx}`}
+                          className={`text-lg md:text-[1.32rem] text-gray-700 leading-[1.85] font-medium text-justify [text-align:justify] [text-justify:inter-word] mb-6${
+                            isFirstParagraph ? ' first-letter:text-[3.2rem] first-letter:font-[900] first-letter:text-foodera-forest first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-none' : ''
+                          }`}
+                        >
+                          {block.text}
+                        </p>
+                      );
+                    }
+                  }
+                })}
               </div>
             </section>
 
@@ -670,10 +938,7 @@ const NewsDetail: React.FC = () => {
             </aside>
           </div>
 
-          <div className="sr-only" itemProp="author" itemScope itemType="https://schema.org/Organization">
-            <span itemProp="name">FoodEra Trade Desk</span>
           </div>
-        </div>
       </article>
 
       <section className="bg-gray-50 py-20 border-t border-gray-100">

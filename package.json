@@ -1,7 +1,7 @@
 {
   "name": "foodmax-global-agri-export",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.1.7",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",

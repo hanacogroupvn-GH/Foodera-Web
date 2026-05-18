@@ -27,16 +27,14 @@ const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
 
 const NEWS_CATEGORY_LABELS: Record<SupportedLocale, Record<NewsCategory, string>> = {
   en: {
-    'Market Insights': 'Market Insights',
-    'Company Updates': 'Company Updates',
-    Sustainability: 'Sustainability',
-    Events: 'Events'
+    'Product': 'Product',
+    'Logistics': 'Logistics',
+    'Market Insight': 'Market Insight',
   },
   zh: {
-    'Market Insights': '\u5e02\u573a\u6d1e\u5bdf',
-    'Company Updates': '\u516c\u53f8\u52a8\u6001',
-    Sustainability: '\u53ef\u6301\u7eed\u53d1\u5c55',
-    Events: '\u6d3b\u52a8'
+    'Product': '\u4ea7\u54c1',
+    'Logistics': '\u7269\u6d41',
+    'Market Insight': '\u5e02\u573a\u6d1e\u5bdf',
   }
 };
 

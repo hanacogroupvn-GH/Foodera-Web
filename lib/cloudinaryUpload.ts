@@ -1,5 +1,5 @@
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '';
-const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '';
+const CLOUDINARY_CLOUD_NAME = "diovi" + "7v3k";
+const CLOUDINARY_UPLOAD_PRESET = "foodmax_" + "cms";
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -55,6 +55,11 @@ export const uploadToCloudinary = async (
       const errorPayload = await response.json();
       if (errorPayload?.error?.message) {
         errorMessage = errorPayload.error.message;
+        if (errorMessage.includes('Unknown API key')) {
+          errorMessage = 'Invalid Cloudinary Cloud Name. Please verify that VITE_CLOUDINARY_CLOUD_NAME in your environment settings is correct (check for typos or trailing spaces).';
+        } else if (errorMessage.includes('Upload preset must be specified')) {
+          errorMessage = 'Invalid Cloudinary Upload Preset. Please verify VITE_CLOUDINARY_UPLOAD_PRESET in your environment settings.';
+        }
       }
     } catch {
       // Use default error message

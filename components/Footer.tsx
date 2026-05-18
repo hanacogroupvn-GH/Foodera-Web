@@ -58,8 +58,8 @@ const Footer: React.FC = () => {
               {copy.description}
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.facebook.com/FoodEraVietnam" target="_blank" rel="noreferrer" className="w-11 h-11 bg-gray-50 text-foodera-forest rounded-xl flex items-center justify-center hover:bg-foodera-forest hover:text-white transition-all"><Facebook size={20} /></a>
-              <a href="https://www.linkedin.com/in/hobinhnghia/" target="_blank" rel="noreferrer" className="w-11 h-11 bg-gray-50 text-foodera-forest rounded-xl flex items-center justify-center hover:bg-foodera-forest hover:text-white transition-all"><Linkedin size={20} /></a>
+              <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodera-forest/40 rounded-xl flex items-center justify-center cursor-default"><Facebook size={20} /></span>
+              <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodera-forest/40 rounded-xl flex items-center justify-center cursor-default"><Linkedin size={20} /></span>
               <span aria-hidden="true" className="w-11 h-11 bg-gray-50 text-foodera-forest/40 rounded-xl flex items-center justify-center cursor-default"><Youtube size={20} /></span>
             </div>
           </div>

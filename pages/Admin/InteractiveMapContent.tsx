@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, FileText, Loader2, LogOut, MapPinned, Package, RefreshCw, Save, Trash2, Wrench } from 'lucide-react';
+import { AdminSidebar } from '../../components/AdminSidebar';
 
 import { useAuth } from '../../context/AuthContext';
 import { api, ApiError } from '../../lib/apiClient';
@@ -276,42 +277,7 @@ export default function AdminInteractiveMapContent() {
 
   return (
     <div className="flex min-h-screen bg-stone-100 font-sans">
-      {/* Mini Sidebar — matching Inventory / News pattern */}
-      <aside className="w-[5.5rem] bg-foodera-forest text-white flex flex-col items-center py-8 gap-8 sticky top-0 h-screen shadow-2xl z-20">
-        <Link to={appRoutes.admin} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5">
-          <ChevronLeft size={24} />
-        </Link>
-        <div className="flex flex-col gap-6 flex-grow">
-          <Link to={appRoutes.adminInventory} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5" title="Inventory">
-            <Package size={24} />
-          </Link>
-          <Link to={appRoutes.adminNews} className="p-3.5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-white/5" title="News">
-            <FileText size={24} />
-          </Link>
-          <Link to={appRoutes.adminMapContent} className="p-3.5 bg-foodera-lime text-foodera-forest rounded-2xl shadow-xl shadow-foodera-lime/20 border border-foodera-lime/20" title="Map Content">
-            <MapPinned size={24} />
-          </Link>
-        </div>
-
-        {/* Mini Branded Exit Button */}
-        <div className="mt-auto pt-6 border-t border-white/10 w-full flex flex-col items-center gap-4">
-          <Link
-            to={appRoutes.home}
-            onClick={() => logout()}
-            className="p-3 hover:bg-white/10 rounded-2xl transition-all group relative overflow-visible"
-            title="Exit to Homepage"
-          >
-            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
-              <div className="flex items-center relative">
-                <span className="text-foodera-forest font-[900] text-xl">F</span>
-              </div>
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
-              <LogOut size={10} className="text-foodera-forest" />
-            </div>
-          </Link>
-        </div>
-      </aside>
+      <AdminSidebar onLogout={() => logout()} />
 
       <main className="flex-grow px-6 py-10 overflow-y-auto">
         <div className="mx-auto max-w-6xl space-y-6">

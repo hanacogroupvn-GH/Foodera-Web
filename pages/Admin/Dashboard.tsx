@@ -27,6 +27,7 @@ import {
   RefreshCw,
   MapPinned
 } from 'lucide-react';
+import { AdminSidebar } from '../../components/AdminSidebar';
 
 const AdminDashboard: React.FC = () => {
   const { products, news, exportData, importData, resetToDefaults, backendMode } = useData();
@@ -42,8 +43,10 @@ const AdminDashboard: React.FC = () => {
       ? {
           staffPortal: '员工后台',
           dashboard: '总览',
-          inventory: '产品库',
-          insights: '资讯',
+          inventory: 'Product',
+          insights: 'SEO',
+          managePosts: 'Quản lí bài đăng',
+          createPost: 'Tạo bài viết',
           mapContent: '地图内容',
           operationsPortal: '运营后台',
           exitHome: '返回首页',
@@ -65,8 +68,10 @@ const AdminDashboard: React.FC = () => {
       : {
           staffPortal: 'Staff Portal',
           dashboard: 'Dashboard',
-          inventory: 'Inventory',
-          insights: 'Insights',
+          inventory: 'Product',
+          insights: 'SEO',
+          managePosts: 'Manage',
+          createPost: 'Create',
           mapContent: 'Map Content',
           operationsPortal: 'Operations Portal',
           exitHome: 'Exit to Home',
@@ -175,61 +180,7 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100 font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-foodera-forest text-white p-6 hidden lg:flex flex-col sticky top-0 h-screen">
-        <div className="flex flex-col mb-10 px-4">
-          <div className="flex items-center">
-            <span className="text-xl font-[900]">Food</span>
-            <span className="text-xl font-[900] text-foodera-lime">max</span>
-          </div>
-          <span className="text-[8px] font-bold text-white/40 tracking-[0.2em] uppercase">{copy.staffPortal}</span>
-        </div>
-
-        <nav className="space-y-2 flex-grow">
-          <Link to={appRoutes.admin} className="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl font-bold text-sm">
-            <LayoutDashboard size={18} /> {copy.dashboard}
-          </Link>
-          <Link to={appRoutes.adminInventory} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
-            <Package size={18} /> {copy.inventory}
-          </Link>
-          <Link to={appRoutes.adminNews} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
-            <FileText size={18} /> {copy.insights}
-          </Link>
-          <Link to={appRoutes.adminMapContent} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-bold text-sm transition-colors">
-            <MapPinned size={18} /> {copy.mapContent}
-          </Link>
-        </nav>
-
-        {/* Branded Logout / Exit Section */}
-        <div className="mt-auto pt-8 border-t border-white/10">
-          <Link
-            to={appRoutes.home}
-            onClick={handleLogout}
-            className="w-full flex items-center gap-4 p-4 rounded-[1.5rem] bg-white/5 hover:bg-white/10 transition-all group relative overflow-hidden"
-          >
-            <div className="relative">
-              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-black/20 group-hover:scale-105 transition-transform">
-                <div className="flex items-center relative">
-                  <span className="text-foodera-forest font-[900] text-xl">F</span>
-                  <div className="absolute -top-1.5 -right-1 flex gap-0.5 opacity-80 scale-75">
-                    <div className="w-1.5 h-2.5 bg-foodera-lime rounded-full rotate-[-25deg]"></div>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foodera-lime rounded-full flex items-center justify-center border-2 border-foodera-forest shadow-md">
-                <LogOut size={10} className="text-foodera-forest" />
-              </div>
-            </div>
-            <div className="text-left">
-               <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{copy.operationsPortal}</p>
-               <div className="flex items-center gap-1">
-                 <p className="text-xs font-black text-white group-hover:text-foodera-lime transition-colors">{copy.exitHome}</p>
-                 <ExternalLink size={10} className="text-white/20 group-hover:text-foodera-lime transition-colors" />
-               </div>
-            </div>
-          </Link>
-        </div>
-      </aside>
+      <AdminSidebar onLogout={handleLogout} />
 
       {/* Main Content */}
       <main className="flex-grow p-8 md:p-12 overflow-y-auto">

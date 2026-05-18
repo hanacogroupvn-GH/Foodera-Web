@@ -381,12 +381,22 @@ export default defineConfig(({ mode }) => {
               return undefined;
             }
 
+            // Heavy PDF library — lazy loaded, keep in its own chunk
+            if (id.includes('html2pdf') || id.includes('jspdf') || id.includes('html2canvas')) {
+              return 'pdf-libs';
+            }
+
             if (id.includes('@google/genai')) {
               return 'genai';
             }
 
             if (id.includes('lucide-react')) {
               return 'icons';
+            }
+
+            // React core — stable, long cache
+            if (id.includes('react-dom') || id.includes('react/') || id.includes('react-router')) {
+              return 'react-vendor';
             }
 
             return undefined;

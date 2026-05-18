@@ -142,8 +142,12 @@ const normalizeNewsItem = (item: NewsItem): NewsItem => {
   const fallbackTranslations =
     fallback?.translations || (FALLBACK_NEWS_TRANSLATIONS[item.id] ? { zh: FALLBACK_NEWS_TRANSLATIONS[item.id] } : undefined);
 
+  const validCategories = ['Product', 'Logistics', 'Market Insight'];
+  const category = validCategories.includes(item.category) ? item.category : 'Market Insight';
+
   return cloneNewsItem({
     ...item,
+    category: category as NewsItem['category'],
     translations: mergeNewsTranslations(item.translations, fallbackTranslations)
   });
 };

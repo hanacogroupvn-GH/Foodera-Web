@@ -22,6 +22,8 @@ import {
   insertContactInquiry,
   insertQuotationRequest,
   listProvinceMapProfiles,
+  listPublicNews,
+  listProducts,
   updateProductRecord,
   upsertAdminUser,
   upsertProvinceMapProfile,
@@ -217,6 +219,11 @@ const getActiveSnapshot = (snapshot) => ({
   products: Array.isArray(snapshot?.products) ? snapshot.products.filter((item) => item?.isActive !== false) : [],
   news: Array.isArray(snapshot?.news) ? snapshot.news.filter((item) => item?.isActive !== false) : []
 });
+
+const getPublicContentSnapshot = async (client) => {
+  const [products, news] = await Promise.all([listProducts(client), listPublicNews(client)]);
+  return { products, news };
+};
 
 const seedLocalDatabaseIfEmpty = async (client) => {
   const snapshot = await getContentSnapshot(client);
@@ -887,7 +894,17 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
     app.get('/api/content', async (request, response) => {
       try {
-        const snapshot = await getContentSnapshot(request.app.locals.db);
+        // Authenticated admins see ALL content (including scheduled articles);
+        // public visitors only see published content.
+        const session = getRequestSession(request);
+        const isAdmin = session?.email
+          ? Boolean(await findAdminByEmail(request.app.locals.db, session.email))
+          : false;
+
+        const snapshot = isAdmin
+          ? await getContentSnapshot(request.app.locals.db)
+          : await getPublicContentSnapshot(request.app.locals.db);
+
         response.json({
           backend: request.app.locals.backendMode,
           ...snapshot
