@@ -1290,7 +1290,7 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
     app.get('/sitemap.xml', async (request, response) => {
       try {
-        const { rows: products } = await db.execute('SELECT id, category FROM products ORDER BY sort_order DESC');
+        const { rows: products } = await db.execute('SELECT id, category FROM products ORDER BY id ASC');
         const { rows: news } = await db.execute('SELECT id, slug, title, date FROM news ORDER BY date DESC, _rowid_ DESC');
         
         const stripDiacritics = (val) => val.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/\u0110/g, 'd');
