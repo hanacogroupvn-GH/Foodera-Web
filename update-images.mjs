@@ -4,8 +4,8 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const client = createClient({
-  url: 'libsql://foodera-hanacogroupvn-gh.aws-ap-northeast-1.turso.io',
-  authToken: process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzcwMDQ4NzUsImlkIjoiMDE5ZGJkMWQtYjIwMS03YjAwLTk4YWYtYTcxYmQzNmRlYTlkIiwicmlkIjoiNjJhNjhmMTgtMjkyNS00ZDdhLTg0MmQtMzQxNTFlMjU1YzdhIn0.WG8m8OAssByfEXdcbP8qymz_xJ1yFJSMR2DiCLaQPKZ9CPblhg-J6ijdL6smU_ssmYoYIXG1j7GG4ECkKTctAQ'
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN
 });
 
 const sourceDir = path.resolve('Hình sản phẩm');
