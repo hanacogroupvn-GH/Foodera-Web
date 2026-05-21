@@ -17,15 +17,6 @@
   font-display: swap;
 }
 
-/* ===== LOCAL FONTS — Noto Sans SC (Simplified Chinese) ===== */
-@font-face {
-  font-family: "Noto Sans SC";
-  src: url("/fonts/NotoSansSC-VariableFont_wght.ttf") format("truetype");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
   --color-foodera-forest: #1B6B3A;
   --color-foodera-lime: #8BC34A;
