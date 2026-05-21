@@ -8,11 +8,11 @@
 }
 
 /* ===== CHINESE LOCALE — Auto-apply Noto Sans SC ===== */
-/* Applied when LocaleContext sets lang="zh" on <html> */
+/* Applied when LocaleContext sets lang="zh-CN" on <html> */
 :lang(zh),
 [lang="zh"],
 [data-locale="zh"] {
-  font-family: "Noto Sans SC", sans-serif;
+  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
 }
 
 /* Core Styling with CSS Variables */
