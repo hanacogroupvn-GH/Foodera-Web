@@ -210,7 +210,7 @@ const Home: React.FC = () => {
           <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(135deg, #006838 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
-              title={locale === 'zh' ? 'ä¸ºæ­¤è®¾å¤‡æŽ¨è' : 'Recommended for This Device'}
+              title={locale === 'zh' ? '为此设备推荐' : 'Recommended for This Device'}
               subtitle={
                 locale === 'zh'
                   ? 'ç»“åˆè¯¥è®¾å¤‡è¿‘æœŸæµè§ˆçš„äº§å“ã€�åˆ†ç±»ä¸Žå¸‚åœºèµ„è®¯ä¿¡å·åŠ¨æ€è°ƒæ•´ã€‚'
@@ -221,7 +221,7 @@ const Home: React.FC = () => {
             {recommendedProducts.length > 0 && (
               <div className="mb-16">
                 <p className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest">
-                  {locale === 'zh' ? 'äº§å“æŽ¨è' : 'Product Recommendations'}
+                  {locale === 'zh' ? '产品推荐' : 'Product Recommendations'}
                 </p>
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                   {recommendedProducts.map((product) => (
@@ -234,7 +234,7 @@ const Home: React.FC = () => {
             {recommendedNews.length > 0 && (
               <div>
                 <p className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-foodera-forest">
-                  {locale === 'zh' ? 'èµ„è®¯æŽ¨è' : 'Insight Recommendations'}
+                  {locale === 'zh' ? '资讯推荐' : 'Insight Recommendations'}
                 </p>
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                   {recommendedNews.map((item) => (

@@ -946,7 +946,7 @@ const NewsDetail: React.FC = () => {
           <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">
             {isUsingPersonalizedRelatedNews
               ? locale === 'zh'
-                ? 'ä¸ºæ­¤è®¾å¤‡æŽ¨èçš„èµ„è®¯'
+                ? '为此设备推荐的资讯'
                 : 'Recommended Insights for This Device'
               : copy.relatedInsights}
           </h2>

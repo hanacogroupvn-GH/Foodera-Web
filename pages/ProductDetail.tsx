@@ -630,12 +630,12 @@ const ProductDetail: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
               <div>
                 <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none">
-                  {isUsingPersonalizedRelated ? (locale === 'zh' ? 'ä¸ºæ­¤è®¾å¤‡æŽ¨è' : 'Recommended for This Device') : copy.related}
+                  {isUsingPersonalizedRelated ? (locale === 'zh' ? '为此设备推荐' : 'Recommended for This Device') : copy.related}
                 </h2>
                 <p className="text-lg text-gray-500 font-medium mt-4">
                   {isUsingPersonalizedRelated
                     ? locale === 'zh'
-                      ? 'åŸºäºŽè¯¥è®¾å¤‡è¿‘æœŸæµè§ˆçš„äº§å“ä¸Žèµ„è®¯è¡Œä¸ºã€‚'
+                      ? '基于该设备近期浏览的产品与资讯行为。'
                       : 'Based on recent product and news activity from this device.'
                     : `${copy.relatedDescPrefix} ${getCategoryLabel(product.category, locale)} ${copy.relatedDescSuffix}`}
                 </p>
@@ -646,7 +646,7 @@ const ProductDetail: React.FC = () => {
               >
                 {isUsingPersonalizedRelated
                   ? locale === 'zh'
-                    ? 'æµè§ˆç›®å½•'
+                    ? '浏览目录'
                     : 'Browse Catalog'
                   : `${copy.viewAllPrefix} ${getCategoryLabel(product.category, locale)} ${copy.viewAllSuffix}`}{' '}
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
