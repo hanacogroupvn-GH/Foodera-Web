@@ -34,3 +34,6 @@ tmp/*.sqlite3
 .netlify
 .venv
 
+# Source font folders (fonts served from public/fonts/ instead)
+Montserrat/
+Noto_Sans_SC/

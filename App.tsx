@@ -86,7 +86,7 @@ const InteractiveMapLayout: React.FC = () => {
   const { locale } = useLocale();
 
   return (
-    <Suspense fallback={<AppShellLoader label={locale === 'zh' ? 'æ­£åœ¨åŠ è½½äº’åŠ¨åœ°å›¾...' : 'Loading interactive map...'} compact />}>
+    <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载互动地图...' : 'Loading interactive map...'} compact />}>
       <Outlet />
     </Suspense>
   );

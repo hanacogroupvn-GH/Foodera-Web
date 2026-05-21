@@ -1,9 +1,44 @@
 @import "tailwindcss";
 
+/* ===== LOCAL FONTS — Montserrat Variable ===== */
+@font-face {
+  font-family: "Montserrat";
+  src: url("/fonts/Montserrat-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("/fonts/Montserrat-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ===== LOCAL FONTS — Noto Sans SC (Simplified Chinese) ===== */
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("/fonts/NotoSansSC-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-foodera-forest: #1B6B3A;
   --color-foodera-lime: #8BC34A;
   --font-sans: "Montserrat", sans-serif;
+  --font-zh: "Noto Sans SC", sans-serif;
+}
+
+/* ===== CHINESE LOCALE — Auto-apply Noto Sans SC ===== */
+/* Applied when LocaleContext sets lang="zh" on <html> */
+:lang(zh),
+[lang="zh"],
+[data-locale="zh"] {
+  font-family: "Noto Sans SC", sans-serif;
 }
 
 /* Core Styling with CSS Variables */

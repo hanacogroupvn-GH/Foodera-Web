@@ -18,7 +18,7 @@ import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePl
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateProductToChinese } from '../../lib/zhTranslation';
 import pdfFooterImage from '../../pdf-footer-current.png';
-import pdfHeaderImage from '../../FOODERA-header.jpg';
+import pdfHeaderImage from '../../letterhead-logo.png';
 import {
   Package, 
   Search, 
