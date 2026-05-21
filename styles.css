@@ -1,22 +1,5 @@
 @import "tailwindcss";
 
-/* ===== LOCAL FONTS — Montserrat Variable ===== */
-@font-face {
-  font-family: "Montserrat";
-  src: url("/fonts/Montserrat-VariableFont_wght.ttf") format("truetype");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Montserrat";
-  src: url("/fonts/Montserrat-Italic-VariableFont_wght.ttf") format("truetype");
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
-}
-
 @theme {
   --color-foodera-forest: #1B6B3A;
   --color-foodera-lime: #8BC34A;
