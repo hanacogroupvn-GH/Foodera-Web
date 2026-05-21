@@ -111,7 +111,7 @@ const readCookies = (cookieHeader = '') =>
 const getSessionSecret = () =>
   process.env.SESSION_SECRET?.trim() ||
   process.env.TURSO_AUTH_TOKEN?.trim() ||
-  'foodmax-local-session-secret';
+  'dev-only-change-in-production';
 
 const signValue = (value) =>
   crypto.createHmac('sha256', getSessionSecret()).update(value).digest('base64url');
