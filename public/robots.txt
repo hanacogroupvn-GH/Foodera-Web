@@ -1,4 +1,4 @@
-# Foodmax Agriculture Export — robots.txt
+# Foodera Agriculture Export — robots.txt
 User-agent: *
 Allow: /
 
@@ -9,4 +9,4 @@ Disallow: /login
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://foodmax.vn/sitemap.xml
+Sitemap: https://foodera.vn/sitemap.xml

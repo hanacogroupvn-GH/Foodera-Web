@@ -191,7 +191,8 @@ const normalizeNonNegativeInteger = (value, fallback = 0) => {
 
 const NEWS_MIGRATION_COLUMNS = [
   ['scheduled_at', 'text'],
-  ['image_alt', 'text']
+  ['image_alt', 'text'],
+  ['related_products', 'text']
 ];
 
 const PROVINCE_MAP_PROFILE_COLUMNS = [
@@ -432,7 +433,8 @@ const mapNewsRow = (row) => ({
   image: String(row.image ?? ''),
   imageAlt: row.image_alt ? String(row.image_alt) : undefined,
   scheduledAt: row.scheduled_at ? String(row.scheduled_at) : undefined,
-  translations: parseJsonColumn(row.translations, undefined)
+  translations: parseJsonColumn(row.translations, undefined),
+  relatedProducts: parseJsonColumn(row.related_products, undefined)
 });
 
 const mapProvinceMapProfileRow = (row) => ({
@@ -600,12 +602,15 @@ export const upsertNews = async (client, item) => {
   const slug = await generateUniqueNewsSlug(client, item.slug, item.title, item.id);
   const scheduledAt = item.scheduledAt ? String(item.scheduledAt).trim() : null;
   const imageAlt = item.imageAlt ? String(item.imageAlt).trim() : null;
+  const relatedProducts = Array.isArray(item.relatedProducts) && item.relatedProducts.length > 0
+    ? stringifyJsonColumn(item.relatedProducts, null)
+    : null;
 
   await client.execute({
     sql: `
       insert into news (
-        id, slug, title, is_active, date, category, excerpt, content, image, image_alt, scheduled_at, translations, created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        id, slug, title, is_active, date, category, excerpt, content, image, image_alt, scheduled_at, translations, related_products, created_at, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       on conflict(id) do update set
         slug = excluded.slug,
         title = excluded.title,
@@ -618,6 +623,7 @@ export const upsertNews = async (client, item) => {
         image_alt = excluded.image_alt,
         scheduled_at = excluded.scheduled_at,
         translations = excluded.translations,
+        related_products = excluded.related_products,
         updated_at = CURRENT_TIMESTAMP
     `,
     args: [
@@ -632,7 +638,8 @@ export const upsertNews = async (client, item) => {
       String(item.image ?? ''),
       imageAlt,
       scheduledAt,
-      stringifyJsonColumn(item.translations, {})
+      stringifyJsonColumn(item.translations, {}),
+      relatedProducts
     ]
   });
 

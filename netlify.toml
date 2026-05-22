@@ -12,12 +12,27 @@
   external_node_modules = ["express", "serverless-http", "@libsql/client", "@google/genai", "helmet", "express-rate-limit"]
   included_files = ["server/**"]
 
+# Serve sitemap.xml with correct XML Content-Type
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=UTF-8"
+    Cache-Control = "public, max-age=86400"
+
+# Serve robots.txt with correct Content-Type
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=UTF-8"
+    Cache-Control = "public, max-age=86400"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
   force = true
 
+# SPA fallback — static files (sitemap.xml, robots.txt) are served first by Netlify
 [[redirects]]
   from = "/*"
   to = "/index.html"

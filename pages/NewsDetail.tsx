@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight, Home, Megaphone, Tag, Anchor } from 'lucide-react';
+import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight, Home, Megaphone, Tag, Anchor, Package, ExternalLink } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import AppShellLoader from '../components/AppShellLoader';
@@ -8,6 +8,7 @@ import { useLocale } from '../context/LocaleContext';
 import { usePersonalization } from '../context/PersonalizationContext';
 import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
+import { normalizeProductCategorySlug } from '../lib/productCategories';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -355,7 +356,7 @@ const NewsDetail: React.FC = () => {
     legacySlug?: string;
   }>();
   const navigate = useNavigate();
-  const { activeNews: news, isLoading } = useData();
+  const { activeNews: news, activeProducts, isLoading } = useData();
   const { locale } = useLocale();
   const { personalizedNews, hasPersonalizedContent, trackEvent } = usePersonalization();
   const primarySegment = useMemo(() => decodeRouteSegment(rawSlug), [rawSlug]);
@@ -935,6 +936,71 @@ const NewsDetail: React.FC = () => {
                   {copy.discussInsight}
                 </Link>
               </div>
+
+              {/* ── Related Products ── */}
+              {article.relatedProducts && article.relatedProducts.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Package size={13} className="text-foodera-forest" />
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                      {locale === 'zh' ? '相关产品' : 'Related Products'}
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {article.relatedProducts.slice(0, 6).map((rp, idx) => {
+                      const isProduct = rp.type === 'product';
+                      const linkedProduct = isProduct
+                        ? activeProducts.find(p => p.id === rp.productId)
+                        : null;
+                      const categorySlug = !isProduct && rp.category
+                        ? normalizeProductCategorySlug(rp.category)
+                        : null;
+                      const href = isProduct
+                        ? appRoutes.productById(rp.productId!)
+                        : categorySlug
+                          ? appRoutes.productsByCategory(categorySlug)
+                          : appRoutes.products;
+                      const displayLabel = rp.label ||
+                        (isProduct ? (linkedProduct?.name ?? rp.productId ?? '') : (rp.category ?? ''));
+                      const thumbSrc = isProduct ? linkedProduct?.image : undefined;
+
+                      return (
+                        <Link
+                          key={`rp-${idx}`}
+                          to={href}
+                          className="group flex items-center gap-3 p-2.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100"
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
+                            {thumbSrc ? (
+                              <img
+                                src={thumbSrc}
+                                alt={displayLabel}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package size={16} className="text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-gray-700 leading-snug line-clamp-2 group-hover:text-foodera-forest transition-colors">
+                              {displayLabel}
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 uppercase tracking-wide">
+                              {isProduct
+                                ? (locale === 'zh' ? '查看产品' : 'View Product')
+                                : (locale === 'zh' ? '浏览分类' : 'Browse Category')}
+                            </p>
+                          </div>
+                          <ExternalLink size={12} className="text-gray-300 group-hover:text-foodera-forest flex-shrink-0 transition-colors" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </aside>
           </div>
 

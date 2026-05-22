@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
-import { NewsItem, NewsCategory } from '../../types';
+import { NewsItem, NewsCategory, NewsRelatedProduct, NewsRelatedProductLinkType } from '../../types';
 import { buildUniqueNewsSlug, getNewsPath, normalizeNewsSlug } from '../../lib/newsSeo';
 import { googleSheetToCsvUrl, mapCsvRowsToNews, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
@@ -14,6 +14,7 @@ import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePl
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateNewsToChinese } from '../../lib/zhTranslation';
 import { analyzeSeo, SeoReport, SeoSeverity, type ContentPolicyFlag, type ReadabilityResult, type SerpPreviewData } from '../../lib/seoAnalyzer';
+import { PRODUCT_CATEGORIES, normalizeProductCategorySlug } from '../../lib/productCategories';
 import { 
   FileText, 
   Search, 
@@ -161,7 +162,7 @@ const AdminNews: React.FC = () => {
     return `news-${Date.now()}`;
   };
 
-  const { news, addNews, updateNews, deleteNews } = useData();
+  const { news, activeProducts, addNews, updateNews, deleteNews } = useData();
   const { logout } = useAuth();
   const { locale, setLocale } = useLocale();
   const rawCopy =
@@ -324,7 +325,7 @@ const AdminNews: React.FC = () => {
   const [coverImageUploadError, setCoverImageUploadError] = useState<string | null>(null);
   const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
-  const [modalTab, setModalTab] = useState<'general' | 'content' | 'translation' | 'seo'>('general');
+  const [modalTab, setModalTab] = useState<'general' | 'content' | 'translation' | 'seo' | 'links'>('general');
   const [focusKeyword, setFocusKeyword] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showFindReplace, setShowFindReplace] = useState(false);
@@ -346,6 +347,12 @@ const AdminNews: React.FC = () => {
     content: [],
     image: ''
   });
+
+  // Related products picker state
+  const [rpPickerType, setRpPickerType] = useState<NewsRelatedProductLinkType>('product');
+  const [rpPickerSearch, setRpPickerSearch] = useState('');
+  const [rpPickerCategory, setRpPickerCategory] = useState<string>('Rice');
+  const [rpPickerLabel, setRpPickerLabel] = useState('');
 
   // Derived state for the multi-line content textarea
   const [contentString, setContentString] = useState('');
@@ -454,6 +461,10 @@ const AdminNews: React.FC = () => {
     setIsModalOpen(true);
     setModalTab('general');
     setFocusKeyword('');
+    setRpPickerType('product');
+    setRpPickerSearch('');
+    setRpPickerCategory('Rice');
+    setRpPickerLabel('');
   };
 
   const closeModal = () => {
@@ -682,6 +693,9 @@ const AdminNews: React.FC = () => {
           imageAlt: (formData.imageAlt || '').trim() || undefined,
           content: paragraphs,
           scheduledAt: formData.scheduledAt || undefined,
+          relatedProducts: (formData.relatedProducts ?? []).length > 0
+            ? formData.relatedProducts
+            : undefined,
           translations:
             (formData.translations?.zh?.title || '').trim() ||
             (formData.translations?.zh?.excerpt || '').trim() ||
@@ -1167,8 +1181,8 @@ const AdminNews: React.FC = () => {
             <form onSubmit={handleSave} className="flex-grow overflow-y-auto flex flex-col">
               {/* Tab Bar */}
               <div className="flex border-b border-gray-200 px-10 pt-4 gap-1 bg-gray-50/50 flex-shrink-0">
-                {(['general', 'content', 'translation', 'seo'] as const).map((tab) => {
-                  const tabLabels = { general: 'General', content: 'Content', translation: 'Translation', seo: 'SEO Check' };
+                {(['general', 'content', 'translation', 'seo', 'links'] as const).map((tab) => {
+                  const tabLabels = { general: 'General', content: 'Content', translation: 'Translation', seo: 'SEO Check', links: 'Liên kết SP' };
                   const isActive = modalTab === tab;
                   return (
                     <button
@@ -1182,6 +1196,15 @@ const AdminNews: React.FC = () => {
                       }`}
                     >
                       {tab === 'seo' && <BarChart3 size={13} />}
+                      {tab === 'links' && (
+                        <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-black ${
+                          (formData.relatedProducts?.length ?? 0) > 0
+                            ? 'bg-foodera-forest text-white'
+                            : 'bg-gray-200 text-gray-400'
+                        }`}>
+                          {formData.relatedProducts?.length ?? 0}
+                        </span>
+                      )}
                       {tabLabels[tab]}
                     </button>
                   );
@@ -1745,6 +1768,275 @@ const AdminNews: React.FC = () => {
               </div>
               </>
               )}
+
+
+              {/* TAB: Liên kết sản phẩm */}
+              {modalTab === 'links' && (() => {
+                const currentLinks: NewsRelatedProduct[] = formData.relatedProducts ?? [];
+
+                const addLink = (entry: NewsRelatedProduct) => {
+                  if (currentLinks.length >= 6) return;
+                  // Avoid duplicates
+                  const isDuplicate = currentLinks.some(rp =>
+                    rp.type === entry.type &&
+                    rp.productId === entry.productId &&
+                    rp.category === entry.category
+                  );
+                  if (isDuplicate) return;
+                  setFormData(prev => ({ ...prev, relatedProducts: [...currentLinks, entry] }));
+                  setRpPickerSearch('');
+                  setRpPickerLabel('');
+                };
+
+                const removeLink = (idx: number) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    relatedProducts: currentLinks.filter((_, i) => i !== idx)
+                  }));
+                };
+
+                const moveLink = (idx: number, dir: -1 | 1) => {
+                  const arr = [...currentLinks];
+                  const swapIdx = idx + dir;
+                  if (swapIdx < 0 || swapIdx >= arr.length) return;
+                  [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
+                  setFormData(prev => ({ ...prev, relatedProducts: arr }));
+                };
+
+                const filteredProducts = activeProducts.filter(p =>
+                  rpPickerSearch.trim() === '' ||
+                  p.name.toLowerCase().includes(rpPickerSearch.toLowerCase()) ||
+                  p.id.toLowerCase().includes(rpPickerSearch.toLowerCase())
+                ).slice(0, 8);
+
+                return (
+                  <>
+                    {/* Header */}
+                    <div className="rounded-2xl border border-foodera-forest/10 bg-foodera-forest/5 p-5 flex gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-foodera-forest flex items-center justify-center">
+                        <LinkIcon size={18} className="text-foodera-lime" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Liên kết nội bộ — Sản phẩm</p>
+                        <p className="text-xs text-gray-500 font-medium mt-1">
+                          Gắn link đến trang sản phẩm để tăng internal linking SEO. Hiển thị trong sidebar bài viết. Tối đa 6 mục.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Picker */}
+                    {currentLinks.length < 6 && (
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 space-y-4">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thêm liên kết mới</p>
+
+                        {/* Type selector */}
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setRpPickerType('product')}
+                            className={`flex-1 py-2.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                              rpPickerType === 'product'
+                                ? 'bg-foodera-forest text-white border-foodera-forest shadow-sm'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-foodera-forest/30'
+                            }`}
+                          >
+                            Sản phẩm cụ thể
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRpPickerType('category')}
+                            className={`flex-1 py-2.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                              rpPickerType === 'category'
+                                ? 'bg-foodera-forest text-white border-foodera-forest shadow-sm'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-foodera-forest/30'
+                            }`}
+                          >
+                            Danh mục sản phẩm
+                          </button>
+                        </div>
+
+                        {rpPickerType === 'product' ? (
+                          <div className="space-y-3">
+                            {/* Search box */}
+                            <div className="relative">
+                              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input
+                                type="text"
+                                value={rpPickerSearch}
+                                onChange={e => setRpPickerSearch(e.target.value)}
+                                placeholder="Tìm sản phẩm theo tên..."
+                                className="w-full pl-9 pr-4 py-2.5 bg-white rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-foodera-forest/30"
+                              />
+                            </div>
+                            {/* Product list */}
+                            <div className="space-y-2 max-h-52 overflow-y-auto">
+                              {filteredProducts.length === 0 && (
+                                <p className="text-xs text-gray-400 font-medium text-center py-4">Không tìm thấy sản phẩm</p>
+                              )}
+                              {filteredProducts.map(product => {
+                                const alreadyAdded = currentLinks.some(rp => rp.type === 'product' && rp.productId === product.id);
+                                return (
+                                  <div key={product.id} className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-gray-100 hover:border-foodera-forest/20 transition-colors">
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-bold text-gray-800 line-clamp-1">{product.name}</p>
+                                      <p className="text-[10px] text-gray-400 font-medium">{product.category} • {product.subCategory}</p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      disabled={alreadyAdded}
+                                      onClick={() => addLink({
+                                        type: 'product',
+                                        productId: product.id,
+                                        label: rpPickerLabel.trim() || undefined
+                                      })}
+                                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                        alreadyAdded
+                                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                          : 'bg-foodera-forest text-white hover:bg-foodera-lime hover:text-foodera-forest'
+                                      }`}
+                                    >
+                                      {alreadyAdded ? '✓ Đã thêm' : '+ Thêm'}
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-3 gap-2">
+                              {PRODUCT_CATEGORIES.map(cat => {
+                                const alreadyAdded = currentLinks.some(rp => rp.type === 'category' && rp.category === cat);
+                                return (
+                                  <button
+                                    key={cat}
+                                    type="button"
+                                    disabled={alreadyAdded}
+                                    onClick={() => addLink({
+                                      type: 'category',
+                                      category: cat,
+                                      label: rpPickerLabel.trim() || undefined
+                                    })}
+                                    className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                                      alreadyAdded
+                                        ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                                        : 'bg-white text-foodera-forest border-foodera-forest/20 hover:bg-foodera-forest hover:text-white hover:border-foodera-forest'
+                                    }`}
+                                  >
+                                    {alreadyAdded ? `✓ ${cat}` : cat}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Custom label */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Label tùy chỉnh (tùy chọn)</label>
+                          <input
+                            type="text"
+                            value={rpPickerLabel}
+                            onChange={e => setRpPickerLabel(e.target.value)}
+                            placeholder="Để trống để dùng tên sản phẩm / danh mục mặc định"
+                            className="w-full px-4 py-2.5 bg-white rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-foodera-forest/30"
+                          />
+                          <p className="text-[10px] text-gray-400 italic">Ví dụ: "Xem các loại gạo xuất khẩu" thay vì tên mặc định</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Current list */}
+                    {currentLinks.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                          Đã chọn ({currentLinks.length}/6)
+                        </p>
+                        <div className="space-y-2">
+                          {currentLinks.map((rp, idx) => {
+                            const linkedProduct = rp.type === 'product'
+                              ? activeProducts.find(p => p.id === rp.productId)
+                              : null;
+                            const displayLabel = rp.label ||
+                              (rp.type === 'product'
+                                ? (linkedProduct?.name ?? rp.productId ?? '')
+                                : (rp.category ?? ''));
+                            const targetUrl = rp.type === 'product'
+                              ? appRoutes.productById(rp.productId!)
+                              : appRoutes.productsByCategory(normalizeProductCategorySlug(rp.category ?? ''));
+
+                            return (
+                              <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+                                {/* Thumbnail */}
+                                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
+                                  {linkedProduct?.image ? (
+                                    <img src={linkedProduct.image} alt={displayLabel} className="w-full h-full object-cover" loading="lazy" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Globe size={16} className="text-gray-300" />
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-black text-gray-800 leading-snug line-clamp-1">{displayLabel}</p>
+                                  <p className="text-[9px] text-foodera-forest font-medium mt-0.5 truncate">{targetUrl}</p>
+                                </div>
+                                {/* Badge */}
+                                <span className={`flex-shrink-0 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${
+                                  rp.type === 'product'
+                                    ? 'bg-blue-50 text-blue-600'
+                                    : 'bg-amber-50 text-amber-600'
+                                }`}>
+                                  {rp.type === 'product' ? 'SP' : 'DM'}
+                                </span>
+                                {/* Move up/down */}
+                                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveLink(idx, -1)}
+                                    disabled={idx === 0}
+                                    className="w-6 h-5 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                                  >
+                                    <ChevronLeft size={12} className="rotate-90" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveLink(idx, 1)}
+                                    disabled={idx === currentLinks.length - 1}
+                                    className="w-6 h-5 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                                  >
+                                    <ChevronLeft size={12} className="-rotate-90" />
+                                  </button>
+                                </div>
+                                {/* Remove */}
+                                <button
+                                  type="button"
+                                  onClick={() => removeLink(idx)}
+                                  className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {currentLinks.length === 0 && (
+                      <div className="text-center py-12 text-gray-400">
+                        <LinkIcon size={32} className="mx-auto mb-3 text-gray-200" />
+                        <p className="text-sm font-bold">Chưa có liên kết sản phẩm nào</p>
+                        <p className="text-xs font-medium mt-1">Thêm liên kết phía trên để bài viết hiển thị mục Related Products trong sidebar</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* TAB: SEO Check */}
               {modalTab === 'seo' && (() => {

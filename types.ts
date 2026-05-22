@@ -51,6 +51,19 @@ export interface Product {
   translations?: Partial<Record<ContentLocale, ProductTranslation>>;
 }
 
+export type NewsRelatedProductLinkType = 'product' | 'category';
+
+export interface NewsRelatedProduct {
+  /** 'product' links to a specific product page; 'category' links to a category listing */
+  type: NewsRelatedProductLinkType;
+  /** Product ID — used when type = 'product' */
+  productId?: string;
+  /** Category name (e.g. 'Rice', 'Coffee') — used when type = 'category' */
+  category?: string;
+  /** Optional custom display label. Falls back to product name / category name */
+  label?: string;
+}
+
 export interface NewsItem {
   id: string;
   slug: string;
@@ -64,6 +77,8 @@ export interface NewsItem {
   imageAlt?: string;
   scheduledAt?: string;
   translations?: Partial<Record<ContentLocale, NewsTranslation>>;
+  /** Internal product links shown in the article sidebar */
+  relatedProducts?: NewsRelatedProduct[];
 }
 
 export type PersonalizationEntityType = 'page' | 'category' | 'product' | 'news' | 'quote_request';
