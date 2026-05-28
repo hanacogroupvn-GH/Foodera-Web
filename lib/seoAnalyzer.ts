@@ -59,7 +59,17 @@ export interface SeoAnalysisInput {
 
 // ── Helpers ────────────────────────────────────────────────
 const charLen = (t: string) => t.trim().length;
-const kw = (t: string, k: string) => k ? t.toLowerCase().includes(k.toLowerCase()) : false;
+
+// Normalize: lowercase + collapse non-alphanumeric to space
+// Allows slug matching: "vietnamese-jasmine-rice-supplier" ↔ "Vietnamese Jasmine Rice Supplier"
+const normalizeForSeo = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const kw = (t: string, k: string) => k ? normalizeForSeo(t).includes(normalizeForSeo(k)) : false;
+
 const grade = (s: number): SeoReport['grade'] =>
   s >= 85 ? 'A' : s >= 70 ? 'B' : s >= 55 ? 'C' : s >= 40 ? 'D' : 'F';
 
@@ -144,7 +154,11 @@ const checkParaStructure: CF = (i) => {
 };
 
 const checkLinks: CF = (i) => {
-  const n = (i.content.match(/\[.*?\]\(.*?\)|<a\s[^>]*href/gi) || []).length;
+  // Detect:
+  // 1. HTML <a href="..."> (nếu content chưa qua htmlToSeoText)
+  // 2. Markdown [text](url)
+  // 3. "text (url)" — format xuất ra bởi htmlToSeoText
+  const n = (i.content.match(/\[.*?\]\(.*?\)|<a\s[^>]*href|(https?:\/\/[^\s)\]]+)/gi) || []).length;
   if (n === 0) return { id: 'internal-links', label: 'Internal Links', severity: 'warning', score: 40, message: 'No links. Add internal links to products/articles.' };
   return { id: 'internal-links', label: 'Internal Links', severity: 'good', score: 100, message: `${n} link(s) found.` };
 };

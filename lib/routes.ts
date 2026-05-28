@@ -19,6 +19,7 @@ export const appRoutes = {
   adminNews: '/admin/news',
   adminMapContent: '/admin/interactive-map',
   productById: (id: string) => `/product/item/${encodeURIComponent(id)}`,
+  productBySlug: (slugOrId: string) => `/product/item/${encodeURIComponent(slugOrId)}`,
   productsByCategory: (category: string) => `/product/${normalizeProductCategorySlug(category)}`,
   productLine: (category: string, subCategory?: string) => {
     const basePath = `/product/${normalizeProductCategorySlug(category)}`;

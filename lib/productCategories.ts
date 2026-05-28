@@ -1,4 +1,4 @@
-import { CategoryType, Product } from '../types';
+import { CategoryType, Product, ProductCategory } from '../types';
 
 type ProductCategoryInput = {
   category?: string | null;
@@ -9,7 +9,26 @@ type ProductCategoryInput = {
   sub_category?: string | null;
 };
 
-export const PRODUCT_CATEGORIES: CategoryType[] = ['Rice', 'Coffee', 'Cashew', 'Agriculture', 'Pepper'];
+// Hardcoded fallback — used when DB categories are not yet loaded
+export const DEFAULT_PRODUCT_CATEGORIES: CategoryType[] = ['Rice', 'Coffee', 'Cashew', 'Agriculture', 'Pepper'];
+
+// PRODUCT_CATEGORIES is now mutable: populated from DB via setDynamicCategories()
+let _dynamicCategories: CategoryType[] | null = null;
+
+export const setDynamicCategories = (categories: ProductCategory[]) => {
+  _dynamicCategories = categories
+    .filter((c) => c.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((c) => c.name);
+};
+
+export const getDynamicCategories = (): CategoryType[] =>
+  _dynamicCategories && _dynamicCategories.length > 0
+    ? _dynamicCategories
+    : DEFAULT_PRODUCT_CATEGORIES;
+
+// Legacy export for backward compatibility — just calls getDynamicCategories()
+export const PRODUCT_CATEGORIES = DEFAULT_PRODUCT_CATEGORIES;
 
 export const normalizeProductCategorySlug = (value: string): string =>
   value
@@ -23,7 +42,7 @@ export const findProductCategoryBySlug = (slug?: string | null): CategoryType | 
   }
 
   const normalizedSlug = normalizeProductCategorySlug(slug);
-  return PRODUCT_CATEGORIES.find((category) => normalizeProductCategorySlug(category) === normalizedSlug);
+  return getDynamicCategories().find((category) => normalizeProductCategorySlug(category) === normalizedSlug);
 };
 
 const hasCashewSignal = (value?: string | null): boolean =>
@@ -38,6 +57,12 @@ export const normalizeProductCategory = (input: ProductCategoryInput): CategoryT
     hasCashewSignal(input.name) ||
     hasCashewSignal(input.filters?.type);
 
+  // Try matching against dynamic categories first
+  const categories = getDynamicCategories();
+  const directMatch = categories.find((c) => c.toLowerCase() === category);
+  if (directMatch) return directMatch;
+
+  // Legacy fallback matching
   if (category.includes('rice')) return 'Rice';
   if (category.includes('coffee')) return 'Coffee';
   if (category.includes('cashew')) return 'Cashew';
@@ -45,5 +70,5 @@ export const normalizeProductCategory = (input: ProductCategoryInput): CategoryT
   if (category.includes('agri')) return 'Agriculture';
   if (category.includes('pepper')) return 'Pepper';
   if (isLegacyCashew) return 'Cashew';
-  return 'Rice';
+  return categories[0] || 'Rice';
 };

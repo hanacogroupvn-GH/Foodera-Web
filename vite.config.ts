@@ -399,6 +399,10 @@ export default defineConfig(({ mode }) => {
               return 'react-vendor';
             }
 
+            if (id.includes('@tiptap') || id.includes('prosemirror')) {
+              return 'tiptap';
+            }
+
             return undefined;
           }
         }

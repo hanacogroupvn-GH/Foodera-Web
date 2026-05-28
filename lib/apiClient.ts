@@ -3,6 +3,7 @@ import {
   PersonalizedRecommendations,
   PersonalizationTrackPayload,
   Product,
+  ProductCategory,
   ProvinceMapProfile,
   ProvinceMapSuggestionResult,
   RfqAttachment,
@@ -104,7 +105,7 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
 
 export const api = {
   getContent: () =>
-    apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[] }>('/api/content'),
+    apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[]; categories?: ProductCategory[] }>('/api/content'),
   getPersonalizedRecommendations: (options?: { productLimit?: number; newsLimit?: number }) => {
     const searchParams = new URLSearchParams();
 
@@ -228,5 +229,15 @@ export const api = {
     apiRequest<{ translation: unknown }>('/api/admin/translate', {
       method: 'POST',
       body: { prompt }
+    }),
+  // Product Categories
+  upsertCategory: (category: ProductCategory) =>
+    apiRequest<{ ok: true; category: ProductCategory }>('/api/admin/categories/upsert', {
+      method: 'POST',
+      body: { category }
+    }),
+  deleteCategory: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/categories/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     })
 };

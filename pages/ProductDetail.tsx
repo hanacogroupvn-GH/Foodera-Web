@@ -17,7 +17,8 @@ import {
   Mountain,
   Zap,
   Coffee,
-  Database
+  Database,
+  Eye
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import RfqWorkflowForm from '../components/RfqWorkflowForm';
@@ -32,18 +33,79 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { activeProducts: products, isLoading } = useData();
-  const product = products.find((p) => p.id === id);
+
+  // SSR product data injected by edge function (available immediately, no API needed)
+  const ssrProduct = useMemo(() => {
+    if (typeof window === 'undefined') return undefined;
+    const ssr = (window as any).__SSR_PRODUCT__ as Product | undefined;
+    if (!ssr || !id) return undefined;
+    // Only use if it matches the current URL slug/id
+    return (ssr.slug === id || ssr.id === id) ? ssr : undefined;
+  }, [id]);
+
+  // Find product: API data first, then SSR fallback
+  const product = products.find((p) => p.slug === id) || products.find((p) => p.id === id) || ssrProduct;
+
+  // Track whether we're using SSR data (edge function already set correct meta tags)
+  const isUsingSSR = Boolean(!products.find((p) => p.slug === id) && !products.find((p) => p.id === id) && ssrProduct && product === ssrProduct);
+
+  // 301 redirect: if URL matches a previousSlug, redirect to current slug
+  const redirectTarget = !product
+    ? products.find((p) => p.previousSlugs?.includes(id || ''))
+    : null;
+
+  useEffect(() => {
+    if (redirectTarget) {
+      navigate(appRoutes.productBySlug(redirectTarget.slug || redirectTarget.id), { replace: true });
+    }
+  }, [redirectTarget, navigate]);
+
   const { locale } = useLocale();
   const { personalizedProducts, hasPersonalizedContent, trackEvent } = usePersonalization();
   const localizedProduct = useMemo(() => (product ? localizeProduct(product, locale) : null), [locale, product]);
 
-  useDocumentMeta({
-    title: localizedProduct?.name || product?.name || (locale === 'zh' ? '产品详情' : 'Product Detail'),
-    description: localizedProduct?.shortDescription || product?.shortDescription || (locale === 'zh' ? 'FoodEra 出口产品详细信息与规格。' : 'FoodEra export product details and specifications.'),
-    canonicalUrl: product ? `${BASE_URL}${appRoutes.productById(product.id)}` : undefined,
-    ogUrl: product ? `${BASE_URL}${appRoutes.productById(product.id)}` : undefined,
+  const productUrl = product ? `${BASE_URL}${appRoutes.productBySlug(product.slug || product.id)}` : undefined;
+
+  // Skip useDocumentMeta overwrite when using SSR data — edge function already set correct title/meta
+  // This prevents React from replacing "Vietnam White Rice..." with generic "Product Detail"
+  useDocumentMeta(isUsingSSR ? {
+    // Keep edge function's values by not setting anything that would overwrite them
+  } : {
+    title: product?.seoTitle || localizedProduct?.name || product?.name || (locale === 'zh' ? '产品详情' : 'Product Detail'),
+    description: product?.metaDescription || localizedProduct?.shortDescription || product?.shortDescription || (locale === 'zh' ? 'FoodEra 出口产品详细信息与规格。' : 'FoodEra export product details and specifications.'),
+    canonicalUrl: product?.canonicalUrl || productUrl,
+    ogUrl: productUrl,
     ogImage: product?.image,
   });
+
+  // JSON-LD Product structured data (B2B: no offers/price to avoid Google critical error)
+  useEffect(() => {
+    if (!product) return;
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: localizedProduct?.name || product.name,
+      description: localizedProduct?.shortDescription || product.shortDescription || product.description,
+      image: product.image ? [product.image] : undefined,
+      url: productUrl,
+      brand: { '@type': 'Brand', name: 'FoodEra' },
+      category: product.category,
+      ...(product.originCountry ? { countryOfOrigin: { '@type': 'Country', name: product.originCountry } } : {}),
+      manufacturer: {
+        '@type': 'Organization',
+        name: 'FoodEra (Hanaco Group)',
+        url: 'https://foodera.vn'
+      }
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'product-jsonld';
+    script.textContent = JSON.stringify(jsonLd);
+    // Remove old one if exists
+    document.getElementById('product-jsonld')?.remove();
+    document.head.appendChild(script);
+    return () => { document.getElementById('product-jsonld')?.remove(); };
+  }, [product, localizedProduct, productUrl]);
   const copy = locale === 'zh'
     ? {
         loader: '正在加载产品详情...',
@@ -186,26 +248,11 @@ const ProductDetail: React.FC = () => {
   }, [hasPersonalizedContent, personalizedRelatedProducts, product, products]);
   const isUsingPersonalizedRelated = hasPersonalizedContent && personalizedRelatedProducts.length > 0;
 
-  if (isLoading && products.length === 0) {
-    return <AppShellLoader compact label={copy.loader} />;
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <h2 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h2>
-        <p className="text-gray-600 mb-8">{copy.notFoundDesc}</p>
-        <Link to={appRoutes.products} className="px-8 py-3 bg-foodera-forest text-white rounded-lg font-bold">
-          {copy.backToProducts}
-        </Link>
-      </div>
-    );
-  }
-
-  const isCashew = product.category === 'Cashew' || product.subCategory.toLowerCase().includes('cashew') || product.id.includes('cashew');
-  const isRice = product.category === 'Rice';
-  const isCoffee = product.category === 'Coffee';
-  const hasProductPdf = Boolean(product.pdfUrl?.trim());
+  // Category booleans — null-safe so they can live before early returns
+  const isCashew = Boolean(product && (product.category === 'Cashew' || product.subCategory?.toLowerCase().includes('cashew') || product.id.includes('cashew')));
+  const isRice = product?.category === 'Rice';
+  const isCoffee = product?.category === 'Coffee';
+  const hasProductPdf = Boolean(product?.pdfUrl?.trim());
 
   /* Legacy RFQ handler removed after migrating to RfqWorkflowForm.
   const handleSubmit = async (e: React.FormEvent) => {
@@ -257,6 +304,7 @@ const ProductDetail: React.FC = () => {
 
   */
   const originData = useMemo(() => {
+    if (!product) return null;
     if (isCashew) {
       return locale === 'zh'
         ? {
@@ -405,11 +453,28 @@ const ProductDetail: React.FC = () => {
           };
     }
     return null;
-  }, [isCashew, isCoffee, isRice, locale]);
+  }, [isCashew, isCoffee, isRice, locale, product]);
   const displayOriginData = useMemo(
     () => (locale === 'zh' && originData ? preserveVietnamesePlaceNamesDeep(originData) : originData),
     [locale, originData]
   );
+
+  // Early returns MUST be after ALL hooks to avoid React error #310
+  if (isLoading && products.length === 0) {
+    return <AppShellLoader compact label={copy.loader} />;
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <h2 className="text-4xl font-black text-gray-900 mb-4">{copy.notFound}</h2>
+        <p className="text-gray-600 mb-8">{copy.notFoundDesc}</p>
+        <Link to={appRoutes.products} className="px-8 py-3 bg-foodera-forest text-white rounded-lg font-bold">
+          {copy.backToProducts}
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -456,6 +521,21 @@ const ProductDetail: React.FC = () => {
                   ))}
                 </ul>
               </div>
+              {product.appearance && product.appearance.trim() && (
+              <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
+                <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-6 flex items-center gap-2">
+                  <Eye size={16} className="text-foodera-forest" /> {locale === 'zh' ? '外观' : 'Appearance'}
+                </h3>
+                <ul className="space-y-3">
+                  {product.appearance.split('\n').filter(line => line.trim()).map((line, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-foodera-forest mt-1.5 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">{line.trim()}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              )}
               <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
                 <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-gray-900 mb-6 flex items-center gap-2">
                   <Truck size={16} className="text-foodera-forest" /> {copy.tradeLogistics}

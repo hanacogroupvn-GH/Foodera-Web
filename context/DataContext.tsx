@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { NewsItem, NewsTranslation, Product, ProductTranslation } from '../types';
+import { NewsItem, NewsTranslation, Product, ProductCategory, ProductTranslation } from '../types';
 import { api, BackendMode } from '../lib/apiClient';
 import { NEWS as fallbackNewsData, PRODUCTS as fallbackProductData } from '../constants';
 import { FALLBACK_NEWS_TRANSLATIONS, FALLBACK_PRODUCT_TRANSLATIONS } from '../lib/fallbackTranslations';
 import { getActiveNews, getActiveProducts } from '../lib/contentStatus';
+import { setDynamicCategories } from '../lib/productCategories';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 interface DataContextType {
   products: Product[];
   news: NewsItem[];
+  categories: ProductCategory[];
   activeProducts: Product[];
   activeNews: NewsItem[];
   isLoading: boolean;
@@ -20,6 +22,8 @@ interface DataContextType {
   addNews: (item: NewsItem) => Promise<void>;
   updateNews: (item: NewsItem) => Promise<void>;
   deleteNews: (id: string) => Promise<void>;
+  upsertCategory: (category: ProductCategory) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   exportData: () => string;
   importData: (jsonData: string) => Promise<boolean>;
   resetToDefaults: () => Promise<void>;
@@ -171,6 +175,7 @@ const getFallbackNews = () =>
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [backendMode, setBackendMode] = useState<BackendMode>('fallback');
   const [backendError, setBackendError] = useState<string | null>(null);
@@ -180,20 +185,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refresh = async () => {
     setIsLoading(true);
 
-    try {
-      const payload = await api.getContent();
-      setProducts((payload.products ?? []).map(normalizeProduct));
-      setNews((payload.news ?? []).map(normalizeNewsItem));
-      setBackendMode(payload.backend || 'turso');
-      setBackendError(null);
-    } catch (error) {
-      setProducts(getFallbackProducts());
-      setNews(getFallbackNews());
-      setBackendMode('fallback');
-      setBackendError(error instanceof Error ? error.message : 'Failed to reach /api/content.');
-    } finally {
-      setIsLoading(false);
+    // Retry up to 2 times to handle Netlify Function cold start delays
+    const MAX_RETRIES = 2;
+    const RETRY_DELAY_MS = 2000;
+
+    let lastError: unknown = null;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const payload = await api.getContent();
+        setProducts((payload.products ?? []).map(normalizeProduct));
+        setNews((payload.news ?? []).map(normalizeNewsItem));
+        setCategories(payload.categories ?? []);
+        setDynamicCategories(payload.categories ?? []);
+        setBackendMode(payload.backend || 'turso');
+        setBackendError(null);
+        setIsLoading(false);
+        return; // success — exit early
+      } catch (error) {
+        lastError = error;
+        if (attempt < MAX_RETRIES) {
+          // Wait before retrying (cold start recovery)
+          await new Promise<void>((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+      }
     }
+
+    // All retries exhausted — fall back to bundled data
+    setProducts(getFallbackProducts());
+    setNews(getFallbackNews());
+    setBackendMode('fallback');
+    setBackendError(lastError instanceof Error ? lastError.message : 'Failed to reach /api/content.');
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -230,6 +253,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refresh();
   };
 
+  const upsertCategory = async (category: ProductCategory) => {
+    await api.upsertCategory(category);
+    await refresh();
+  };
+
+  const deleteCategory = async (id: string) => {
+    await api.deleteCategory(id);
+    await refresh();
+  };
+
   const exportData = () => JSON.stringify({ products, news }, null, 2);
 
   const importData = async (jsonData: string) => {
@@ -261,6 +294,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     () => ({
       products,
       news,
+      categories,
       activeProducts,
       activeNews,
       isLoading,
@@ -272,12 +306,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addNews,
       updateNews,
       deleteNews,
+      upsertCategory,
+      deleteCategory,
       exportData,
       importData,
       resetToDefaults,
       refresh
     }),
-    [products, news, activeProducts, activeNews, isLoading, backendMode, backendError]
+    [products, news, categories, activeProducts, activeNews, isLoading, backendMode, backendError]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

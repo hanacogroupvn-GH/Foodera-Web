@@ -59,7 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <Link 
-      to={appRoutes.productById(product.id)}
+      to={appRoutes.productBySlug(product.slug || product.id)}
       onClick={() => {
         void trackEvent(
           {
@@ -84,7 +84,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">
         <img 
           src={product.image} 
-          alt={localizedProduct.name} 
+          alt={product.imageAlt || localizedProduct.name} 
           loading="lazy"
           decoding="async"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"

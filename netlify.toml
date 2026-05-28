@@ -32,6 +32,11 @@
   status = 200
   force = true
 
+# Edge Function: inject product SEO meta into HTML for Googlebot / social crawlers
+[[edge_functions]]
+  function = "seo-inject"
+  path = "/product/item/*"
+
 # SPA fallback — static files (sitemap.xml, robots.txt) are served first by Netlify
 [[redirects]]
   from = "/*"

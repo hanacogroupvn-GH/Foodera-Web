@@ -779,6 +779,33 @@ const NewsDetail: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-12">
             <section className="min-w-0">
               <div itemProp="articleBody">
+                {/* ── HTML content from Tiptap editor (priority) ── */}
+                {article.contentHtml ? (
+                  <div
+                    className={[
+                      'prose prose-lg max-w-none',
+                      'prose-h1:text-3xl prose-h1:font-black prose-h1:text-gray-900 prose-h1:mt-8 prose-h1:mb-4',
+                      'prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:font-black prose-h2:text-gray-900 prose-h2:mt-12 prose-h2:mb-5',
+                      'prose-h3:text-xl prose-h3:font-bold prose-h3:text-gray-800 prose-h3:mt-8 prose-h3:mb-3',
+                      'prose-p:text-lg md:prose-p:text-[1.32rem] prose-p:text-gray-700 prose-p:leading-[1.85] prose-p:font-medium prose-p:mb-6 prose-p:text-justify',
+                      'prose-ul:pl-6 prose-ul:mb-4 prose-li:text-lg prose-li:text-gray-700 prose-li:font-medium prose-li:mb-2',
+                      'prose-ol:pl-6 prose-ol:mb-4',
+                      'prose-blockquote:border-l-4 prose-blockquote:border-foodera-forest prose-blockquote:pl-6 prose-blockquote:py-3 prose-blockquote:my-8 prose-blockquote:text-lg prose-blockquote:italic prose-blockquote:text-gray-600 prose-blockquote:font-medium',
+                      'prose-a:text-foodera-forest prose-a:underline prose-a:hover:text-foodera-lime prose-a:transition-colors',
+                      'prose-strong:font-black prose-strong:text-gray-900',
+                      'prose-em:italic prose-em:text-gray-700',
+                      'prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono',
+                      'prose-table:w-full prose-table:border-collapse',
+                      'prose-th:bg-foodera-forest/5 prose-th:px-5 prose-th:py-3.5 prose-th:border prose-th:border-gray-200 prose-th:text-left prose-th:font-black prose-th:text-xs prose-th:uppercase prose-th:tracking-wider prose-th:text-foodera-forest',
+                      'prose-td:px-5 prose-td:py-3.5 prose-td:border prose-td:border-gray-200 prose-td:text-gray-700 prose-td:font-medium',
+                      'prose-img:rounded-2xl prose-img:my-8 prose-img:border prose-img:border-gray-100',
+                      'prose-hr:border-gray-200 prose-hr:my-10',
+                    ].join(' ')}
+                    dangerouslySetInnerHTML={{ __html: article.contentHtml }}
+                  />
+                ) : (
+                /* ── Legacy block renderer for plain-text content ── */
+                <>
                 {displayBlocks.map((block, idx) => {
                   const isFirstParagraph = block.type === 'paragraph' && idx === displayBlocks.findIndex(b => b.type === 'paragraph');
 
@@ -905,7 +932,8 @@ const NewsDetail: React.FC = () => {
                       );
                     }
                   }
-                })}
+                })}</>
+                )}
               </div>
             </section>
 

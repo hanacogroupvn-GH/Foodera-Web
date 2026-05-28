@@ -14,7 +14,10 @@ import { preserveVietnamesePlaceNamesDeep } from '../../lib/preserveVietnamesePl
 import { repairMojibakeDeep, repairMojibakeText } from '../../lib/repairMojibake';
 import { canTranslateCmsContent, translateNewsToChinese } from '../../lib/zhTranslation';
 import { analyzeSeo, SeoReport, SeoSeverity, type ContentPolicyFlag, type ReadabilityResult, type SerpPreviewData } from '../../lib/seoAnalyzer';
-import { PRODUCT_CATEGORIES, normalizeProductCategorySlug } from '../../lib/productCategories';
+import { getDynamicCategories, normalizeProductCategorySlug } from '../../lib/productCategories';
+import RichTextEditor from '../../components/RichTextEditor';
+import { NewsPreviewModal } from './news/NewsPreviewModal';
+import { SeoFieldsPanel } from './news/SeoFieldsPanel';
 import { 
   FileText, 
   Search, 
@@ -44,28 +47,15 @@ import {
   CircleAlert,
   TriangleAlert,
   CheckCircle2,
-  Bold,
-  Italic,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  Minus,
   CalendarClock,
   Inbox,
-  Table2,
   Megaphone,
   Tag,
   Anchor,
-  Undo2,
-  Redo2,
   Globe,
   AlertOctagon,
   BookOpen,
   Gauge,
-  FileSearch2,
-  Replace,
   ListTree,
   Info,
 } from 'lucide-react';
@@ -73,46 +63,52 @@ import { AdminSidebar } from '../../components/AdminSidebar';
 
 type ListViewTab = 'all' | 'scheduled' | 'active' | 'inactive';
 
-// ── Rich‑text toolbar helper ──────────────────────────────
-const wrapSelection = (
-  textarea: HTMLTextAreaElement | null,
-  setter: React.Dispatch<React.SetStateAction<string>>,
-  prefix: string,
-  suffix: string,
-  placeholder = 'text'
-) => {
-  if (!textarea) return;
-  const { selectionStart, selectionEnd, value } = textarea;
-  const selected = value.slice(selectionStart, selectionEnd) || placeholder;
-  const before = value.slice(0, selectionStart);
-  const after = value.slice(selectionEnd);
-  const inserted = `${prefix}${selected}${suffix}`;
-  setter(before + inserted + after);
-  requestAnimationFrame(() => {
-    textarea.focus();
-    textarea.setSelectionRange(
-      selectionStart + prefix.length,
-      selectionStart + prefix.length + selected.length
-    );
-  });
+// ── HTML → SEO-aware plain text (giữ cấu trúc heading, paragraph, link) ─
+// Dùng cho SEO Analyzer — KHÔNG dùng doc.body.textContent vì sẽ mất cấu trúc
+const htmlToSeoText = (html: string): string => {
+  if (!html) return '';
+
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    // Convert links → "text (href)" để SEO analyzer detect được internal/external link
+    doc.querySelectorAll('a[href]').forEach((a) => {
+      const text = a.textContent?.trim() || 'link';
+      const href = a.getAttribute('href') || '';
+      a.replaceWith(`${text} (${href})`);
+    });
+
+    // Add line breaks around block elements để paragraph/heading check hoạt động đúng
+    doc.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,div,tr').forEach((el) => {
+      el.insertAdjacentText('beforebegin', '\n');
+      el.insertAdjacentText('afterend', '\n');
+    });
+
+    return (doc.body.textContent || '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+  } catch {
+    // Fallback regex khi DOMParser không khả dụng
+    return html
+      .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+      .replace(/<\/(h1|h2|h3|h4|h5|h6|p|li|blockquote|div|tr)>/gi, '\n')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+  }
 };
 
-const insertAtCursor = (
-  textarea: HTMLTextAreaElement | null,
-  setter: React.Dispatch<React.SetStateAction<string>>,
-  text: string
-) => {
-  if (!textarea) return;
-  const { selectionStart, value } = textarea;
-  const before = value.slice(0, selectionStart);
-  const after = value.slice(selectionStart);
-  const needsNewline = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
-  setter(before + needsNewline + text + after);
-  requestAnimationFrame(() => {
-    textarea.focus();
-    const pos = selectionStart + needsNewline.length + text.length;
-    textarea.setSelectionRange(pos, pos);
-  });
+// Legacy alias — vẫn giữ cho các chỗ dùng khi lưu content[] (paragraph split)
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+  } catch {
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 };
 
 const NEWS_DRAFT_KEY = 'foodera_admin_news_draft_v1';
@@ -328,13 +324,7 @@ const AdminNews: React.FC = () => {
   const [modalTab, setModalTab] = useState<'general' | 'content' | 'translation' | 'seo' | 'links'>('general');
   const [focusKeyword, setFocusKeyword] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [showFindReplace, setShowFindReplace] = useState(false);
-  const [findText, setFindText] = useState('');
-  const [replaceTextVal, setReplaceTextVal] = useState('');
-  const [showOutline, setShowOutline] = useState(false);
-  const [undoStack, setUndoStack] = useState<string[]>([]);
-  const [redoStack, setRedoStack] = useState<string[]>([]);
-  const contentTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [contentImageUploadError, setContentImageUploadError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<NewsItem>>({
@@ -437,9 +427,11 @@ const AdminNews: React.FC = () => {
           }
         }
       });
-      setContentString(item.content.join('\n\n'));
+      setContentString(item.contentHtml || item.content.join('\n\n'));
       setZhContentString(preserveVietnamesePlaceNamesDeep(item.translations?.zh?.content || []).join('\n\n'));
       setHasCustomSlug(!!item.slug?.trim());
+      // Restore SEO fields when editing existing item
+      setFocusKeyword(item.focusKeyword || '');
     } else {
       setEditingItem(null);
       const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -460,7 +452,7 @@ const AdminNews: React.FC = () => {
     }
     setIsModalOpen(true);
     setModalTab('general');
-    setFocusKeyword('');
+    // focusKeyword đã được set trong block if/else phía trên — KHÔNG reset ở đây
     setRpPickerType('product');
     setRpPickerSearch('');
     setRpPickerCategory('Rice');
@@ -477,48 +469,9 @@ const AdminNews: React.FC = () => {
     clearNewsDraft();
   };
 
-  // ── Undo / Redo helpers ──────────────────────────────────
-  const pushUndo = (prev: string) => {
-    setUndoStack(s => [...s.slice(-30), prev]);
-    setRedoStack([]);
-  };
-  const handleUndo = () => {
-    if (undoStack.length === 0) return;
-    const prev = undoStack[undoStack.length - 1];
-    setUndoStack(s => s.slice(0, -1));
-    setRedoStack(s => [...s, contentString]);
-    setContentString(prev);
-  };
-  const handleRedo = () => {
-    if (redoStack.length === 0) return;
-    const next = redoStack[redoStack.length - 1];
-    setRedoStack(s => s.slice(0, -1));
-    setUndoStack(s => [...s, contentString]);
-    setContentString(next);
-  };
-  const updateContentWithUndo = (next: string) => {
-    pushUndo(contentString);
-    setContentString(next);
-  };
 
-  // ── Find & Replace helper ───────────────────────────────
-  const handleFindReplace = () => {
-    if (!findText) return;
-    const updated = contentString.split(findText).join(replaceTextVal);
-    if (updated !== contentString) {
-      pushUndo(contentString);
-      setContentString(updated);
-    }
-  };
 
-  // ── Content outline extractor ───────────────────────────
-  const contentOutline = React.useMemo(() => {
-    const lines = contentString.split('\n').map(l => l.trim()).filter(Boolean);
-    const headingPat = /^\d{1,2}\s*[.)\-]?\s*[\p{L}\p{N}\s&/.-]{2,60}$/u;
-    return lines
-      .map((line, idx) => ({ line, idx, isHeading: headingPat.test(line) }))
-      .filter(item => item.isHeading);
-  }, [contentString]);
+
 
   const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -669,8 +622,9 @@ const AdminNews: React.FC = () => {
     setIsSaving(true);
     setSaveError(null);
 
-    // Convert string to paragraphs
-    const paragraphs = contentString.split('\n').filter(p => p.trim() !== '');
+    // Extract plain text from HTML for legacy content[] field (SEO, translation fallback)
+    const plainText = stripHtmlTags(contentString);
+    const paragraphs = plainText.split('\n').filter(p => p.trim() !== '');
     const zhParagraphs = zhContentString.split('\n').filter(p => p.trim() !== '');
 
     setTimeout(async () => {
@@ -680,6 +634,9 @@ const AdminNews: React.FC = () => {
         const slugPool = news.map((item) => item.slug);
         const requestedSlug = (formData.slug || '').trim();
         const finalSlug = buildUniqueNewsSlug(requestedSlug || title, slugPool, editingItem?.slug);
+
+        // Determine if contentString is HTML (from Tiptap) or legacy plain text
+        const isHtmlContent = contentString.trim().startsWith('<');
 
         const payload = {
           id: editingItem?.id || createNewsId(),
@@ -691,7 +648,14 @@ const AdminNews: React.FC = () => {
           excerpt: (formData.excerpt || '').trim(),
           image: (formData.image || '').trim(),
           imageAlt: (formData.imageAlt || '').trim() || undefined,
-          content: paragraphs,
+          // Keep content[] for backward compat with old rendering & translation pipeline
+          content: paragraphs.length > 0 ? paragraphs : (formData.content || []),
+          // Store HTML from Tiptap editor
+          contentHtml: isHtmlContent ? contentString : undefined,
+          // SEO fields
+          seoTitle: (formData.seoTitle || '').trim() || undefined,
+          metaDescription: (formData.metaDescription || '').trim() || undefined,
+          focusKeyword: focusKeyword.trim() || undefined,
           scheduledAt: formData.scheduledAt || undefined,
           relatedProducts: (formData.relatedProducts ?? []).length > 0
             ? formData.relatedProducts
@@ -1393,295 +1357,47 @@ const AdminNews: React.FC = () => {
               {/* TAB: Content */}
               {modalTab === 'content' && (
               <>
-              <div className="flex gap-4">
-              {/* Outline Sidebar (collapsible) */}
-              {showOutline && (
-                <div className="w-56 flex-shrink-0 bg-gray-50 rounded-2xl border border-gray-100 p-4 space-y-3 h-fit sticky top-0">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ListTree size={14} className="text-foodera-forest" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-foodera-forest">Article Outline</span>
-                  </div>
-                  {contentOutline.length === 0 ? (
-                    <p className="text-[10px] text-gray-400 italic">No headings detected. Add numbered sections (e.g. "1. Overview") to build an outline.</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {contentOutline.map((h, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            const ta = contentTextareaRef.current;
-                            if (!ta) return;
-                            const lines = contentString.split('\n');
-                            let charPos = 0;
-                            for (let li = 0; li < lines.length && li <= h.idx; li++) {
-                              if (li < h.idx) charPos += lines[li].length + 1;
-                            }
-                            ta.focus();
-                            ta.setSelectionRange(charPos, charPos + h.line.length);
-                            ta.scrollTop = (charPos / contentString.length) * ta.scrollHeight;
-                          }}
-                          className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg hover:bg-foodera-forest/5 transition-colors"
-                        >
-                          <CheckCircle2 size={10} className="text-green-500 flex-shrink-0" />
-                          <span className="text-[10px] font-bold text-gray-700 truncate">{h.line}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="pt-3 border-t border-gray-200">
-                    <p className="text-[9px] text-gray-400">
-                      {contentOutline.length} section{contentOutline.length !== 1 ? 's' : ''} detected
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex-grow space-y-2">
-                <div className="flex justify-between items-center mb-2">
+              <div className="space-y-4">
+                {/* Header row */}
+                <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.fullContentLabel}</label>
-                  <span className="text-[9px] font-bold text-foodera-forest bg-foodera-forest/5 px-2 py-1 rounded">{copy.fullContentHint}</span>
-                </div>
-
-                {/* ── Enhanced Rich-text Toolbar ──────────────── */}
-                <div className="flex flex-wrap items-center gap-1 p-2 bg-white border border-gray-200 rounded-t-xl">
-                  {/* Undo / Redo */}
-                  <button type="button" title="Undo (Ctrl+Z)" onClick={handleUndo} disabled={undoStack.length === 0}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors disabled:opacity-30">
-                    <Undo2 size={16} />
-                  </button>
-                  <button type="button" title="Redo (Ctrl+Shift+Z)" onClick={handleRedo} disabled={redoStack.length === 0}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors disabled:opacity-30">
-                    <Redo2 size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Bold / Italic */}
-                  <button type="button" title="Bold (Ctrl+B)"
-                    onClick={() => { pushUndo(contentString); wrapSelection(contentTextareaRef.current, setContentString, '**', '**', 'bold text'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Bold size={16} />
-                  </button>
-                  <button type="button" title="Italic (Ctrl+I)"
-                    onClick={() => { pushUndo(contentString); wrapSelection(contentTextareaRef.current, setContentString, '*', '*', 'italic text'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Italic size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Heading H2 */}
-                  <button type="button" title="Heading (H2)"
-                    onClick={() => {
-                      const ta = contentTextareaRef.current;
-                      if (!ta) return;
-                      pushUndo(contentString);
-                      const { selectionStart, value } = ta;
-                      const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
-                      const lineEnd = value.indexOf('\n', selectionStart);
-                      const end = lineEnd === -1 ? value.length : lineEnd;
-                      const lineText = value.slice(lineStart, end);
-                      const alreadyHeading = /^\d+\.\s/.test(lineText);
-                      const before = value.slice(0, lineStart);
-                      const after = value.slice(end);
-                      setContentString(alreadyHeading ? before + lineText.replace(/^\d+\.\s*/, '') + after : before + '1. ' + lineText + after);
-                      requestAnimationFrame(() => ta.focus());
-                    }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Heading2 size={16} />
-                  </button>
-                  {/* Heading H3 (subheading) */}
-                  <button type="button" title="Subheading (H3)"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '1.1 Subheading'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Heading3 size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Lists */}
-                  <button type="button" title="Bulleted List"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '• '); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <List size={16} />
-                  </button>
-                  <button type="button" title="Numbered List"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '1. '); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <ListOrdered size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Link / Image */}
-                  <button type="button" title="Link (Ctrl+K)"
-                    onClick={() => { pushUndo(contentString); wrapSelection(contentTextareaRef.current, setContentString, '[', '](https://)', 'link text'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <LinkIcon size={16} />
-                  </button>
-                  <button type="button" title="Insert Image"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '[[IMAGE:https://example.com/image.jpg|Alt text|Caption]]'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <ImageIcon size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Quote / Separator */}
-                  <button type="button" title="Quote"
-                    onClick={() => {
-                      const ta = contentTextareaRef.current;
-                      if (!ta) return;
-                      pushUndo(contentString);
-                      const { selectionStart, selectionEnd, value } = ta;
-                      const selected = value.slice(selectionStart, selectionEnd);
-                      const quoted = (selected || 'quote text').split('\n').map((l: string) => `> ${l}`).join('\n');
-                      const before = value.slice(0, selectionStart);
-                      const after = value.slice(selectionEnd);
-                      const nl = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
-                      setContentString(before + nl + quoted + after);
-                      requestAnimationFrame(() => ta.focus());
-                    }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Quote size={16} />
-                  </button>
-                  <button type="button" title="Separator"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '\n---\n'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Minus size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Table */}
-                  <button type="button" title="Insert Table"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Data     | Data     | Data     |'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Table2 size={16} />
-                  </button>
-                  {/* CTA Block */}
-                  <button type="button" title="Call-to-Action"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '[[CTA:Contact us for a competitive quotation|/contact]]'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Megaphone size={16} />
-                  </button>
-                  {/* Tag */}
-                  <button type="button" title="Semantic Tag"
-                    onClick={() => { pushUndo(contentString); wrapSelection(contentTextareaRef.current, setContentString, '[[TAG:', ']]', 'keyword'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Tag size={16} />
-                  </button>
-                  {/* Anchor */}
-                  <button type="button" title="Anchor Point"
-                    onClick={() => { pushUndo(contentString); insertAtCursor(contentTextareaRef.current, setContentString, '[[ANCHOR:section-name]]'); }}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Anchor size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-200 mx-1" />
-
-                  {/* Find & Replace */}
-                  <button type="button" title="Find & Replace"
-                    onClick={() => setShowFindReplace(v => !v)}
-                    className={`p-2 rounded-lg transition-colors ${showFindReplace ? 'bg-foodera-forest/10 text-foodera-forest' : 'text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest'}`}>
-                    <FileSearch2 size={16} />
-                  </button>
-                  {/* Outline Toggle */}
-                  <button type="button" title="Toggle Outline"
-                    onClick={() => setShowOutline(v => !v)}
-                    className={`p-2 rounded-lg transition-colors ${showOutline ? 'bg-foodera-forest/10 text-foodera-forest' : 'text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest'}`}>
-                    <ListTree size={16} />
-                  </button>
-                  {/* Preview */}
-                  <button type="button" title="Live Preview"
-                    onClick={() => setShowPreviewModal(true)}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-foodera-forest/10 hover:text-foodera-forest transition-colors">
-                    <Eye size={16} />
-                  </button>
-                </div>
-
-                {/* ── Find & Replace Bar ──────────────────────── */}
-                {showFindReplace && (
-                  <div className="flex flex-wrap items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
-                    <Search size={14} className="text-amber-500 flex-shrink-0" />
-                    <input type="text" value={findText} onChange={e => setFindText(e.target.value)}
-                      placeholder="Find..." className="flex-grow min-w-[100px] px-2 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-medium outline-none focus:border-foodera-forest/30" />
-                    <Replace size={14} className="text-amber-500 flex-shrink-0" />
-                    <input type="text" value={replaceTextVal} onChange={e => setReplaceTextVal(e.target.value)}
-                      placeholder="Replace with..." className="flex-grow min-w-[100px] px-2 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-medium outline-none focus:border-foodera-forest/30" />
-                    <button type="button" onClick={handleFindReplace}
-                      className="px-3 py-1.5 bg-foodera-forest text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all">
-                      Replace All
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      title="Xem trước bài viết"
+                      onClick={() => setShowPreviewModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-foodera-forest/5 hover:bg-foodera-forest text-foodera-forest hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                      <Eye size={12} />
+                      Xem trước
                     </button>
-                    <button type="button" onClick={() => setShowFindReplace(false)}
-                      className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors">
-                      <X size={14} />
+                  </div>
+                </div>
+
+                {/* Image upload error */}
+                {contentImageUploadError && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-xs font-bold text-red-600">
+                    <AlertCircle size={14} />
+                    <span>{contentImageUploadError}</span>
+                    <button type="button" onClick={() => setContentImageUploadError(null)} className="ml-auto text-red-400 hover:text-red-600">
+                      <X size={12} />
                     </button>
                   </div>
                 )}
 
-                <textarea
-                  ref={contentTextareaRef}
-                  rows={20}
+                {/* Rich Text Editor */}
+                <RichTextEditor
                   value={contentString}
-                  onChange={(e) => setContentString(e.target.value)}
-                  onKeyDown={(e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                      e.preventDefault();
-                      pushUndo(contentString);
-                      wrapSelection(contentTextareaRef.current, setContentString, '**', '**', 'bold text');
-                    }
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
-                      e.preventDefault();
-                      pushUndo(contentString);
-                      wrapSelection(contentTextareaRef.current, setContentString, '*', '*', 'italic text');
-                    }
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                      e.preventDefault();
-                      pushUndo(contentString);
-                      wrapSelection(contentTextareaRef.current, setContentString, '[', '](https://)', 'link text');
-                    }
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleUndo();
-                    }
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
-                      e.preventDefault();
-                      handleRedo();
-                    }
-                  }}
-                  className="w-full px-4 py-5 bg-gray-50 rounded-b-xl rounded-t-none border-2 border-t-0 border-gray-200 focus:border-foodera-forest/20 outline-none text-base font-medium resize-none leading-relaxed font-mono"
-                  placeholder="Draft your professional analysis here..."
-                  required
+                  onChange={setContentString}
+                  placeholder="Soạn nội dung bài viết SEO của bạn tại đây... Dùng thanh công cụ để thêm tiêu đề H1-H3, in đậm, danh sách, bảng, hình ảnh, liên kết nội bộ..."
+                  articleSlug={editingItem?.slug || formData.slug || formData.title || 'article'}
+                  onImageUploadError={(msg) => setContentImageUploadError(msg)}
                 />
-
-                {/* ── Word Count Status Bar ──────────────────── */}
-                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-bold text-gray-400">
-                      {contentString.trim().split(/\s+/).filter(Boolean).length} words
-                    </span>
-                    <span className="text-[10px] font-bold text-gray-400">
-                      {contentString.length} chars
-                    </span>
-                    <span className="text-[10px] font-bold text-gray-400">
-                      {contentString.split('\n').filter(l => l.trim()).length} paragraphs
-                    </span>
-                    <span className="text-[10px] font-bold text-gray-400">
-                      ~{Math.max(1, Math.ceil(contentString.trim().split(/\s+/).filter(Boolean).length / 220))} min read
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {undoStack.length > 0 && (
-                      <span className="text-[9px] font-bold text-amber-500">{undoStack.length} undo available</span>
-                    )}
-                  </div>
-                </div>
-              </div>
               </div>
               </>
               )}
+
+
 
               {/* TAB: Translation */}
               {modalTab === 'translation' && (
@@ -1908,7 +1624,7 @@ const AdminNews: React.FC = () => {
                         ) : (
                           <div className="space-y-3">
                             <div className="grid grid-cols-3 gap-2">
-                              {PRODUCT_CATEGORIES.map(cat => {
+                              {getDynamicCategories().map(cat => {
                                 const alreadyAdded = currentLinks.some(rp => rp.type === 'category' && rp.category === cat);
                                 return (
                                   <button
@@ -2040,11 +1756,14 @@ const AdminNews: React.FC = () => {
 
               {/* TAB: SEO Check */}
               {modalTab === 'seo' && (() => {
+                // htmlToSeoText giữ nguyên heading, paragraph, link → SEO Analyzer chấm đúng
+                const plainContent = htmlToSeoText(contentString);
                 const seoInput = {
                   title: (formData.title || '').trim(),
                   slug: slugPreview,
-                  excerpt: (formData.excerpt || '').trim(),
-                  content: contentString,
+                  // Ưu tiên metaDescription do user nhập, fallback về excerpt
+                  excerpt: ((formData.metaDescription || formData.excerpt) || '').trim(),
+                  content: plainContent,
                   image: (formData.image || '').trim(),
                   focusKeyword: focusKeyword.trim(),
                   existingArticleTitles: news.filter(n => n.id !== editingItem?.id).map(n => n.title),
@@ -2084,23 +1803,22 @@ const AdminNews: React.FC = () => {
 
                 return (
                   <>
-                  {/* Focus Keyword Input */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Target size={18} className="text-foodera-forest" />
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Focus Keyword</label>
-                    </div>
-                    <input
-                      type="text"
-                      value={focusKeyword}
-                      onChange={(e) => setFocusKeyword(e.target.value)}
-                      placeholder="e.g. Vietnamese rice export, Jasmine rice supplier..."
-                      className="w-full px-4 py-3.5 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
-                    />
-                    <p className="text-[10px] text-gray-400 italic">Enter the main keyword you want this article to rank for. Leave blank to skip keyword-related checks.</p>
-                  </div>
+                  {/* SEO Fields Panel */}
+                  <SeoFieldsPanel
+                    seoTitle={formData.seoTitle || ''}
+                    metaDescription={formData.metaDescription || ''}
+                    focusKeyword={focusKeyword}
+                    slug={slugPreview}
+                    imageAlt={formData.imageAlt || ''}
+                    title={formData.title || ''}
+                    excerpt={formData.excerpt || ''}
+                    onSeoTitleChange={(v) => setFormData(prev => ({ ...prev, seoTitle: v }))}
+                    onMetaDescriptionChange={(v) => setFormData(prev => ({ ...prev, metaDescription: v }))}
+                    onFocusKeywordChange={setFocusKeyword}
+                    onImageAltChange={(v) => setFormData(prev => ({ ...prev, imageAlt: v }))}
+                  />
 
-                  {/* Score Overview Card */}
+                  <div className="border-t border-gray-100 pt-6">
                   <div className="relative overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm">
                     <div className={`absolute inset-0 bg-gradient-to-br ${gradeColor(report.grade)} opacity-[0.04]`} />
                     <div className="relative p-8">
@@ -2296,6 +2014,7 @@ const AdminNews: React.FC = () => {
                       <li className="flex gap-2"><span className="text-foodera-forest">•</span>Keep passive voice under 20% for engaging, action-oriented writing.</li>
                     </ul>
                   </div>
+                  </div>{/* end border-t wrapper */}
                   </>
                 );
               })()}
@@ -2344,192 +2063,11 @@ const AdminNews: React.FC = () => {
 
       {/* ── Live Preview Modal ────────────────────────────── */}
       {showPreviewModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-4xl h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <Eye size={20} className="text-foodera-forest" />
-                <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">Live Preview</h3>
-              </div>
-              <button onClick={() => setShowPreviewModal(false)} className="p-2 hover:bg-gray-200 rounded-xl transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="flex-grow overflow-y-auto p-10">
-              <article className="max-w-3xl mx-auto">
-                {/* Category + Date */}
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="px-3 py-1 bg-foodera-forest/10 text-foodera-forest text-[10px] font-black uppercase tracking-widest rounded-full">
-                    {formData.category || 'Market Insight'}
-                  </span>
-                  <span className="text-xs font-bold text-gray-400">{formData.date}</span>
-                </div>
-                {/* Title */}
-                <h1 className="text-4xl font-[900] text-gray-900 mb-6 leading-tight tracking-tight">
-                  {formData.title || 'Untitled Article'}
-                </h1>
-                {/* Excerpt */}
-                {formData.excerpt && (
-                  <p className="text-xl text-gray-600 leading-relaxed mb-8 font-medium">
-                    {formData.excerpt}
-                  </p>
-                )}
-                {/* Featured Image */}
-                {formData.image && (
-                  <figure className="w-full overflow-hidden rounded-2xl mb-10 border border-gray-100">
-                    <img src={formData.image} alt={formData.title} className="w-full h-[300px] object-cover" />
-                  </figure>
-                )}
-                {/* Content */}
-                <div className="prose prose-lg max-w-none">
-                  {(() => {
-                    const lines = contentString.split('\n').filter(l => l.trim());
-                    const rendered: React.ReactNode[] = [];
-                    let i = 0;
-                    while (i < lines.length) {
-                      const trimmed = lines[i].trim();
-
-                      // ── Table (multi-line: detect pipe-delimited rows) ──
-                      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-                        const tableLines: string[] = [];
-                        while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
-                          tableLines.push(lines[i].trim());
-                          i++;
-                        }
-                        // Parse header + separator + body
-                        const rows = tableLines
-                          .filter(r => !/^\|[\s\-:|]+\|$/.test(r)) // skip separator
-                          .map(r => r.split('|').slice(1, -1).map(c => c.trim()));
-                        if (rows.length > 0) {
-                          const [header, ...body] = rows;
-                          rendered.push(
-                            <div key={`table-${i}`} className="my-6 overflow-x-auto rounded-2xl border border-gray-200">
-                              <table className="w-full text-sm">
-                                <thead className="bg-foodera-forest/5">
-                                  <tr>
-                                    {header.map((h, hi) => (
-                                      <th key={hi} className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-foodera-forest border-b border-gray-200">{h}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {body.map((row, ri) => (
-                                    <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                      {row.map((cell, ci) => (
-                                        <td key={ci} className="px-4 py-3 text-gray-700 border-b border-gray-100">{cell}</td>
-                                      ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          );
-                          continue;
-                        }
-                      }
-
-                      // ── Heading pattern ──
-                      if (/^\d{1,2}\s*[.)\-]?\s*[\p{L}\p{N}\s&/.-]{2,60}$/u.test(trimmed)) {
-                        rendered.push(
-                          <div key={i} className="mt-10 mb-4">
-                            <div className="w-10 h-1 bg-foodera-lime rounded-full mb-3" />
-                            <h2 className="text-2xl font-black text-gray-900">{trimmed}</h2>
-                          </div>
-                        );
-                        i++;
-                        continue;
-                      }
-
-                      // ── HR ──
-                      if (trimmed === '---') {
-                        rendered.push(<hr key={i} className="my-8 border-gray-200" />);
-                        i++;
-                        continue;
-                      }
-
-                      // ── Quote ──
-                      if (trimmed.startsWith('> ')) {
-                        rendered.push(<blockquote key={i} className="border-l-4 border-foodera-forest pl-4 py-2 my-4 italic text-gray-600">{trimmed.slice(2)}</blockquote>);
-                        i++;
-                        continue;
-                      }
-
-                      // ── Bullet ──
-                      if (trimmed.startsWith('• ')) {
-                        rendered.push(<div key={i} className="flex gap-2 mb-2 text-gray-700"><span className="text-foodera-forest">•</span><span>{trimmed.slice(2)}</span></div>);
-                        i++;
-                        continue;
-                      }
-
-                      // ── CTA Block: [[CTA:text|link]] ──
-                      const ctaMatch = trimmed.match(/\[\[CTA:(.*?)\|(.*?)\]\]/i);
-                      if (ctaMatch) {
-                        rendered.push(
-                          <div key={i} className="my-8 rounded-2xl bg-gradient-to-r from-foodera-forest to-foodera-forest/80 p-8 text-center">
-                            <p className="text-white text-lg font-bold mb-4">{ctaMatch[1].trim()}</p>
-                            <span className="inline-flex items-center gap-2 px-6 py-3 bg-foodera-lime text-foodera-forest rounded-xl font-black text-sm uppercase tracking-widest">
-                              <Megaphone size={16} /> {ctaMatch[2].trim() === '/contact' ? 'Contact Us' : ctaMatch[2].trim()}
-                            </span>
-                          </div>
-                        );
-                        i++;
-                        continue;
-                      }
-
-                      // ── TAG: [[TAG:keyword]] ──
-                      const tagMatch = trimmed.match(/\[\[TAG:(.*?)\]\]/i);
-                      if (tagMatch) {
-                        rendered.push(
-                          <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-foodera-forest/10 text-foodera-forest rounded-full text-xs font-black uppercase tracking-wider my-2 mr-2">
-                            <Tag size={12} />{tagMatch[1].trim()}
-                          </span>
-                        );
-                        i++;
-                        continue;
-                      }
-
-                      // ── ANCHOR: [[ANCHOR:name]] ──
-                      const anchorMatch = trimmed.match(/\[\[ANCHOR:(.*?)\]\]/i);
-                      if (anchorMatch) {
-                        rendered.push(
-                          <div key={i} id={anchorMatch[1].trim()} className="flex items-center gap-2 my-2 text-gray-300">
-                            <Anchor size={12} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">⚓ {anchorMatch[1].trim()}</span>
-                          </div>
-                        );
-                        i++;
-                        continue;
-                      }
-
-                      // ── Image marker ──
-                      const imgMatch = trimmed.match(/\[\[IMAGE:(.*?)\]\]/i);
-                      if (imgMatch) {
-                        const parts = imgMatch[1].split('|').map(p => p.trim());
-                        rendered.push(
-                          <figure key={i} className="my-8 rounded-2xl overflow-hidden border border-gray-100">
-                            <img src={parts[0]} alt={parts[1] || ''} className="w-full h-auto object-cover" />
-                            {parts[2] && <figcaption className="px-4 py-2 text-xs text-gray-500 text-center border-t border-gray-100">{parts[2]}</figcaption>}
-                          </figure>
-                        );
-                        i++;
-                        continue;
-                      }
-
-                      // ── Regular paragraph (with bold, italic, links) ──
-                      let text = trimmed;
-                      text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                      text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-                      text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">$1</a>');
-                      rendered.push(<p key={i} className="text-lg text-gray-700 leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: text }} />);
-                      i++;
-                    }
-                    return rendered;
-                  })()}
-                </div>
-              </article>
-            </div>
-          </div>
-        </div>
+        <NewsPreviewModal
+          formData={formData}
+          contentHtml={contentString}
+          onClose={() => setShowPreviewModal(false)}
+        />
       )}
     </div>
   );

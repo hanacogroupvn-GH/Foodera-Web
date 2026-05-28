@@ -80,7 +80,7 @@ export const localizeNewsItem = (item: NewsItem, locale: SupportedLocale): NewsI
 };
 
 export const getCategoryLabel = (category: CategoryType, locale: SupportedLocale): string =>
-  CATEGORY_LABELS[locale][category];
+  CATEGORY_LABELS[locale]?.[category] || category;
 
 export const getNewsCategoryLabel = (category: NewsCategory, locale: SupportedLocale): string =>
   NEWS_CATEGORY_LABELS[locale][category];

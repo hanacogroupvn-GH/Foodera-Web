@@ -79,13 +79,14 @@ const useDocumentMeta = (options: DocumentMetaOptions) => {
       setMetaTag('property', 'og:url', options.ogUrl);
     }
 
-    // Canonical
-    if (options.canonicalUrl) {
-      setCanonicalLink(options.canonicalUrl);
-    }
+    // Canonical — always set to prevent stale homepage canonical
+    const canonicalHref = options.canonicalUrl || `${BASE_URL}${window.location.pathname}`;
+    setCanonicalLink(canonicalHref);
 
     return () => {
       document.title = previousTitle;
+      // Reset canonical to current path on cleanup to avoid leaking between routes
+      setCanonicalLink(`${BASE_URL}${window.location.pathname}`);
     };
   }, [
     options.title,
