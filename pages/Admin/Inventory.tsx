@@ -7,10 +7,11 @@ import { saveAs } from 'file-saver';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
-import { Product, CategoryType, SupportedLocale } from '../../types';
+import { Product, CategoryType, ProductCategory, SupportedLocale } from '../../types';
 import { googleSheetToCsvUrl, mapCsvRowsToProducts, parseCsv } from '../../lib/csvImport';
 import { CMS_IMAGE_INPUT_ACCEPT, uploadCmsImage } from '../../lib/storageUploads';
-import { PRODUCT_CATEGORIES } from '../../lib/productCategories';
+import { api } from '../../lib/apiClient';
+import { getDynamicCategories } from '../../lib/productCategories';
 import { getCategoryLabel, localizeProduct } from '../../lib/contentLocalization';
 import { buildProductPdfPrintHtml as buildProductPdfTemplateHtml } from '../../lib/productPdfExport';
 import { appRoutes } from '../../lib/routes';
@@ -44,7 +45,9 @@ import {
   Languages,
   RefreshCw,
   FileDown,
-  MapPinned
+  MapPinned,
+  Eye,
+  Pin
 } from 'lucide-react';
 import { AdminSidebar } from '../../components/AdminSidebar';
 
@@ -54,7 +57,8 @@ const isValidPdfUrl = (value: string): boolean => {
 
   try {
     const parsed = new URL(trimmed);
-    return parsed.pathname.toLowerCase().endsWith('.pdf');
+    // Accept .pdf in pathname OR any URL from CDN/Google Drive
+    return parsed.pathname.toLowerCase().endsWith('.pdf') || /drive\.google\.com|cloudinary\.com|supabase\.co|cdn\./i.test(parsed.hostname);
   } catch {
     return false;
   }
@@ -133,7 +137,11 @@ const buildNextProductId = (requestedId: string, existingIds: string[], excluded
 };
 
 const AdminInventory: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct, refresh } = useData();
+  const { products, categories, addProduct, updateProduct, deleteProduct, upsertCategory, deleteCategory, refresh } = useData();
+  const dynamicCategories = useMemo(() => getDynamicCategories(), [categories]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
+  const [categoryForm, setCategoryForm] = useState({ name: '', sortOrder: 0 });
   const { logout } = useAuth();
   const { locale, setLocale } = useLocale();
   const rawCopy =
@@ -387,7 +395,7 @@ const AdminInventory: React.FC = () => {
   const itemsPerPage = 10;
   const [isExportingZip, setIsExportingZip] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive'>('active');
+  const [statusFilter, setStatusFilter] = useState<'published' | 'draft' | 'archived'>('published');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasDraftToRestore, setHasDraftToRestore] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -398,7 +406,7 @@ const AdminInventory: React.FC = () => {
   // CSV Import status handled via toast
   // Translation status handled via toast
   const [isUploadingPrimaryImage, setIsUploadingPrimaryImage] = useState(false);
-  const [modalTab, setModalTab] = useState<'general' | 'media' | 'specs' | 'settings'>('general');
+  const [modalTab, setModalTab] = useState<'general' | 'media' | 'specs' | 'appearance' | 'settings' | 'seo'>('general');
   const [translatingItemId, setTranslatingItemId] = useState<string | null>(null);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
   const [isReloadingInventory, setIsReloadingInventory] = useState(false);
@@ -462,13 +470,13 @@ const AdminInventory: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const activeCount = baseFilteredProducts.filter((p) => p.isActive !== false).length;
-  const inactiveCount = baseFilteredProducts.filter((p) => p.isActive === false).length;
+  const getProductStatus = (p: Product): string => p.status || (p.isActive === false ? 'archived' : 'published');
+  const publishedCount = baseFilteredProducts.filter((p) => getProductStatus(p) === 'published').length;
+  const draftCount = baseFilteredProducts.filter((p) => getProductStatus(p) === 'draft').length;
+  const archivedCount = baseFilteredProducts.filter((p) => getProductStatus(p) === 'archived').length;
 
   // Apply status filter on top of base
-  const filteredProducts = baseFilteredProducts.filter((p) =>
-    statusFilter === 'active' ? p.isActive !== false : p.isActive === false
-  );
+  const filteredProducts = baseFilteredProducts.filter((p) => getProductStatus(p) === statusFilter);
 
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
@@ -514,6 +522,8 @@ const AdminInventory: React.FC = () => {
         id: `FM-${Math.floor(Math.random() * 10000)}`,
         name: '',
         isActive: true,
+        status: 'draft' as const,
+        slug: '',
         category: 'Rice',
         subCategory: '',
         description: '',
@@ -1029,6 +1039,41 @@ const AdminInventory: React.FC = () => {
     }
   };
 
+  const pinnedCount = useMemo(() => products.filter(p => p.pinOrder != null).length, [products]);
+
+  const handleTogglePin = async (product: Product) => {
+    if (product.pinOrder != null) {
+      // Unpin: compute new pin assignments, update UI immediately, then batch API calls
+      const otherPinned = products
+        .filter(p => p.pinOrder != null && p.id !== product.id)
+        .sort((a, b) => (a.pinOrder ?? 0) - (b.pinOrder ?? 0));
+
+      // Build all updates needed: unpin target + renumber others
+      const updates: { product: Product; newPinOrder: number | null }[] = [
+        { product, newPinOrder: null }
+      ];
+      for (let i = 0; i < otherPinned.length; i++) {
+        if (otherPinned[i].pinOrder !== i + 1) {
+          updates.push({ product: otherPinned[i], newPinOrder: i + 1 });
+        }
+      }
+
+      // Fire all API calls in parallel (no refresh per call)
+      await Promise.all(
+        updates.map(u => api.upsertProduct({ ...u.product, pinOrder: u.newPinOrder } as Product))
+      );
+      await refresh();
+    } else {
+      if (pinnedCount >= 9) {
+        toast.error(locale === 'zh' ? '最多只能固定 9 个产品' : 'Maximum 9 products can be pinned');
+        return;
+      }
+      // Pin: single API call
+      await api.upsertProduct({ ...product, pinOrder: pinnedCount + 1 } as Product);
+      await refresh();
+    }
+  };
+
   const importProductsFromCsvText = async (csvText: string, sourceLabel: string) => {
     const parsed = parseCsv(csvText);
     if (!parsed.rows.length) {
@@ -1522,77 +1567,208 @@ const AdminInventory: React.FC = () => {
             </div>
           </div>
 
-          {/* Status Tabs: Active / Inactive */}
+          {/* Status Tabs: Published / Draft / Archived */}
           <div className="flex items-center gap-3 mb-6">
             <button
               type="button"
-              onClick={() => { setStatusFilter('active'); setCurrentPage(1); }}
+              onClick={() => { setStatusFilter('published'); setCurrentPage(1); }}
               className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.16em] transition-all border ${
-                statusFilter === 'active'
+                statusFilter === 'published'
                   ? 'bg-foodera-forest text-white border-foodera-forest shadow-lg'
                   : 'bg-white text-gray-500 border-gray-200 hover:border-foodera-forest/30 hover:text-foodera-forest'
               }`}
             >
               <span className="flex items-center gap-1.5">
                 <span className={`inline-flex items-center justify-center w-2 h-2 rounded-full ${
-                  statusFilter === 'active' ? 'bg-foodera-lime' : 'bg-green-400'
+                  statusFilter === 'published' ? 'bg-foodera-lime' : 'bg-green-400'
                 }`} />
-                Active
+                Published
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                statusFilter === 'active' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                statusFilter === 'published' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
               }`}>
-                {activeCount}
+                {publishedCount}
               </span>
             </button>
 
             <button
               type="button"
-              onClick={() => { setStatusFilter('inactive'); setCurrentPage(1); }}
+              onClick={() => { setStatusFilter('draft'); setCurrentPage(1); }}
               className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.16em] transition-all border ${
-                statusFilter === 'inactive'
+                statusFilter === 'draft'
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-lg'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-amber-400 hover:text-amber-600'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className={`inline-flex items-center justify-center w-2 h-2 rounded-full ${
+                  statusFilter === 'draft' ? 'bg-amber-200' : 'bg-amber-400'
+                }`} />
+                Draft
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                statusFilter === 'draft' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {draftCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setStatusFilter('archived'); setCurrentPage(1); }}
+              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.16em] transition-all border ${
+                statusFilter === 'archived'
                   ? 'bg-gray-700 text-white border-gray-700 shadow-lg'
                   : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-700'
               }`}
             >
               <span className="flex items-center gap-1.5">
                 <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-gray-400" />
-                Inactive
+                Archived
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                statusFilter === 'inactive' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                statusFilter === 'archived' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
               }`}>
-                {inactiveCount}
+                {archivedCount}
               </span>
             </button>
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex border-b border-gray-200 mb-8 overflow-x-auto hide-scrollbar gap-1">
-            <button
-              onClick={() => { setSelectedCategory('all'); setCurrentPage(1); }}
-              className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
-                selectedCategory === 'all' 
-                ? 'border-foodera-forest text-foodera-forest' 
-                : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
-              }`}
-            >
-              {copy.allCategories}
-            </button>
-            {PRODUCT_CATEGORIES.map((cat) => (
+          {/* Category Tabs + Manage Button */}
+          <div className="flex items-center border-b border-gray-200 mb-8 gap-1">
+            <div className="flex overflow-x-auto hide-scrollbar gap-1 flex-grow min-w-0">
               <button
-                key={cat}
-                onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
+                onClick={() => { setSelectedCategory('all'); setCurrentPage(1); }}
                 className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
-                  selectedCategory === cat
+                  selectedCategory === 'all' 
                   ? 'border-foodera-forest text-foodera-forest' 
                   : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
                 }`}
               >
-                {getCategoryLabel(cat as CategoryType, locale)}
+                {copy.allCategories}
               </button>
-            ))}
+              {dynamicCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
+                  className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap border-b-2 transition-all ${
+                    selectedCategory === cat
+                    ? 'border-foodera-forest text-foodera-forest' 
+                    : 'border-transparent text-gray-400 hover:text-gray-900 hover:border-gray-200'
+                  }`}
+                >
+                  {getCategoryLabel(cat as CategoryType, locale)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setIsCategoryModalOpen(true); setEditingCategory(null); setCategoryForm({ name: '', sortOrder: 0 }); }}
+              className="ml-auto flex-shrink-0 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-foodera-forest border border-foodera-forest/20 rounded-xl hover:bg-foodera-forest hover:text-white transition-all"
+            >
+              ⚙ Manage Categories
+            </button>
           </div>
+
+          {/* Category Management Modal */}
+          {isCategoryModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setIsCategoryModalOpen(false)}>
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-foodera-forest text-white px-8 py-5 flex items-center justify-between">
+                  <h3 className="text-sm font-black uppercase tracking-widest">Manage Product Categories</h3>
+                  <button onClick={() => setIsCategoryModalOpen(false)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Add / Edit Form */}
+                <div className="px-8 py-6 border-b border-gray-100 space-y-4 bg-gray-50/50">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    {editingCategory ? 'Edit Category' : 'Add New Category'}
+                  </h4>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={categoryForm.name}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                      className="flex-grow px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
+                      placeholder="Category name (e.g. Fruits)"
+                    />
+                    <input
+                      type="number"
+                      value={categoryForm.sortOrder}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, sortOrder: Number(e.target.value) || 0 })}
+                      className="w-20 px-3 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold text-center"
+                      placeholder="Order"
+                      title="Sort Order"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!categoryForm.name.trim()) return;
+                        const nameSlug = categoryForm.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                        const id = editingCategory?.id || nameSlug;
+                        await upsertCategory({
+                          id,
+                          name: categoryForm.name.trim(),
+                          slug: nameSlug,
+                          sortOrder: categoryForm.sortOrder,
+                          isActive: true
+                        });
+                        setCategoryForm({ name: '', sortOrder: 0 });
+                        setEditingCategory(null);
+                      }}
+                      className="px-6 py-3 bg-foodera-forest text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all whitespace-nowrap"
+                    >
+                      {editingCategory ? 'Update' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Category List */}
+                <div className="flex-grow overflow-y-auto px-8 py-4 space-y-2">
+                  {categories.length === 0 ? (
+                    <p className="text-center text-gray-400 py-8 text-sm">No categories yet</p>
+                  ) : (
+                    categories
+                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .map((cat) => (
+                        <div key={cat.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-100 group hover:bg-gray-100 transition-all">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-gray-300 w-6 text-center">{cat.sortOrder}</span>
+                            <span className="text-sm font-bold text-gray-900">{cat.name}</span>
+                            <span className="text-[10px] text-gray-400">/{cat.slug}</span>
+                          </div>
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCategory(cat);
+                                setCategoryForm({ name: cat.name, sortOrder: cat.sortOrder });
+                              }}
+                              className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-foodera-forest border border-foodera-forest/20 rounded-lg hover:bg-foodera-forest hover:text-white transition-all"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (window.confirm(`Delete category "${cat.name}"? Products using this category will keep their current value.`)) {
+                                  await deleteCategory(cat.id);
+                                }
+                              }}
+                              className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-500 border border-red-200 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Product Table */}
           <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
@@ -1641,6 +1817,24 @@ const AdminInventory: React.FC = () => {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePin(p)}
+                          disabled={p.pinOrder == null && pinnedCount >= 9}
+                          className={`relative p-2.5 rounded-xl transition-all shadow-sm ${
+                            p.pinOrder != null
+                              ? 'bg-amber-500 text-white hover:bg-amber-600'
+                              : 'bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                          }`}
+                          title={p.pinOrder != null ? (locale === 'zh' ? '取消固定' : 'Unpin') : (locale === 'zh' ? '固定到首页' : 'Pin to top')}
+                        >
+                          <Pin size={18} />
+                          {p.pinOrder != null && (
+                            <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-amber-600 text-[9px] font-black shadow-sm border border-amber-200">
+                              {p.pinOrder}
+                            </span>
+                          )}
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleExportProductPdf(p, 'en')}
@@ -1740,8 +1934,8 @@ const AdminInventory: React.FC = () => {
             
             {/* Tab Bar */}
             <div className="flex border-b border-gray-200 px-10 pt-4 gap-1 bg-gray-50/50 flex-shrink-0">
-              {(['general', 'media', 'specs', 'settings'] as const).map((tab) => {
-                const tabLabels = { general: 'General', media: 'Gallery & Media', specs: 'Specs & Options', settings: 'Translation & Settings' };
+              {(['general', 'media', 'specs', 'appearance', 'settings', 'seo'] as const).map((tab) => {
+                const tabLabels = { general: 'General', media: 'Gallery & Media', specs: 'Specs & Options', appearance: 'Appearance', settings: 'Translation & Settings', seo: 'SEO & B2B' };
                 const isActive = modalTab === tab;
                 return (
                   <button
@@ -1774,14 +1968,33 @@ const AdminInventory: React.FC = () => {
                   type="text" 
                   value={formData.id}
                   onChange={(e) => setFormData({...formData, id: e.target.value})}
-                  className="w-full px-4 py-4 bg-white border-2 border-transparent focus:border-foodera-forest/20 rounded-xl outline-none text-sm font-black transition-all"
+                  disabled={!!editingProduct}
+                  className={`w-full px-4 py-4 bg-white border-2 border-transparent focus:border-foodera-forest/20 rounded-xl outline-none text-sm font-black transition-all ${editingProduct ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                   placeholder="e.g. RICE-JASMINE-001"
                   required
                 />
                 <p className="text-[10px] text-gray-400 italic">
                   {editingProduct 
-                    ? "Warning: Changing the ID will update the primary key for this record across the system."
-                    : "This ID is used for system mapping and can be manually adjusted later."}
+                    ? "ID is locked after creation. Use the Slug field in the SEO & B2B tab to change the URL."
+                    : "This ID is used for internal mapping and cannot be changed after creation."}
+                </p>
+              </div>
+
+              {/* SEO Slug */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-foodera-forest text-white rounded-lg"><LinkIcon size={18} /></div>
+                   <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">SEO Slug (URL Path)</h3>
+                </div>
+                <input 
+                  type="text" 
+                  value={formData.slug || ''}
+                  onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')})}
+                  className="w-full px-4 py-4 bg-white border-2 border-transparent focus:border-foodera-forest/20 rounded-xl outline-none text-sm font-black transition-all"
+                  placeholder="e.g. vietnamese-jasmine-rice"
+                />
+                <p className="text-[10px] text-gray-400 italic">
+                  URL: foodera.vn/product/item/{formData.slug || '(auto-generated from name)'}
                 </p>
               </div>
 
@@ -1930,7 +2143,7 @@ const AdminInventory: React.FC = () => {
                     onChange={(e) => setFormData({...formData, category: e.target.value as CategoryType})}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
-                    {PRODUCT_CATEGORIES.map((category) => (
+                    {dynamicCategories.map((category) => (
                       <option key={category} value={category}>{getCategoryLabel(category as CategoryType, locale)}</option>
                     ))}
                   </select>
@@ -1952,12 +2165,16 @@ const AdminInventory: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{copy.status}</label>
                   <select
-                    value={formData.isActive === false ? 'inactive' : 'active'}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
+                    value={formData.status || (formData.isActive === false ? 'archived' : 'published')}
+                    onChange={(e) => {
+                      const status = e.target.value as 'draft' | 'published' | 'archived';
+                      setFormData({ ...formData, status, isActive: status === 'published' });
+                    }}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold cursor-pointer"
                   >
-                    <option value="active">{activeStatusLabel}</option>
-                    <option value="inactive">{inactiveStatusLabel}</option>
+                    <option value="draft">{locale === 'zh' ? '草稿' : 'Draft'}</option>
+                    <option value="published">{activeStatusLabel}</option>
+                    <option value="archived">{locale === 'zh' ? '已归档' : 'Archived'}</option>
                   </select>
                   <p className="text-[10px] text-gray-400 italic">{statusHelpText}</p>
                 </div>
@@ -2390,6 +2607,134 @@ const AdminInventory: React.FC = () => {
                 </div>
               </div>
             </>)}
+
+
+              {modalTab === 'appearance' && (<>
+              {/* Appearance */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] flex items-center gap-2">
+                    <Eye size={14} className="text-foodera-forest" /> Product Appearance
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Visual characteristics, color, shape, texture</p>
+                </div>
+                <textarea
+                  value={formData.appearance || ''}
+                  onChange={(e) => setFormData({...formData, appearance: e.target.value})}
+                  className="w-full px-5 py-4 bg-white rounded-2xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold resize-none leading-relaxed"
+                  rows={8}
+                  placeholder={"Dried processed tea\nGreen to dark green color\nClean, uniform cut\nCharacteristic herbal aroma and mild bitter taste"}
+                />
+                <p className="text-[10px] text-gray-400 italic">Enter one attribute per line. Each line will be displayed as a separate bullet point on the product page.</p>
+              </div>
+              </>)}
+
+              {modalTab === 'seo' && (<>
+              {/* SEO Title */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">SEO Title</h3>
+                <input 
+                  type="text" 
+                  value={formData.seoTitle || ''}
+                  onChange={(e) => setFormData({...formData, seoTitle: e.target.value})}
+                  className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
+                  placeholder="e.g. Vietnamese Jasmine Rice Supplier for GCC Importers | FoodEra"
+                />
+                <div className="flex items-center gap-2">
+                  <div className={`h-1.5 rounded-full flex-grow transition-all ${(formData.seoTitle?.length || 0) > 60 ? 'bg-amber-400' : (formData.seoTitle?.length || 0) >= 30 ? 'bg-green-400' : 'bg-gray-200'}`} style={{maxWidth: `${Math.min(100, ((formData.seoTitle?.length || 0) / 70) * 100)}%`}} />
+                  <span className="text-[10px] text-gray-400 font-bold">{formData.seoTitle?.length || 0}/60</span>
+                </div>
+              </div>
+
+              {/* Meta Description */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Meta Description</h3>
+                <textarea 
+                  value={formData.metaDescription || ''}
+                  onChange={(e) => setFormData({...formData, metaDescription: e.target.value})}
+                  className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold resize-none"
+                  rows={3}
+                  placeholder="Compelling meta description for search results (150-160 chars)..."
+                />
+                <div className="flex items-center gap-2">
+                  <div className={`h-1.5 rounded-full flex-grow transition-all ${(formData.metaDescription?.length || 0) > 160 ? 'bg-amber-400' : (formData.metaDescription?.length || 0) >= 120 ? 'bg-green-400' : 'bg-gray-200'}`} style={{maxWidth: `${Math.min(100, ((formData.metaDescription?.length || 0) / 170) * 100)}%`}} />
+                  <span className="text-[10px] text-gray-400 font-bold">{formData.metaDescription?.length || 0}/160</span>
+                </div>
+              </div>
+
+              {/* Focus Keyword */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Focus Keyword</h3>
+                <input 
+                  type="text" 
+                  value={formData.focusKeyword || ''}
+                  onChange={(e) => setFormData({...formData, focusKeyword: e.target.value})}
+                  className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
+                  placeholder="e.g. Vietnamese Jasmine Rice Supplier"
+                />
+              </div>
+
+              {/* Image Alt Text */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Primary Image Alt Text</h3>
+                <input 
+                  type="text" 
+                  value={formData.imageAlt || ''}
+                  onChange={(e) => setFormData({...formData, imageAlt: e.target.value})}
+                  className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
+                  placeholder="e.g. Vietnamese jasmine rice export packaging for GCC importers"
+                />
+              </div>
+
+              {/* Google SERP Preview */}
+              <div className="p-8 bg-white rounded-[2.5rem] border border-gray-200 space-y-3">
+                <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em] mb-4">Google SERP Preview</h3>
+                <div className="font-medium text-[#1a0dab] text-lg leading-tight truncate">
+                  {formData.seoTitle || formData.name || 'Product Title'}
+                </div>
+                <div className="text-[#006621] text-sm truncate">
+                  foodera.vn/product/item/{formData.slug || '...'}
+                </div>
+                <div className="text-sm text-[#545454] line-clamp-2 leading-relaxed">
+                  {formData.metaDescription || formData.shortDescription || 'Meta description will appear here...'}
+                </div>
+              </div>
+
+              {/* B2B Export Information */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-6">
+                <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">B2B Export Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">MOQ (Minimum Order)</label>
+                    <input type="text" value={formData.moq || ''} onChange={(e) => setFormData({...formData, moq: e.target.value})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. 1 container 20ft FCL" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Origin Country</label>
+                    <input type="text" value={formData.originCountry || ''} onChange={(e) => setFormData({...formData, originCountry: e.target.value})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. Vietnam" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Lead Time</label>
+                    <input type="text" value={formData.leadTime || ''} onChange={(e) => setFormData({...formData, leadTime: e.target.value})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. 7-14 days" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Sample Policy</label>
+                    <input type="text" value={formData.samplePolicy || ''} onChange={(e) => setFormData({...formData, samplePolicy: e.target.value})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. Available upon request" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Certifications (comma-separated)</label>
+                  <input type="text" value={(formData.certifications || []).join(', ')} onChange={(e) => setFormData({...formData, certifications: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. Phytosanitary, CO, Halal" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Incoterms (comma-separated)</label>
+                  <input type="text" value={(formData.incoterms || []).join(', ')} onChange={(e) => setFormData({...formData, incoterms: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. FOB, CIF, CFR" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Destination Markets (comma-separated)</label>
+                  <input type="text" value={(formData.destinationMarkets || []).join(', ')} onChange={(e) => setFormData({...formData, destinationMarkets: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold" placeholder="e.g. GCC, UAE, Saudi Arabia, Qatar" />
+                </div>
+              </div>
+              </>)}
 </div></form>
 
             <div className="p-8 border-t border-gray-100 bg-gray-50">

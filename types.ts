@@ -1,5 +1,13 @@
 
-export type CategoryType = 'Rice' | 'Coffee' | 'Cashew' | 'Agriculture' | 'Pepper';
+export type CategoryType = string;
+
+export interface ProductCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  isActive: boolean;
+}
 
 export type NewsCategory = 'Product' | 'Logistics' | 'Market Insight';
 
@@ -33,22 +41,54 @@ export interface NewsTranslation {
   content?: string[];
 }
 
+export interface GalleryImage {
+  url: string;
+  alt?: string;
+  caption?: string;
+  sortOrder?: number;
+}
+
+export type ProductStatus = 'draft' | 'published' | 'archived';
+
 export interface Product {
   id: string;
+  slug?: string;
   name: string;
   isActive?: boolean;
+  status?: ProductStatus;
   category: CategoryType;
   subCategory: string;
   description: string;
   shortDescription: string;
   image: string;
+  imageAlt?: string;
   pdfUrl?: string;
-  gallery?: string[];
+  gallery?: (string | GalleryImage)[];
   specifications: Record<string, string>;
   packaging?: Record<string, string>;
   payment?: Record<string, string>;
   filters: ProductFilters;
   translations?: Partial<Record<ContentLocale, ProductTranslation>>;
+  // SEO fields
+  seoTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
+  canonicalUrl?: string;
+  // B2B export fields
+  moq?: string;
+  originCountry?: string;
+  certifications?: string[];
+  incoterms?: string[];
+  destinationMarkets?: string[];
+  packagingOptions?: string[];
+  leadTime?: string;
+  samplePolicy?: string;
+  /** Previous slugs for 301 redirect when slug changes */
+  previousSlugs?: string[];
+  /** Product appearance description (e.g. color, grain shape, texture) */
+  appearance?: string;
+  /** Pin order for featured display (1-9), null if not pinned */
+  pinOrder?: number | null;
 }
 
 export type NewsRelatedProductLinkType = 'product' | 'category';
@@ -73,9 +113,17 @@ export interface NewsItem {
   category: NewsCategory;
   excerpt: string;
   content: string[];
+  /** Rich HTML content from Tiptap editor — takes priority over content[] for rendering */
+  contentHtml?: string;
   image: string;
   imageAlt?: string;
   scheduledAt?: string;
+  /** Custom <title> tag for SEO (falls back to title if not set) */
+  seoTitle?: string;
+  /** Meta description for SEO (falls back to excerpt/first paragraph if not set) */
+  metaDescription?: string;
+  /** Focus keyword for SEO analyzer scoring */
+  focusKeyword?: string;
   translations?: Partial<Record<ContentLocale, NewsTranslation>>;
   /** Internal product links shown in the article sidebar */
   relatedProducts?: NewsRelatedProduct[];

@@ -13,6 +13,7 @@ import {
   deleteProvinceMapProfileById,
   deleteNewsById,
   deleteProductById,
+  deleteCategoryById,
   ensureDatabaseSchema,
   findAdminByEmail,
   getContentSnapshot,
@@ -24,10 +25,12 @@ import {
   listProvinceMapProfiles,
   listPublicNews,
   listProducts,
+  listCategories,
   updateProductRecord,
   upsertAdminUser,
   upsertProvinceMapProfile,
   upsertNews,
+  upsertCategory,
   verifyPassword
 } from './db.mjs';
 import { loadProjectEnv } from './loadEnv.mjs';
@@ -221,8 +224,8 @@ const getActiveSnapshot = (snapshot) => ({
 });
 
 const getPublicContentSnapshot = async (client) => {
-  const [products, news] = await Promise.all([listProducts(client), listPublicNews(client)]);
-  return { products, news };
+  const [products, news, categories] = await Promise.all([listProducts(client), listPublicNews(client), listCategories(client)]);
+  return { products, news, categories };
 };
 
 const seedLocalDatabaseIfEmpty = async (client) => {
@@ -1035,7 +1038,18 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
     app.post('/api/contact-inquiries', async (request, response) => {
       try {
-        await insertContactInquiry(request.app.locals.db, request.body ?? {});
+        const body = request.body ?? {};
+        const fullName = String(body.fullName ?? '').trim();
+        const email = String(body.email ?? '').trim();
+        const subject = String(body.subject ?? '').trim();
+        const message = String(body.message ?? '').trim();
+
+        if (!fullName || !email || !subject || !message) {
+          response.status(400).json({ error: 'Full name, email, subject, and message are required.' });
+          return;
+        }
+
+        await insertContactInquiry(request.app.locals.db, body);
         response.status(201).json({ ok: true });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to submit inquiry.' });
@@ -1111,6 +1125,11 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
     app.post('/api/admin/products/upsert', requireAdmin, async (request, response) => {
       try {
         const product = request.body?.product;
+        if (!product || typeof product !== 'object') {
+          response.status(400).json({ error: 'Product data is required.' });
+          return;
+        }
+
         const oldId = request.body?.oldId;
         const savedProduct = await updateProductRecord(request.app.locals.db, product, oldId);
         response.json({ ok: true, product: savedProduct });
@@ -1128,9 +1147,49 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
     });
 
+    // ── Product Categories ──────────────────────────────────
+
+    app.get('/api/admin/categories', requireAdmin, async (request, response) => {
+      try {
+        const categories = await listCategories(request.app.locals.db);
+        response.json({ categories });
+      } catch (error) {
+        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load categories.' });
+      }
+    });
+
+    app.post('/api/admin/categories/upsert', requireAdmin, async (request, response) => {
+      try {
+        const category = request.body?.category;
+        if (!category || typeof category !== 'object') {
+          response.status(400).json({ error: 'Category data is required.' });
+          return;
+        }
+
+        const saved = await upsertCategory(request.app.locals.db, category);
+        response.json({ ok: true, category: saved });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save category.' });
+      }
+    });
+
+    app.delete('/api/admin/categories/:id', requireAdmin, async (request, response) => {
+      try {
+        await deleteCategoryById(request.app.locals.db, request.params.id);
+        response.json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete category.' });
+      }
+    });
+
     app.post('/api/admin/news/upsert', requireAdmin, async (request, response) => {
       try {
         const item = request.body?.item;
+        if (!item || typeof item !== 'object') {
+          response.status(400).json({ error: 'News article data is required.' });
+          return;
+        }
+
         const savedNews = await upsertNews(request.app.locals.db, item);
         response.json({ ok: true, item: savedNews });
       } catch (error) {
@@ -1150,6 +1209,11 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
     app.post('/api/admin/map-profiles/upsert', requireAdmin, async (request, response) => {
       try {
         const profile = request.body?.profile;
+        if (!profile || typeof profile !== 'object') {
+          response.status(400).json({ error: 'Map profile data is required.' });
+          return;
+        }
+
         const savedProfile = await upsertProvinceMapProfile(request.app.locals.db, profile);
         response.json({ ok: true, profile: savedProfile });
       } catch (error) {
@@ -1284,14 +1348,26 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         const translation = await callOllama(prompt);
         response.json({ translation });
       } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Translation failed.' });
+        response.status(502).json({ error: error instanceof Error ? error.message : 'Translation failed.' });
       }
     });
 
     app.get('/sitemap.xml', async (request, response) => {
       try {
-        const { rows: products } = await db.execute('SELECT id, category FROM products ORDER BY id ASC');
-        const { rows: news } = await db.execute('SELECT id, slug, title, date FROM news ORDER BY date DESC, _rowid_ DESC');
+        const sitemapDb = request.app.locals.db;
+        if (!sitemapDb) {
+          response.status(503).end();
+          return;
+        }
+
+        // Only include published products (status='published' or legacy is_active=1 with no status)
+        const { rows: products } = await sitemapDb.execute(
+          `SELECT id, slug, category, status, is_active FROM products ORDER BY id ASC`
+        );
+        // Only include active, non-scheduled news
+        const { rows: news } = await sitemapDb.execute(
+          `SELECT id, slug, title, date, is_active, scheduled_at FROM news WHERE is_active = 1 ORDER BY date DESC, _rowid_ DESC`
+        );
         
         const stripDiacritics = (val) => val.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/\u0110/g, 'd');
         const normalizeNewsSlug = (val) => stripDiacritics(val).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
@@ -1304,7 +1380,7 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
           return idSlug || 'news-item';
         };
 
-        const baseUrl = 'https://foodmax.vn';
+        const baseUrl = 'https://foodera.vn';
         
         const staticRoutes = [
           { url: '/', priority: '1.0', changefreq: 'weekly' },
@@ -1323,11 +1399,26 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
           xml += `  <url>\n    <loc>${baseUrl}${route.url}</loc>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>\n`;
         }
 
+        // Products: only published, use slug for URL
         for (const product of products) {
-          xml += `  <url>\n    <loc>${baseUrl}/product/item/${encodeURIComponent(product.id)}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+          const productStatus = product.status || (Number(product.is_active) === 0 ? 'archived' : 'published');
+          if (productStatus !== 'published') continue;
+
+          const urlPath = product.slug || product.id;
+          xml += `  <url>\n    <loc>${baseUrl}/product/item/${encodeURIComponent(urlPath)}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         }
 
+        // News: only active and not scheduled in the future
+        const now = new Date();
         for (const item of news) {
+          // Skip future-scheduled articles
+          if (item.scheduled_at) {
+            try {
+              const scheduledDate = new Date(item.scheduled_at);
+              if (scheduledDate > now) continue;
+            } catch {}
+          }
+
           const slug = encodeURIComponent(getNewsSlug(item));
           let dateStr = '';
           try {

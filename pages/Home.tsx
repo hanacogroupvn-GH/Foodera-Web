@@ -160,7 +160,14 @@ const Home: React.FC = () => {
   const { activeProducts, activeNews, isLoading } = useData();
   const { locale } = useLocale();
   const { personalizedProducts, personalizedNews, hasPersonalizedContent, trackEvent } = usePersonalization();
-  const featuredProducts = activeProducts.slice(0, 4);
+  const featuredProducts = [...activeProducts].sort((a, b) => {
+    const aPinned = a.pinOrder != null;
+    const bPinned = b.pinOrder != null;
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    if (aPinned && bPinned) return (a.pinOrder ?? 0) - (b.pinOrder ?? 0);
+    return 0;
+  }).slice(0, 4);
   const featuredNews = activeNews.slice(0, 3).map((item) => localizeNewsItem(item, locale));
   const recommendedProducts = personalizedProducts.slice(0, 4);
   const recommendedNews = personalizedNews.slice(0, 2).map((item) => localizeNewsItem(item, locale));

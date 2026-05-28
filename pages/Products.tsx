@@ -6,7 +6,7 @@ import SectionHeading from '../components/SectionHeading';
 import ProductCard from '../components/ProductCard';
 import AppShellLoader from '../components/AppShellLoader';
 import { Filter, X, ChevronDown, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { findProductCategoryBySlug, normalizeProductCategorySlug, PRODUCT_CATEGORIES } from '../lib/productCategories';
+import { findProductCategoryBySlug, normalizeProductCategorySlug, getDynamicCategories } from '../lib/productCategories';
 import { useLocale } from '../context/LocaleContext';
 import { usePersonalization } from '../context/PersonalizationContext';
 import { getCategoryLabel, getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
@@ -126,6 +126,13 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
     const subMatch = filterSub === 'all' || p.subCategory.toLowerCase() === filterSub.toLowerCase();
     const procMatch = filterProcessing === 'all' || (p.filters.processing && p.filters.processing.toLowerCase() === filterProcessing.toLowerCase());
     return catMatch && subMatch && procMatch;
+  }).sort((a, b) => {
+    const aPinned = a.pinOrder != null;
+    const bPinned = b.pinOrder != null;
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    if (aPinned && bPinned) return (a.pinOrder ?? 0) - (b.pinOrder ?? 0);
+    return 0;
   });
 
   useEffect(() => {
@@ -133,13 +140,13 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
   }, [filterCategory, filterSub, filterProcessing]);
 
   const categories = useMemo(
-    () => [copy.all, ...PRODUCT_CATEGORIES.filter((cat) => products.some((product) => product.category === cat))],
+    () => [copy.all, ...getDynamicCategories().filter((cat) => products.some((product) => product.category === cat))],
     [copy.all, products]
   );
 
   const subs = useMemo(
     () =>
-      PRODUCT_CATEGORIES.reduce((output, cat) => {
+      getDynamicCategories().reduce((output, cat) => {
         const lines: string[] = Array.from(
           new Set<string>(products.filter((product) => product.category === cat).map((product) => product.subCategory))
         )

@@ -151,6 +151,17 @@ const SCHEMA_STATEMENTS = [
       last_active_at text,
       updated_at text not null default CURRENT_TIMESTAMP
     )
+  `,
+  `
+    create table if not exists product_categories (
+      id text primary key,
+      name text not null,
+      slug text not null,
+      sort_order integer not null default 0,
+      is_active integer not null default 1,
+      created_at text not null default CURRENT_TIMESTAMP,
+      updated_at text not null default CURRENT_TIMESTAMP
+    )
   `
 ];
 
@@ -192,7 +203,32 @@ const normalizeNonNegativeInteger = (value, fallback = 0) => {
 const NEWS_MIGRATION_COLUMNS = [
   ['scheduled_at', 'text'],
   ['image_alt', 'text'],
-  ['related_products', 'text']
+  ['related_products', 'text'],
+  ['content_html', 'text'],
+  ['seo_title', 'text'],
+  ['meta_description', 'text'],
+  ['focus_keyword', 'text']
+];
+
+const PRODUCT_MIGRATION_COLUMNS = [
+  ['slug', 'text'],
+  ['seo_title', 'text'],
+  ['meta_description', 'text'],
+  ['focus_keyword', 'text'],
+  ['image_alt', 'text'],
+  ['canonical_url', 'text'],
+  ['status', "text not null default 'published'"],
+  ['moq', 'text'],
+  ['origin_country', 'text'],
+  ['certifications', 'text'],
+  ['incoterms', 'text'],
+  ['destination_markets', 'text'],
+  ['packaging_options', 'text'],
+  ['lead_time', 'text'],
+  ['sample_policy', 'text'],
+  ['previous_slugs', 'text'],
+  ['appearance', 'text'],
+  ['pin_order', 'integer']
 ];
 
 const PROVINCE_MAP_PROFILE_COLUMNS = [
@@ -332,6 +368,28 @@ export const createTursoConnection = (env = process.env) => {
   });
 };
 
+// ── Product Categories (must be before ensureDatabaseSchema) ──
+
+const DEFAULT_CATEGORIES = [
+  { id: 'rice', name: 'Rice', slug: 'rice', sort_order: 0 },
+  { id: 'coffee', name: 'Coffee', slug: 'coffee', sort_order: 1 },
+  { id: 'cashew', name: 'Cashew', slug: 'cashew', sort_order: 2 },
+  { id: 'agriculture', name: 'Agriculture', slug: 'agriculture', sort_order: 3 },
+  { id: 'pepper', name: 'Pepper', slug: 'pepper', sort_order: 4 }
+];
+
+export const seedDefaultCategories = async (client) => {
+  const existing = await client.execute('select count(*) as cnt from product_categories');
+  if (Number(existing.rows[0]?.cnt ?? 0) > 0) return;
+
+  for (const cat of DEFAULT_CATEGORIES) {
+    await client.execute({
+      sql: `insert or ignore into product_categories (id, name, slug, sort_order) values (?, ?, ?, ?)`,
+      args: [cat.id, cat.name, cat.slug, cat.sort_order]
+    });
+  }
+};
+
 export const ensureDatabaseSchema = async (client) => {
   for (const statement of SCHEMA_STATEMENTS) {
     await client.execute(statement);
@@ -360,6 +418,18 @@ export const ensureDatabaseSchema = async (client) => {
     await client.execute(`alter table news add column ${columnName} ${columnDefinition}`);
   }
 
+  // Migrate products table for SEO + B2B fields
+  const productColumns = await client.execute('pragma table_info(products)');
+  const existingProductColumnNames = new Set(productColumns.rows.map((row) => String(row.name ?? '').trim()));
+
+  for (const [columnName, columnDefinition] of PRODUCT_MIGRATION_COLUMNS) {
+    if (existingProductColumnNames.has(columnName)) {
+      continue;
+    }
+
+    await client.execute(`alter table products add column ${columnName} ${columnDefinition}`);
+  }
+
   const provinceMapProfileColumns = await client.execute('pragma table_info(province_map_profiles)');
   const existingColumnNames = new Set(provinceMapProfileColumns.rows.map((row) => String(row.name ?? '').trim()));
 
@@ -370,6 +440,9 @@ export const ensureDatabaseSchema = async (client) => {
 
     await client.execute(`alter table province_map_profiles add column ${columnName} ${columnDefinition}`);
   }
+
+  // Seed default product categories if table is empty
+  await seedDefaultCategories(client);
 };
 
 export const slugify = (value) =>
@@ -405,20 +478,40 @@ export const verifyPassword = (password, storedHash) => {
 
 const mapProductRow = (row) => ({
   id: String(row.id ?? ''),
+  slug: row.slug ? String(row.slug) : undefined,
   name: String(row.name ?? ''),
   isActive: Number(row.is_active ?? 1) !== 0,
+  status: row.status ? String(row.status) : undefined,
   category: String(row.category ?? ''),
   subCategory: String(row.sub_category ?? ''),
   description: String(row.description ?? ''),
   shortDescription: String(row.short_description ?? ''),
   image: String(row.image ?? ''),
+  imageAlt: row.image_alt ? String(row.image_alt) : undefined,
   pdfUrl: row.pdf_url ? String(row.pdf_url) : undefined,
   gallery: parseJsonColumn(row.gallery, undefined),
   specifications: parseJsonColumn(row.specifications, {}),
   packaging: parseJsonColumn(row.packaging, {}),
   payment: parseJsonColumn(row.payment, {}),
   filters: parseJsonColumn(row.filters, {}),
-  translations: parseJsonColumn(row.translations, undefined)
+  translations: parseJsonColumn(row.translations, undefined),
+  // SEO fields
+  seoTitle: row.seo_title ? String(row.seo_title) : undefined,
+  metaDescription: row.meta_description ? String(row.meta_description) : undefined,
+  focusKeyword: row.focus_keyword ? String(row.focus_keyword) : undefined,
+  canonicalUrl: row.canonical_url ? String(row.canonical_url) : undefined,
+  // B2B fields
+  moq: row.moq ? String(row.moq) : undefined,
+  originCountry: row.origin_country ? String(row.origin_country) : undefined,
+  certifications: parseJsonColumn(row.certifications, undefined),
+  incoterms: parseJsonColumn(row.incoterms, undefined),
+  destinationMarkets: parseJsonColumn(row.destination_markets, undefined),
+  packagingOptions: parseJsonColumn(row.packaging_options, undefined),
+  leadTime: row.lead_time ? String(row.lead_time) : undefined,
+  samplePolicy: row.sample_policy ? String(row.sample_policy) : undefined,
+  previousSlugs: parseJsonColumn(row.previous_slugs, undefined),
+  appearance: row.appearance ? String(row.appearance) : undefined,
+  pinOrder: row.pin_order != null ? Number(row.pin_order) : null
 });
 
 const mapNewsRow = (row) => ({
@@ -430,15 +523,23 @@ const mapNewsRow = (row) => ({
   category: String(row.category ?? ''),
   excerpt: String(row.excerpt ?? ''),
   content: parseJsonColumn(row.content, []),
+  contentHtml: row.content_html ? String(row.content_html) : undefined,
   image: String(row.image ?? ''),
   imageAlt: row.image_alt ? String(row.image_alt) : undefined,
   scheduledAt: row.scheduled_at ? String(row.scheduled_at) : undefined,
+  seoTitle: row.seo_title ? String(row.seo_title) : undefined,
+  metaDescription: row.meta_description ? String(row.meta_description) : undefined,
+  focusKeyword: row.focus_keyword ? String(row.focus_keyword) : undefined,
   translations: parseJsonColumn(row.translations, undefined),
   relatedProducts: parseJsonColumn(row.related_products, undefined)
 });
 
 const mapProvinceMapProfileRow = (row) => ({
   provinceId: String(row.province_id ?? ''),
+  headline: String(row.headline ?? ''),
+  overview: String(row.overview ?? ''),
+  exportProduceCount: Number(row.export_produce_count ?? 0),
+  growingZones: Number(row.growing_zones ?? 0),
   gpsLatitude: normalizeNullableNumber(row.gps_latitude),
   gpsLongitude: normalizeNullableNumber(row.gps_longitude),
   cultivatedAreaHectares: normalizeNullableNumber(row.cultivated_area_hectares),
@@ -482,7 +583,7 @@ const mapPersonalizationProfileRow = (row) => ({
 });
 
 export const listProducts = async (client) => {
-  const result = await client.execute('select * from products order by id asc');
+  const result = await client.execute('select * from products order by (pin_order is not null) desc, pin_order asc, id asc');
   return result.rows.map(mapProductRow);
 };
 
@@ -503,8 +604,8 @@ export const listPublicNews = async (client) => {
 };
 
 export const getContentSnapshot = async (client) => {
-  const [products, news] = await Promise.all([listProducts(client), listNews(client)]);
-  return { products, news };
+  const [products, news, categories] = await Promise.all([listProducts(client), listNews(client), listCategories(client)]);
+  return { products, news, categories };
 };
 
 export const generateUniqueNewsSlug = async (client, requestedSlug, title, id) => {
@@ -528,20 +629,44 @@ export const generateUniqueNewsSlug = async (client, requestedSlug, title, id) =
 };
 
 export const upsertProduct = async (client, product) => {
+  // Auto-generate slug from product name if not provided
+  const productSlug = product.slug?.trim() || slugify(product.name || product.id || 'product');
+
+  // Merge previousSlugs: if slug changed, append old slug to history
+  let mergedPreviousSlugs = Array.isArray(product.previousSlugs) ? [...product.previousSlugs] : [];
+  // Check if current row exists and slug is changing
+  try {
+    const existingRow = await client.execute({ sql: 'select slug, previous_slugs from products where id = ? limit 1', args: [String(product.id ?? '')] });
+    if (existingRow.rows.length > 0) {
+      const oldSlug = existingRow.rows[0].slug ? String(existingRow.rows[0].slug) : null;
+      const oldPrevious = parseJsonColumn(existingRow.rows[0].previous_slugs, []);
+      if (Array.isArray(oldPrevious)) mergedPreviousSlugs = [...new Set([...oldPrevious, ...mergedPreviousSlugs])];
+      if (oldSlug && oldSlug !== productSlug && !mergedPreviousSlugs.includes(oldSlug)) {
+        mergedPreviousSlugs.push(oldSlug);
+      }
+    }
+  } catch { /* first insert — no existing row */ }
+
   await client.execute({
     sql: `
       insert into products (
-        id, name, is_active, category, sub_category, description, short_description, image,
-        pdf_url, gallery, specifications, packaging, payment, filters, translations, created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        id, slug, name, is_active, status, category, sub_category, description, short_description, image, image_alt,
+        pdf_url, gallery, specifications, packaging, payment, filters, translations,
+        seo_title, meta_description, focus_keyword, canonical_url,
+        moq, origin_country, certifications, incoterms, destination_markets, packaging_options, lead_time, sample_policy,
+        previous_slugs, appearance, pin_order, created_at, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       on conflict(id) do update set
+        slug = excluded.slug,
         name = excluded.name,
         is_active = excluded.is_active,
+        status = excluded.status,
         category = excluded.category,
         sub_category = excluded.sub_category,
         description = excluded.description,
         short_description = excluded.short_description,
         image = excluded.image,
+        image_alt = excluded.image_alt,
         pdf_url = excluded.pdf_url,
         gallery = excluded.gallery,
         specifications = excluded.specifications,
@@ -549,24 +674,57 @@ export const upsertProduct = async (client, product) => {
         payment = excluded.payment,
         filters = excluded.filters,
         translations = excluded.translations,
+        seo_title = excluded.seo_title,
+        meta_description = excluded.meta_description,
+        focus_keyword = excluded.focus_keyword,
+        canonical_url = excluded.canonical_url,
+        moq = excluded.moq,
+        origin_country = excluded.origin_country,
+        certifications = excluded.certifications,
+        incoterms = excluded.incoterms,
+        destination_markets = excluded.destination_markets,
+        packaging_options = excluded.packaging_options,
+        lead_time = excluded.lead_time,
+        sample_policy = excluded.sample_policy,
+        previous_slugs = excluded.previous_slugs,
+        appearance = excluded.appearance,
+        pin_order = excluded.pin_order,
         updated_at = CURRENT_TIMESTAMP
     `,
     args: [
       String(product.id ?? ''),
+      productSlug,
       String(product.name ?? ''),
       product.isActive === false ? 0 : 1,
+      product.status || 'published',
       String(product.category ?? ''),
       String(product.subCategory ?? ''),
       String(product.description ?? ''),
       String(product.shortDescription ?? ''),
       String(product.image ?? ''),
+      product.imageAlt?.trim() || null,
       product.pdfUrl?.trim() ? product.pdfUrl.trim() : null,
       stringifyJsonColumn(product.gallery, null),
       stringifyJsonColumn(product.specifications, {}),
       stringifyJsonColumn(product.packaging, {}),
       stringifyJsonColumn(product.payment, {}),
       stringifyJsonColumn(product.filters, {}),
-      stringifyJsonColumn(product.translations, {})
+      stringifyJsonColumn(product.translations, {}),
+      product.seoTitle?.trim() || null,
+      product.metaDescription?.trim() || null,
+      product.focusKeyword?.trim() || null,
+      product.canonicalUrl?.trim() || null,
+      product.moq?.trim() || null,
+      product.originCountry?.trim() || null,
+      stringifyJsonColumn(product.certifications, null),
+      stringifyJsonColumn(product.incoterms, null),
+      stringifyJsonColumn(product.destinationMarkets, null),
+      stringifyJsonColumn(product.packagingOptions, null),
+      product.leadTime?.trim() || null,
+      product.samplePolicy?.trim() || null,
+      stringifyJsonColumn(mergedPreviousSlugs.length > 0 ? mergedPreviousSlugs : null, null),
+      product.appearance?.trim() || null,
+      product.pinOrder != null ? Number(product.pinOrder) : null
     ]
   });
 
@@ -598,10 +756,66 @@ export const deleteProductById = async (client, id) => {
   });
 };
 
+// ── Product Categories (CRUD) ──────────────────────────────
+
+const mapCategoryRow = (row) => ({
+  id: String(row.id ?? ''),
+  name: String(row.name ?? ''),
+  slug: String(row.slug ?? ''),
+  sortOrder: Number(row.sort_order ?? 0),
+  isActive: Number(row.is_active ?? 1) !== 0
+});
+
+export const listCategories = async (client) => {
+  const result = await client.execute('select * from product_categories order by sort_order asc, name asc');
+  return result.rows.map(mapCategoryRow);
+};
+
+export const upsertCategory = async (client, category) => {
+  const catSlug = category.slug?.trim() || slugify(category.name || category.id || 'category');
+  await client.execute({
+    sql: `
+      insert into product_categories (id, name, slug, sort_order, is_active, updated_at)
+      values (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      on conflict(id) do update set
+        name = excluded.name,
+        slug = excluded.slug,
+        sort_order = excluded.sort_order,
+        is_active = excluded.is_active,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+    args: [
+      String(category.id ?? ''),
+      String(category.name ?? ''),
+      catSlug,
+      Number(category.sortOrder ?? 0),
+      category.isActive === false ? 0 : 1
+    ]
+  });
+
+  const result = await client.execute({
+    sql: 'select * from product_categories where id = ? limit 1',
+    args: [String(category.id ?? '')]
+  });
+
+  return mapCategoryRow(result.rows[0]);
+};
+
+export const deleteCategoryById = async (client, id) => {
+  await client.execute({
+    sql: 'delete from product_categories where id = ?',
+    args: [String(id)]
+  });
+};
+
 export const upsertNews = async (client, item) => {
   const slug = await generateUniqueNewsSlug(client, item.slug, item.title, item.id);
   const scheduledAt = item.scheduledAt ? String(item.scheduledAt).trim() : null;
   const imageAlt = item.imageAlt ? String(item.imageAlt).trim() : null;
+  const contentHtml = item.contentHtml ? String(item.contentHtml) : null;
+  const seoTitle = item.seoTitle ? String(item.seoTitle).trim() : null;
+  const metaDescription = item.metaDescription ? String(item.metaDescription).trim() : null;
+  const focusKeyword = item.focusKeyword ? String(item.focusKeyword).trim() : null;
   const relatedProducts = Array.isArray(item.relatedProducts) && item.relatedProducts.length > 0
     ? stringifyJsonColumn(item.relatedProducts, null)
     : null;
@@ -609,8 +823,11 @@ export const upsertNews = async (client, item) => {
   await client.execute({
     sql: `
       insert into news (
-        id, slug, title, is_active, date, category, excerpt, content, image, image_alt, scheduled_at, translations, related_products, created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        id, slug, title, is_active, date, category, excerpt, content, image, image_alt,
+        scheduled_at, translations, related_products,
+        content_html, seo_title, meta_description, focus_keyword,
+        created_at, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       on conflict(id) do update set
         slug = excluded.slug,
         title = excluded.title,
@@ -624,6 +841,10 @@ export const upsertNews = async (client, item) => {
         scheduled_at = excluded.scheduled_at,
         translations = excluded.translations,
         related_products = excluded.related_products,
+        content_html = excluded.content_html,
+        seo_title = excluded.seo_title,
+        meta_description = excluded.meta_description,
+        focus_keyword = excluded.focus_keyword,
         updated_at = CURRENT_TIMESTAMP
     `,
     args: [
@@ -639,7 +860,11 @@ export const upsertNews = async (client, item) => {
       imageAlt,
       scheduledAt,
       stringifyJsonColumn(item.translations, {}),
-      relatedProducts
+      relatedProducts,
+      contentHtml,
+      seoTitle,
+      metaDescription,
+      focusKeyword
     ]
   });
 
