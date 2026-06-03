@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import { Node as TiptapNode, mergeAttributes } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/react/menus';
@@ -405,6 +405,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [showImageDialog, setShowImageDialog] = React.useState(false);
   const [showCtaDialog, setShowCtaDialog] = React.useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  // Force re-render on selection/transaction changes so toolbar buttons reflect cursor position
+  const [, setTick] = useState(0);
 
   const editor = useEditor({
     extensions: [
@@ -439,6 +441,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       const html = ed.getHTML();
       // Emit empty string when editor is empty (just <p></p>)
       onChange(html === '<p></p>' ? '' : html);
+    },
+    // Re-render toolbar on every transaction (cursor move, selection change, etc.)
+    onTransaction: () => {
+      setTick((t) => t + 1);
     },
     editorProps: {
       attributes: {
