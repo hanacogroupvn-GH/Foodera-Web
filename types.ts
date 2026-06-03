@@ -73,6 +73,7 @@ export interface Product {
   seoTitle?: string;
   metaDescription?: string;
   focusKeyword?: string;
+  secondaryKeywords?: string[];
   canonicalUrl?: string;
   // B2B export fields
   moq?: string;
@@ -124,6 +125,7 @@ export interface NewsItem {
   metaDescription?: string;
   /** Focus keyword for SEO analyzer scoring */
   focusKeyword?: string;
+  secondaryKeywords?: string[];
   translations?: Partial<Record<ContentLocale, NewsTranslation>>;
   /** Internal product links shown in the article sidebar */
   relatedProducts?: NewsRelatedProduct[];

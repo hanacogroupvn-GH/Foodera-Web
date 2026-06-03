@@ -1,11 +1,12 @@
-import React from 'react';
-import { Target, Search, FileText, Globe } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Target, Search, FileText, Globe, Tags, X } from 'lucide-react';
 
 interface SeoFieldsPanelProps {
   // Core SEO fields
   seoTitle: string;
   metaDescription: string;
   focusKeyword: string;
+  secondaryKeywords: string[];
   slug: string;
   imageAlt: string;
   // Source fields for fallback display
@@ -15,6 +16,7 @@ interface SeoFieldsPanelProps {
   onSeoTitleChange: (value: string) => void;
   onMetaDescriptionChange: (value: string) => void;
   onFocusKeywordChange: (value: string) => void;
+  onSecondaryKeywordsChange: (value: string[]) => void;
   onImageAltChange: (value: string) => void;
 }
 
@@ -41,6 +43,7 @@ export const SeoFieldsPanel: React.FC<SeoFieldsPanelProps> = ({
   seoTitle,
   metaDescription,
   focusKeyword,
+  secondaryKeywords,
   slug,
   imageAlt,
   title,
@@ -48,8 +51,32 @@ export const SeoFieldsPanel: React.FC<SeoFieldsPanelProps> = ({
   onSeoTitleChange,
   onMetaDescriptionChange,
   onFocusKeywordChange,
+  onSecondaryKeywordsChange,
   onImageAltChange,
 }) => {
+  const [skwInput, setSkwInput] = useState('');
+
+  const addSecondaryKeyword = useCallback((raw: string) => {
+    const kw = raw.trim().toLowerCase();
+    if (!kw || secondaryKeywords.length >= 10) return;
+    if (secondaryKeywords.some(k => k.toLowerCase() === kw)) return;
+    onSecondaryKeywordsChange([...secondaryKeywords, kw]);
+  }, [secondaryKeywords, onSecondaryKeywordsChange]);
+
+  const removeSecondaryKeyword = useCallback((index: number) => {
+    onSecondaryKeywordsChange(secondaryKeywords.filter((_, i) => i !== index));
+  }, [secondaryKeywords, onSecondaryKeywordsChange]);
+
+  const handleSkwKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === 'Tab' || e.key === ',') {
+      e.preventDefault();
+      addSecondaryKeyword(skwInput);
+      setSkwInput('');
+    }
+    if (e.key === 'Backspace' && !skwInput && secondaryKeywords.length > 0) {
+      removeSecondaryKeyword(secondaryKeywords.length - 1);
+    }
+  }, [skwInput, addSecondaryKeyword, removeSecondaryKeyword, secondaryKeywords]);
   const effectiveSeoTitle = seoTitle || title;
   const effectiveMetaDesc = metaDescription || excerpt;
   const effectiveSlug = slug || 'news-item';
@@ -174,6 +201,73 @@ export const SeoFieldsPanel: React.FC<SeoFieldsPanelProps> = ({
         </p>
       </div>
 
+      {/* Secondary Keywords */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-violet-50 rounded-lg flex items-center justify-center">
+              <Tags size={13} className="text-violet-500" />
+            </div>
+            <label className="text-xs font-black uppercase tracking-widest text-gray-500">
+              Secondary Keywords
+            </label>
+          </div>
+          <span className="text-[10px] font-bold tabular-nums text-gray-400">
+            {secondaryKeywords.length}/10
+          </span>
+        </div>
+
+        {/* Tags display */}
+        {secondaryKeywords.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {secondaryKeywords.map((kw, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-200 text-xs font-semibold text-violet-700 transition-all hover:bg-violet-100 group"
+              >
+                {kw}
+                <button
+                  type="button"
+                  onClick={() => removeSecondaryKeyword(idx)}
+                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-violet-400 hover:text-white hover:bg-violet-500 transition-colors"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <input
+          type="text"
+          value={skwInput}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v.includes(',')) {
+              const parts = v.split(',');
+              parts.forEach(p => addSecondaryKeyword(p));
+              setSkwInput('');
+            } else {
+              setSkwInput(v);
+            }
+          }}
+          onKeyDown={handleSkwKeyDown}
+          onBlur={() => {
+            if (skwInput.trim()) {
+              addSecondaryKeyword(skwInput);
+              setSkwInput('');
+            }
+          }}
+          placeholder={secondaryKeywords.length >= 10 ? 'Đã đạt tối đa 10 keyword' : 'Nhập keyword phụ, nhấn Enter hoặc dấu phẩy để thêm...'}
+          disabled={secondaryKeywords.length >= 10}
+          className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-violet-300 transition-colors placeholder:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <p className="text-[10px] text-gray-400">
+          Từ khóa phụ liên quan giúp mở rộng phạm vi SEO. Nhấn Enter, Tab hoặc dấu phẩy để thêm. Tối đa 10 keyword.
+        </p>
+      </div>
+
       {/* Image Alt Text */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3">
         <div className="flex items-center justify-between">
@@ -215,6 +309,10 @@ export const SeoFieldsPanel: React.FC<SeoFieldsPanelProps> = ({
           {
             label: 'Focus Keyword đã điền',
             ok: focusKeyword.trim().length > 0,
+          },
+          {
+            label: 'Có ít nhất 1 keyword phụ',
+            ok: secondaryKeywords.length > 0,
           },
           {
             label: 'Image Alt Text đã điền',

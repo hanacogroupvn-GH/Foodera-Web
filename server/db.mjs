@@ -207,7 +207,8 @@ const NEWS_MIGRATION_COLUMNS = [
   ['content_html', 'text'],
   ['seo_title', 'text'],
   ['meta_description', 'text'],
-  ['focus_keyword', 'text']
+  ['focus_keyword', 'text'],
+  ['secondary_keywords', 'text']
 ];
 
 const PRODUCT_MIGRATION_COLUMNS = [
@@ -215,6 +216,7 @@ const PRODUCT_MIGRATION_COLUMNS = [
   ['seo_title', 'text'],
   ['meta_description', 'text'],
   ['focus_keyword', 'text'],
+  ['secondary_keywords', 'text'],
   ['image_alt', 'text'],
   ['canonical_url', 'text'],
   ['status', "text not null default 'published'"],
@@ -499,6 +501,7 @@ const mapProductRow = (row) => ({
   seoTitle: row.seo_title ? String(row.seo_title) : undefined,
   metaDescription: row.meta_description ? String(row.meta_description) : undefined,
   focusKeyword: row.focus_keyword ? String(row.focus_keyword) : undefined,
+  secondaryKeywords: parseJsonColumn(row.secondary_keywords, undefined),
   canonicalUrl: row.canonical_url ? String(row.canonical_url) : undefined,
   // B2B fields
   moq: row.moq ? String(row.moq) : undefined,
@@ -530,6 +533,7 @@ const mapNewsRow = (row) => ({
   seoTitle: row.seo_title ? String(row.seo_title) : undefined,
   metaDescription: row.meta_description ? String(row.meta_description) : undefined,
   focusKeyword: row.focus_keyword ? String(row.focus_keyword) : undefined,
+  secondaryKeywords: parseJsonColumn(row.secondary_keywords, undefined),
   translations: parseJsonColumn(row.translations, undefined),
   relatedProducts: parseJsonColumn(row.related_products, undefined)
 });
@@ -652,10 +656,10 @@ export const upsertProduct = async (client, product) => {
       insert into products (
         id, slug, name, is_active, status, category, sub_category, description, short_description, image, image_alt,
         pdf_url, gallery, specifications, packaging, payment, filters, translations,
-        seo_title, meta_description, focus_keyword, canonical_url,
+        seo_title, meta_description, focus_keyword, secondary_keywords, canonical_url,
         moq, origin_country, certifications, incoterms, destination_markets, packaging_options, lead_time, sample_policy,
         previous_slugs, appearance, pin_order, created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       on conflict(id) do update set
         slug = excluded.slug,
         name = excluded.name,
@@ -677,6 +681,7 @@ export const upsertProduct = async (client, product) => {
         seo_title = excluded.seo_title,
         meta_description = excluded.meta_description,
         focus_keyword = excluded.focus_keyword,
+        secondary_keywords = excluded.secondary_keywords,
         canonical_url = excluded.canonical_url,
         moq = excluded.moq,
         origin_country = excluded.origin_country,
@@ -713,6 +718,7 @@ export const upsertProduct = async (client, product) => {
       product.seoTitle?.trim() || null,
       product.metaDescription?.trim() || null,
       product.focusKeyword?.trim() || null,
+      stringifyJsonColumn(Array.isArray(product.secondaryKeywords) && product.secondaryKeywords.length > 0 ? product.secondaryKeywords : null, null),
       product.canonicalUrl?.trim() || null,
       product.moq?.trim() || null,
       product.originCountry?.trim() || null,
@@ -816,6 +822,9 @@ export const upsertNews = async (client, item) => {
   const seoTitle = item.seoTitle ? String(item.seoTitle).trim() : null;
   const metaDescription = item.metaDescription ? String(item.metaDescription).trim() : null;
   const focusKeyword = item.focusKeyword ? String(item.focusKeyword).trim() : null;
+  const secondaryKeywords = Array.isArray(item.secondaryKeywords) && item.secondaryKeywords.length > 0
+    ? stringifyJsonColumn(item.secondaryKeywords, null)
+    : null;
   const relatedProducts = Array.isArray(item.relatedProducts) && item.relatedProducts.length > 0
     ? stringifyJsonColumn(item.relatedProducts, null)
     : null;
@@ -825,9 +834,9 @@ export const upsertNews = async (client, item) => {
       insert into news (
         id, slug, title, is_active, date, category, excerpt, content, image, image_alt,
         scheduled_at, translations, related_products,
-        content_html, seo_title, meta_description, focus_keyword,
+        content_html, seo_title, meta_description, focus_keyword, secondary_keywords,
         created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       on conflict(id) do update set
         slug = excluded.slug,
         title = excluded.title,
@@ -845,6 +854,7 @@ export const upsertNews = async (client, item) => {
         seo_title = excluded.seo_title,
         meta_description = excluded.meta_description,
         focus_keyword = excluded.focus_keyword,
+        secondary_keywords = excluded.secondary_keywords,
         updated_at = CURRENT_TIMESTAMP
     `,
     args: [
@@ -864,7 +874,8 @@ export const upsertNews = async (client, item) => {
       contentHtml,
       seoTitle,
       metaDescription,
-      focusKeyword
+      focusKeyword,
+      secondaryKeywords
     ]
   });
 

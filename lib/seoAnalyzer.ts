@@ -53,6 +53,7 @@ export interface SeoAnalysisInput {
   content: string;
   image: string;
   focusKeyword?: string;
+  secondaryKeywords?: string[];
   /** Existing article titles for doorway/duplicate detection */
   existingArticleTitles?: string[];
 }
@@ -196,6 +197,16 @@ const checkKwFirstPara: CF = (i) => {
   return { id: 'keyword-first-para', label: 'Keyword in Intro', severity: 'warning', score: 40, message: `"${k}" not in first 100 words. Place it early.` };
 };
 
+const checkSecondaryKw: CF = (i) => {
+  const skw = (i.secondaryKeywords || []).map(k => k.trim()).filter(Boolean);
+  if (skw.length === 0) return { id: 'secondary-keywords', label: 'Secondary Keywords', severity: 'warning', score: 40, message: 'No secondary keywords set. Add related terms.' };
+  const found = skw.filter(k => kw(i.content, k));
+  const pct = found.length / skw.length;
+  if (pct >= 0.5) return { id: 'secondary-keywords', label: 'Secondary Keywords', severity: 'good', score: 100, message: `${found.length}/${skw.length} secondary keywords in content. Great coverage!` };
+  if (found.length > 0) return { id: 'secondary-keywords', label: 'Secondary Keywords', severity: 'warning', score: 60, message: `Only ${found.length}/${skw.length} in content. Add: ${skw.filter(k => !kw(i.content, k)).join(', ')}.` };
+  return { id: 'secondary-keywords', label: 'Secondary Keywords', severity: 'error', score: 20, message: `None of ${skw.length} secondary keywords found in content.` };
+};
+
 const checkTransition: CF = (i) => {
   const sents = splitSentences(i.content);
   if (sents.length < 3) return { id: 'transition-words', label: 'Transition Words', severity: 'warning', score: 50, message: 'Too short to analyze.' };
@@ -257,7 +268,7 @@ const allChecks: CF[] = [
   checkTitleLength, checkExcerpt, checkSlug, checkContentLength,
   checkImage, checkFocusKw, checkDensity, checkParaStructure, checkLinks,
   // v2 checks
-  checkHeadingStructure, checkImageAlt, checkKwFirstPara,
+  checkHeadingStructure, checkImageAlt, checkKwFirstPara, checkSecondaryKw,
   checkTransition, checkSentLen, checkPassive, checkOutbound, checkOriginality,
 ];
 

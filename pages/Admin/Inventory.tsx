@@ -47,7 +47,8 @@ import {
   FileDown,
   MapPinned,
   Eye,
-  Pin
+  Pin,
+  Tags
 } from 'lucide-react';
 import { AdminSidebar } from '../../components/AdminSidebar';
 
@@ -2672,6 +2673,76 @@ const AdminInventory: React.FC = () => {
                   className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-foodera-forest/20 outline-none text-sm font-bold"
                   placeholder="e.g. Vietnamese Jasmine Rice Supplier"
                 />
+              </div>
+
+              {/* Secondary Keywords */}
+              <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-violet-100 text-violet-600 rounded-lg"><Tags size={18} /></div>
+                    <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.3em]">Secondary Keywords</h3>
+                  </div>
+                  <span className="text-[10px] text-gray-400 font-bold tabular-nums">{(formData.secondaryKeywords || []).length}/10</span>
+                </div>
+
+                {/* Tags display */}
+                {(formData.secondaryKeywords || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(formData.secondaryKeywords || []).map((kw, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-200 text-xs font-semibold text-violet-700 transition-all hover:bg-violet-100"
+                      >
+                        {kw}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (formData.secondaryKeywords || []).filter((_, i) => i !== idx);
+                            setFormData({...formData, secondaryKeywords: updated});
+                          }}
+                          className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-violet-400 hover:text-white hover:bg-violet-500 transition-colors"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  placeholder={(formData.secondaryKeywords || []).length >= 10 ? 'Đã đạt tối đa 10 keyword' : 'Nhập keyword phụ, nhấn Enter hoặc dấu phẩy để thêm...'}
+                  disabled={(formData.secondaryKeywords || []).length >= 10}
+                  className="w-full px-4 py-3 bg-white rounded-xl border-2 border-transparent focus:border-violet-300 outline-none text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === 'Tab' || e.key === ',') {
+                      e.preventDefault();
+                      const val = (e.target as HTMLInputElement).value.trim().toLowerCase();
+                      if (!val || (formData.secondaryKeywords || []).length >= 10) return;
+                      if ((formData.secondaryKeywords || []).some(k => k.toLowerCase() === val)) { (e.target as HTMLInputElement).value = ''; return; }
+                      setFormData({...formData, secondaryKeywords: [...(formData.secondaryKeywords || []), val]});
+                      (e.target as HTMLInputElement).value = '';
+                    }
+                  }}
+                  onChange={(e) => {
+                    if (e.target.value.includes(',')) {
+                      const parts = e.target.value.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                      const current = formData.secondaryKeywords || [];
+                      const unique = parts.filter(p => !current.some(k => k.toLowerCase() === p));
+                      const merged = [...current, ...unique].slice(0, 10);
+                      setFormData({...formData, secondaryKeywords: merged});
+                      e.target.value = '';
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = e.target.value.trim().toLowerCase();
+                    if (val && (formData.secondaryKeywords || []).length < 10 && !(formData.secondaryKeywords || []).some(k => k.toLowerCase() === val)) {
+                      setFormData({...formData, secondaryKeywords: [...(formData.secondaryKeywords || []), val]});
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                <p className="text-[10px] text-gray-400 italic">Từ khóa phụ liên quan. Nhấn Enter, Tab hoặc dấu phẩy để thêm. Tối đa 10 keyword.</p>
               </div>
 
               {/* Image Alt Text */}

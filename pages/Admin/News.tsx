@@ -323,6 +323,7 @@ const AdminNews: React.FC = () => {
   const [isTranslatingDraft, setIsTranslatingDraft] = useState(false);
   const [modalTab, setModalTab] = useState<'general' | 'content' | 'translation' | 'seo' | 'links'>('general');
   const [focusKeyword, setFocusKeyword] = useState('');
+  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [contentImageUploadError, setContentImageUploadError] = useState<string | null>(null);
 
@@ -432,6 +433,7 @@ const AdminNews: React.FC = () => {
       setHasCustomSlug(!!item.slug?.trim());
       // Restore SEO fields when editing existing item
       setFocusKeyword(item.focusKeyword || '');
+      setSecondaryKeywords(Array.isArray(item.secondaryKeywords) ? item.secondaryKeywords : []);
     } else {
       setEditingItem(null);
       const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -453,6 +455,7 @@ const AdminNews: React.FC = () => {
     setIsModalOpen(true);
     setModalTab('general');
     // focusKeyword đã được set trong block if/else phía trên — KHÔNG reset ở đây
+    // secondaryKeywords cũng đã được set — KHÔNG reset ở đây
     setRpPickerType('product');
     setRpPickerSearch('');
     setRpPickerCategory('Rice');
@@ -656,6 +659,7 @@ const AdminNews: React.FC = () => {
           seoTitle: (formData.seoTitle || '').trim() || undefined,
           metaDescription: (formData.metaDescription || '').trim() || undefined,
           focusKeyword: focusKeyword.trim() || undefined,
+          secondaryKeywords: secondaryKeywords.length > 0 ? secondaryKeywords : undefined,
           scheduledAt: formData.scheduledAt || undefined,
           relatedProducts: (formData.relatedProducts ?? []).length > 0
             ? formData.relatedProducts
@@ -1766,6 +1770,7 @@ const AdminNews: React.FC = () => {
                   content: plainContent,
                   image: (formData.image || '').trim(),
                   focusKeyword: focusKeyword.trim(),
+                  secondaryKeywords: secondaryKeywords,
                   existingArticleTitles: news.filter(n => n.id !== editingItem?.id).map(n => n.title),
                 };
                 const report: SeoReport = analyzeSeo(seoInput, 'en');
@@ -1808,6 +1813,7 @@ const AdminNews: React.FC = () => {
                     seoTitle={formData.seoTitle || ''}
                     metaDescription={formData.metaDescription || ''}
                     focusKeyword={focusKeyword}
+                    secondaryKeywords={secondaryKeywords}
                     slug={slugPreview}
                     imageAlt={formData.imageAlt || ''}
                     title={formData.title || ''}
@@ -1815,6 +1821,7 @@ const AdminNews: React.FC = () => {
                     onSeoTitleChange={(v) => setFormData(prev => ({ ...prev, seoTitle: v }))}
                     onMetaDescriptionChange={(v) => setFormData(prev => ({ ...prev, metaDescription: v }))}
                     onFocusKeywordChange={setFocusKeyword}
+                    onSecondaryKeywordsChange={setSecondaryKeywords}
                     onImageAltChange={(v) => setFormData(prev => ({ ...prev, imageAlt: v }))}
                   />
 
