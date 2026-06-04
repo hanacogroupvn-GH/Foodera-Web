@@ -207,7 +207,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
         id: slugify(label, index)
       });
       blocks.push({ type: 'paragraph', text: numberedLabelWithBodyMatch[3].trim() });
-      return;
+      continue;
     }
 
     const numberedStandaloneHeadingMatch = text.match(
@@ -220,7 +220,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
         text: headingText,
         id: slugify(headingText, index)
       });
-      return;
+      continue;
     }
 
     const localizedSectionMatch = text.match(/^第\s*\d+\s*(部分|章|节)\s*[:：\-]?\s*(.*)$/u);
@@ -231,7 +231,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
         text: headingText,
         id: slugify(headingText, index)
       });
-      return;
+      continue;
     }
 
     const sectionMatch = text.match(/^(section|chapter|part)\s*\d+\s*[:\-]?\s*(.*)$/i);
@@ -242,7 +242,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
         text: headingText || `Section ${index + 1}`,
         id: slugify(headingText || `section-${index + 1}`, index)
       });
-      return;
+      continue;
     }
 
     const conclusionMatch = text.match(/^(conclusion|key takeaways|outlook|结论|关键要点|展望)\s*[:：\-]?\s*(.*)$/iu);
@@ -257,7 +257,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
       if (remainder) {
         blocks.push({ type: 'paragraph', text: remainder });
       }
-      return;
+      continue;
     }
 
     const shortLabelMatch = text.match(/^([\p{L}\p{N}\s&/.-]{2,40})\s*[:：]\s+(.+)$/u);
@@ -268,13 +268,13 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
         id: slugify(shortLabelMatch[1], index)
       });
       blocks.push({ type: 'paragraph', text: shortLabelMatch[2].trim() });
-      return;
+      continue;
     }
 
     if (text.endsWith(':') && text.split(/\s+/).length <= 8) {
       const headingText = text.slice(0, -1).trim();
       blocks.push({ type: 'heading', text: headingText, id: slugify(headingText, index) });
-      return;
+      continue;
     }
 
     const looksLikeStandaloneHeading =
@@ -285,7 +285,7 @@ const createContentBlocks = (paragraphs: string[], defaultImageAlt: string): Con
 
     if (looksLikeStandaloneHeading) {
       blocks.push({ type: 'heading', text, id: slugify(text, index) });
-      return;
+      continue;
     }
 
     blocks.push({ type: 'paragraph', text });
