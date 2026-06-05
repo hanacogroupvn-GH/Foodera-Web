@@ -48,7 +48,8 @@ import {
   MapPinned,
   Eye,
   Pin,
-  Tags
+  Tags,
+  Copy
 } from 'lucide-react';
 import { AdminSidebar } from '../../components/AdminSidebar';
 
@@ -1040,6 +1041,27 @@ const AdminInventory: React.FC = () => {
     }
   };
 
+  const handleDuplicate = (product: Product) => {
+    const newId = buildNextProductId(product.id, products.map((p) => p.id));
+    setEditingProduct(null);
+    setFormData({
+      ...product,
+      id: newId,
+      name: product.name,
+      slug: '',
+      pinOrder: undefined,
+      pdfUrl: product.pdfUrl || '',
+      gallery: product.gallery ? [...product.gallery] : [],
+      specifications: { ...product.specifications },
+      packaging: { ...(product.packaging || {}) },
+      payment: { ...(product.payment || {}) },
+      filters: { ...product.filters },
+      translations: cloneProductTranslations(product)
+    });
+    setNewGalleryUrl('');
+    setIsModalOpen(true);
+  };
+
   const pinnedCount = useMemo(() => products.filter(p => p.pinOrder != null).length, [products]);
 
   const handleTogglePin = async (product: Product) => {
@@ -1859,6 +1881,14 @@ const AdminInventory: React.FC = () => {
                           className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-foodera-forest hover:text-white transition-all shadow-sm"
                         >
                           <Edit3 size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicate(p)}
+                          className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-blue-500 hover:text-white transition-all shadow-sm"
+                          title={locale === 'zh' ? '复制产品' : 'Duplicate Product'}
+                        >
+                          <Copy size={18} />
                         </button>
                         <button
                           onClick={() => handleTranslateExistingProduct(p)}
