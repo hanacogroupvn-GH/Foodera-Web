@@ -1362,11 +1362,15 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
         // Only include published products (status='published' or legacy is_active=1 with no status)
         const { rows: products } = await sitemapDb.execute(
-          `SELECT id, slug, category, status, is_active FROM products ORDER BY id ASC`
+          `SELECT id, slug, category, status, is_active, updated_at FROM products ORDER BY id ASC`
         );
         // Only include active, non-scheduled news
         const { rows: news } = await sitemapDb.execute(
           `SELECT id, slug, title, date, is_active, scheduled_at FROM news WHERE is_active = 1 ORDER BY date DESC, _rowid_ DESC`
+        );
+        // Active product categories for category listing pages
+        const { rows: categories } = await sitemapDb.execute(
+          `SELECT id, slug, name FROM product_categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC`
         );
         
         const stripDiacritics = (val) => val.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/\u0110/g, 'd');
@@ -1389,7 +1393,8 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
           { url: '/news', priority: '0.7', changefreq: 'weekly' },
           { url: '/operations', priority: '0.6', changefreq: 'monthly' },
           { url: '/contact', priority: '0.6', changefreq: 'monthly' },
-          { url: '/interactive-map', priority: '0.5', changefreq: 'monthly' }
+          { url: '/interactive-map', priority: '0.5', changefreq: 'monthly' },
+          { url: '/commercial-tools', priority: '0.5', changefreq: 'monthly' }
         ];
 
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -1397,6 +1402,12 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
         for (const route of staticRoutes) {
           xml += `  <url>\n    <loc>${baseUrl}${route.url}</loc>\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>\n`;
+        }
+
+        // Product category listing pages (e.g., /product/rice, /product/coffee)
+        for (const cat of categories) {
+          const catSlug = encodeURIComponent(cat.slug || cat.id);
+          xml += `  <url>\n    <loc>${baseUrl}/product/${catSlug}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         }
 
         // Products: only published, use slug for URL

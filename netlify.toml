@@ -37,7 +37,20 @@
   function = "seo-inject"
   path = "/product/item/*"
 
-# SPA fallback — static files (sitemap.xml, robots.txt) are served first by Netlify
+# Edge Function: inject news/article SEO meta into HTML for Googlebot / social crawlers
+[[edge_functions]]
+  function = "news-seo-inject"
+  path = "/news/*"
+
+# Route dynamic sitemap through serverless function (must be BEFORE SPA fallback)
+# force=true ensures this overrides the static public/sitemap.xml file
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/api/sitemap.xml"
+  status = 200
+  force = true
+
+# SPA fallback — static files (robots.txt, etc.) are served first by Netlify
 [[redirects]]
   from = "/*"
   to = "/index.html"

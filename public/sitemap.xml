@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- Core pages (static fallback — dynamic sitemap served by server at /sitemap.xml) -->
+  <!--
+    STATIC FALLBACK SITEMAP
+    =======================
+    This file is a fallback only. In production, the dynamic sitemap is served
+    by the serverless function at /sitemap.xml which queries the database for
+    all published products, active news articles, and product categories.
+
+    If the serverless function is unavailable, Netlify will serve this file.
+    Keep core static pages here for baseline coverage.
+  -->
+
+  <!-- Core pages -->
   <url>
     <loc>https://foodera.vn/</loc>
     <changefreq>weekly</changefreq>
@@ -15,30 +26,35 @@
   <url>
     <loc>https://foodera.vn/news</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://foodera.vn/about</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foodera.vn/contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://foodera.vn/operations</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://foodera.vn/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://foodera.vn/interactive-map</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+  <url>
+    <loc>https://foodera.vn/commercial-tools</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 
-  <!-- Product category pages -->
+  <!-- Default product categories (dynamic sitemap includes DB-driven categories) -->
   <url>
     <loc>https://foodera.vn/product/rice</loc>
     <changefreq>weekly</changefreq>
@@ -51,6 +67,16 @@
   </url>
   <url>
     <loc>https://foodera.vn/product/cashew</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://foodera.vn/product/pepper</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://foodera.vn/product/agriculture</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
