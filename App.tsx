@@ -26,6 +26,7 @@ const News = lazy(() => import('./pages/News'));
 const NewsDetail = lazy(() => import('./pages/NewsDetail'));
 const CommercialTool = lazy(() => import('./pages/CommercialTool'));
 const Operations = lazy(() => import('./pages/Operations'));
+const Careers = lazy(() => import('./pages/Careers'));
 const Login = lazy(() => import('./pages/Login'));
 const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
@@ -193,6 +194,7 @@ const AppRoutes: React.FC = () => {
                   <Route path={`${appRoutes.news}/:slug`} element={<NewsDetail />} />
                   <Route path={`${appRoutes.news}/:legacyId/:legacySlug`} element={<NewsDetail />} />
                   <Route path={appRoutes.operations} element={<Operations />} />
+                  <Route path={appRoutes.careers} element={<Careers />} />
                   <Route path={appRoutes.contact} element={<Contact />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>

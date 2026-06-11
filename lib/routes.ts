@@ -14,6 +14,7 @@ export const appRoutes = {
   commercialTool: '/interactive-map',
   legacyCommercialTool: '/commercial-tool',
   operations: '/operations',
+  careers: '/careers',
   admin: '/admin',
   adminInventory: '/admin/inventory',
   adminNews: '/admin/news',

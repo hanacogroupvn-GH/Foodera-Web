@@ -71,6 +71,7 @@ const Footer: React.FC = () => {
               <li><Link to={appRoutes.productsByCategory('Rice')} className="text-foodera-forest/80 hover:text-foodera-lime transition-colors">{copy.rice}</Link></li>
               <li><Link to={appRoutes.productsByCategory('Coffee')} className="text-foodera-forest/80 hover:text-foodera-lime transition-colors">{copy.coffee}</Link></li>
               <li><Link to={appRoutes.productsByCategory('Cashew')} className="text-foodera-forest/80 hover:text-foodera-lime transition-colors">{copy.cashew}</Link></li>
+              <li><Link to={appRoutes.careers} className="text-foodera-forest/80 hover:text-foodera-lime transition-colors">{locale === 'zh' ? '招聘' : 'Careers'}</Link></li>
             </ul>
           </div>
 

@@ -479,6 +479,7 @@ const Navbar: React.FC = () => {
 
                 <Link to={appRoutes.news} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.news}</Link>
                 <Link to={appRoutes.about} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.about}</Link>
+                <Link to={appRoutes.careers} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{locale === 'zh' ? '招聘' : 'Careers'}</Link>
                 
               <div className="flex items-center space-x-6">
                 <button
@@ -565,6 +566,7 @@ const Navbar: React.FC = () => {
                   <Link to={appRoutes.products} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.products}</Link>
                   <Link to={appRoutes.news} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
                   <Link to={appRoutes.about} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.about}</Link>
+                  <Link to={appRoutes.careers} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{locale === 'zh' ? '招聘' : 'Careers'}</Link>
                   <Link to={appRoutes.contact} className="block w-full py-5 bg-foodera-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
                     {copy.contactUs}
                   </Link>
