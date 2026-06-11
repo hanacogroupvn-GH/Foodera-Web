@@ -155,7 +155,7 @@ export const careersContentVi: CareersContent = {
     description:
       'Gửi CV của bạn đến email bên dưới, chúng tôi luôn chào đón những tài năng xuất sắc tham gia vào hành trình phát triển của FoodEra.',
     emailLabel: 'Gửi CV qua email',
-    email: 'hr@foodera.vn',
+    email: 'export@foodera.vn',
   },
 };
 
