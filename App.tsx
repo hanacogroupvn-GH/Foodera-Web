@@ -32,6 +32,7 @@ const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
 const AdminNews = lazy(() => import('./pages/Admin/News'));
 const AdminInteractiveMapContent = lazy(() => import('./pages/Admin/InteractiveMapContent'));
+const AdminCareers = lazy(() => import('./pages/Admin/Careers'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const ScrollToTop = () => {
@@ -171,6 +172,16 @@ const AppRoutes: React.FC = () => {
                     <ProtectedRoute>
                       <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载地图内容...' : 'Loading map content...'} compact />}>
                         <AdminInteractiveMapContent />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminCareers}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载招聘管理...' : 'Loading careers...'} compact />}>
+                        <AdminCareers />
                       </Suspense>
                     </ProtectedRoute>
                   }

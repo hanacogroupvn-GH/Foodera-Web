@@ -131,6 +131,19 @@ export interface NewsItem {
   relatedProducts?: NewsRelatedProduct[];
 }
 
+export interface CareerItem {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  description: string;
+  requirements: string[];
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type PersonalizationEntityType = 'page' | 'category' | 'product' | 'news' | 'quote_request';
 export type PersonalizationAction = 'view' | 'click' | 'submit';
 

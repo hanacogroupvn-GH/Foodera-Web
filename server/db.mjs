@@ -47,6 +47,20 @@ const SCHEMA_STATEMENTS = [
   `,
   'create index if not exists idx_news_date on news(date desc)',
   `
+    create table if not exists careers (
+      id text primary key,
+      title text not null,
+      department text not null default '',
+      location text not null default '',
+      type text not null default 'Full-time',
+      description text not null default '',
+      requirements text not null default '[]',
+      is_active integer not null default 1,
+      created_at text not null default CURRENT_TIMESTAMP,
+      updated_at text not null default CURRENT_TIMESTAMP
+    )
+  `,
+  `
     create table if not exists admin_users (
       id integer primary key autoincrement,
       email text not null unique,
@@ -538,6 +552,19 @@ const mapNewsRow = (row) => ({
   relatedProducts: parseJsonColumn(row.related_products, undefined)
 });
 
+const mapCareerRow = (row) => ({
+  id: String(row.id ?? ''),
+  title: String(row.title ?? ''),
+  department: String(row.department ?? ''),
+  location: String(row.location ?? ''),
+  type: String(row.type ?? 'Full-time'),
+  description: String(row.description ?? ''),
+  requirements: parseJsonColumn(row.requirements, []),
+  isActive: Number(row.is_active ?? 1) !== 0,
+  createdAt: row.created_at ? String(row.created_at) : undefined,
+  updatedAt: row.updated_at ? String(row.updated_at) : undefined
+});
+
 const mapProvinceMapProfileRow = (row) => ({
   provinceId: String(row.province_id ?? ''),
   headline: String(row.headline ?? ''),
@@ -607,9 +634,22 @@ export const listPublicNews = async (client) => {
   return result.rows.map(mapNewsRow);
 };
 
+export const listCareers = async (client) => {
+  const result = await client.execute('select * from careers order by created_at desc, id desc');
+  return result.rows.map(mapCareerRow);
+};
+
+export const listActiveCareers = async (client) => {
+  const result = await client.execute({
+    sql: 'select * from careers where is_active = 1 order by created_at desc, id desc',
+    args: []
+  });
+  return result.rows.map(mapCareerRow);
+};
+
 export const getContentSnapshot = async (client) => {
-  const [products, news, categories] = await Promise.all([listProducts(client), listNews(client), listCategories(client)]);
-  return { products, news, categories };
+  const [products, news, categories, careers] = await Promise.all([listProducts(client), listNews(client), listCategories(client), listCareers(client)]);
+  return { products, news, categories, careers };
 };
 
 export const generateUniqueNewsSlug = async (client, requestedSlug, title, id) => {
@@ -890,6 +930,52 @@ export const upsertNews = async (client, item) => {
 export const deleteNewsById = async (client, id) => {
   await client.execute({
     sql: 'delete from news where id = ?',
+    args: [String(id)]
+  });
+};
+
+export const upsertCareer = async (client, item) => {
+  const id = String(item.id ?? '').trim() || `career-${Date.now()}`;
+
+  await client.execute({
+    sql: `
+      insert into careers (
+        id, title, department, location, type, description, requirements, is_active,
+        created_at, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      on conflict(id) do update set
+        title = excluded.title,
+        department = excluded.department,
+        location = excluded.location,
+        type = excluded.type,
+        description = excluded.description,
+        requirements = excluded.requirements,
+        is_active = excluded.is_active,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+    args: [
+      id,
+      String(item.title ?? ''),
+      String(item.department ?? ''),
+      String(item.location ?? ''),
+      String(item.type ?? 'Full-time'),
+      String(item.description ?? ''),
+      JSON.stringify(Array.isArray(item.requirements) ? item.requirements : []),
+      item.isActive === false ? 0 : 1
+    ]
+  });
+
+  const result = await client.execute({
+    sql: 'select * from careers where id = ? limit 1',
+    args: [id]
+  });
+
+  return mapCareerRow(result.rows[0]);
+};
+
+export const deleteCareerById = async (client, id) => {
+  await client.execute({
+    sql: 'delete from careers where id = ?',
     args: [String(id)]
   });
 };

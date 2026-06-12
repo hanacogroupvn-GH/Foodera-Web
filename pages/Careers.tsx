@@ -4,6 +4,7 @@ import {
   Upload, Send, CheckCircle, Search, Mail, Phone, Linkedin, Facebook, MapPinned
 } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
+import { useData } from '../context/DataContext';
 import { getCareersContent, type CareersContent, type CareersBenefit } from '../lib/careersContent';
 import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 import '../components/careers.css';
@@ -63,6 +64,7 @@ const getBadgeClass = (type: string) => {
    ══════════════════════════════════════════ */
 const Careers: React.FC = () => {
   const { locale } = useLocale();
+  const { activeCareers } = useData();
   const content: CareersContent = getCareersContent(locale);
   const formRef = useRef<HTMLElement>(null);
 
@@ -88,7 +90,20 @@ const Careers: React.FC = () => {
     ogUrl: `${BASE_URL}/careers`,
   });
 
-  const activePositions = content.positions.items.filter((p) => p.isActive);
+  // Use DB careers if available, otherwise fall back to static content
+  const dbPositions = activeCareers.map((c) => ({
+    id: c.id,
+    title: c.title,
+    department: c.department,
+    location: c.location,
+    type: c.type as any,
+    description: c.description,
+    requirements: c.requirements,
+    isActive: c.isActive,
+  }));
+  const activePositions = dbPositions.length > 0
+    ? dbPositions
+    : content.positions.items.filter((p) => p.isActive);
 
   const scrollToForm = (positionTitle?: string) => {
     if (positionTitle) {
@@ -165,7 +180,7 @@ const Careers: React.FC = () => {
             <img
               src="/media/careers/hero-bg.jpg"
               alt={isVi ? 'Đội ngũ FoodEra' : 'FoodEra Team'}
-              style={{ backgroundColor: '#1B6B3A' }}
+              style={{ backgroundColor: '#e5e7eb' }}
               onError={(e) => {
                 // Fallback: hide broken image and show solid color
                 (e.currentTarget as HTMLImageElement).style.display = 'none';

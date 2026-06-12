@@ -5,6 +5,7 @@ import {
   Package,
   FileText,
   MapPinned,
+  Briefcase,
   LogOut,
   ChevronDown,
   ChevronRight,
@@ -239,6 +240,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         >
           <MapPinned size={17} />
           Map Content
+        </Link>
+
+        {/* Careers (Tuyển dụng) */}
+        <Link
+          to={appRoutes.adminCareers}
+          className={`${linkBase} ${
+            isSection(appRoutes.adminCareers) ? linkActive : linkInactive
+          }`}
+        >
+          <Briefcase size={17} />
+          Tuyển dụng
         </Link>
       </nav>
 

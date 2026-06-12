@@ -1,4 +1,5 @@
 import {
+  CareerItem,
   NewsItem,
   PersonalizedRecommendations,
   PersonalizationTrackPayload,
@@ -105,7 +106,7 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
 
 export const api = {
   getContent: () =>
-    apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[]; categories?: ProductCategory[] }>('/api/content'),
+    apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[]; categories?: ProductCategory[]; careers?: CareerItem[] }>('/api/content'),
   getPersonalizedRecommendations: (options?: { productLimit?: number; newsLimit?: number }) => {
     const searchParams = new URLSearchParams();
 
@@ -238,6 +239,16 @@ export const api = {
     }),
   deleteCategory: (id: string) =>
     apiRequest<{ ok: true }>(`/api/admin/categories/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  // Careers
+  upsertCareer: (item: CareerItem) =>
+    apiRequest<{ ok: true; item: CareerItem }>('/api/admin/careers/upsert', {
+      method: 'POST',
+      body: { item }
+    }),
+  deleteCareer: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/careers/${encodeURIComponent(id)}`, {
       method: 'DELETE'
     })
 };

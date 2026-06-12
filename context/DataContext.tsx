@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { NewsItem, NewsTranslation, Product, ProductCategory, ProductTranslation } from '../types';
+import { CareerItem, NewsItem, NewsTranslation, Product, ProductCategory, ProductTranslation } from '../types';
 import { api, BackendMode } from '../lib/apiClient';
 import { NEWS as fallbackNewsData, PRODUCTS as fallbackProductData } from '../constants';
 import { FALLBACK_NEWS_TRANSLATIONS, FALLBACK_PRODUCT_TRANSLATIONS } from '../lib/fallbackTranslations';
-import { getActiveNews, getActiveProducts } from '../lib/contentStatus';
+import { getActiveCareers, getActiveNews, getActiveProducts } from '../lib/contentStatus';
 import { setDynamicCategories } from '../lib/productCategories';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
@@ -11,8 +11,10 @@ interface DataContextType {
   products: Product[];
   news: NewsItem[];
   categories: ProductCategory[];
+  careers: CareerItem[];
   activeProducts: Product[];
   activeNews: NewsItem[];
+  activeCareers: CareerItem[];
   isLoading: boolean;
   backendMode: BackendMode;
   backendError: string | null;
@@ -22,6 +24,9 @@ interface DataContextType {
   addNews: (item: NewsItem) => Promise<void>;
   updateNews: (item: NewsItem) => Promise<void>;
   deleteNews: (id: string) => Promise<void>;
+  addCareer: (item: CareerItem) => Promise<void>;
+  updateCareer: (item: CareerItem) => Promise<void>;
+  deleteCareer: (id: string) => Promise<void>;
   upsertCategory: (category: ProductCategory) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   exportData: () => string;
@@ -176,11 +181,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [products, setProducts] = useState<Product[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [careers, setCareers] = useState<CareerItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [backendMode, setBackendMode] = useState<BackendMode>('fallback');
   const [backendError, setBackendError] = useState<string | null>(null);
   const activeProducts = useMemo(() => getActiveProducts(products), [products]);
   const activeNews = useMemo(() => getActiveNews(news), [news]);
+  const activeCareers = useMemo(() => getActiveCareers(careers), [careers]);
 
   const refresh = async () => {
     setIsLoading(true);
@@ -197,6 +204,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProducts((payload.products ?? []).map(normalizeProduct));
         setNews((payload.news ?? []).map(normalizeNewsItem));
         setCategories(payload.categories ?? []);
+        setCareers(payload.careers ?? []);
         setDynamicCategories(payload.categories ?? []);
         setBackendMode(payload.backend || 'turso');
         setBackendError(null);
@@ -253,6 +261,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refresh();
   };
 
+  const addCareer = async (item: CareerItem) => {
+    await api.upsertCareer(item);
+    await refresh();
+  };
+
+  const updateCareer = async (item: CareerItem) => {
+    await api.upsertCareer(item);
+    await refresh();
+  };
+
+  const deleteCareer = async (id: string) => {
+    await api.deleteCareer(id);
+    await refresh();
+  };
+
   const upsertCategory = async (category: ProductCategory) => {
     await api.upsertCategory(category);
     await refresh();
@@ -295,8 +318,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       products,
       news,
       categories,
+      careers,
       activeProducts,
       activeNews,
+      activeCareers,
       isLoading,
       backendMode,
       backendError,
@@ -306,6 +331,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addNews,
       updateNews,
       deleteNews,
+      addCareer,
+      updateCareer,
+      deleteCareer,
       upsertCategory,
       deleteCategory,
       exportData,
@@ -313,7 +341,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       resetToDefaults,
       refresh
     }),
-    [products, news, categories, activeProducts, activeNews, isLoading, backendMode, backendError]
+    [products, news, categories, careers, activeProducts, activeNews, activeCareers, isLoading, backendMode, backendError]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

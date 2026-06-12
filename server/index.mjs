@@ -14,6 +14,7 @@ import {
   deleteNewsById,
   deleteProductById,
   deleteCategoryById,
+  deleteCareerById,
   ensureDatabaseSchema,
   findAdminByEmail,
   getContentSnapshot,
@@ -26,11 +27,13 @@ import {
   listPublicNews,
   listProducts,
   listCategories,
+  listActiveCareers,
   updateProductRecord,
   upsertAdminUser,
   upsertProvinceMapProfile,
   upsertNews,
   upsertCategory,
+  upsertCareer,
   verifyPassword
 } from './db.mjs';
 import { loadProjectEnv } from './loadEnv.mjs';
@@ -224,8 +227,8 @@ const getActiveSnapshot = (snapshot) => ({
 });
 
 const getPublicContentSnapshot = async (client) => {
-  const [products, news, categories] = await Promise.all([listProducts(client), listPublicNews(client), listCategories(client)]);
-  return { products, news, categories };
+  const [products, news, categories, careers] = await Promise.all([listProducts(client), listPublicNews(client), listCategories(client), listActiveCareers(client)]);
+  return { products, news, categories, careers };
 };
 
 const seedLocalDatabaseIfEmpty = async (client) => {
@@ -1203,6 +1206,30 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         response.json({ ok: true });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete article.' });
+      }
+    });
+
+    app.post('/api/admin/careers/upsert', requireAdmin, async (request, response) => {
+      try {
+        const item = request.body?.item;
+        if (!item || typeof item !== 'object') {
+          response.status(400).json({ error: 'Career position data is required.' });
+          return;
+        }
+
+        const savedCareer = await upsertCareer(request.app.locals.db, item);
+        response.json({ ok: true, item: savedCareer });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save career position.' });
+      }
+    });
+
+    app.delete('/api/admin/careers/:id', requireAdmin, async (request, response) => {
+      try {
+        await deleteCareerById(request.app.locals.db, request.params.id);
+        response.json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete career position.' });
       }
     });
 
