@@ -374,6 +374,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     build: {
+      target: 'es2020', // Modern browsers — avoids unnecessary polyfills
+      sourcemap: true, // Enable source maps for production debugging
       rollupOptions: {
         output: {
           manualChunks(id) {
@@ -401,6 +403,11 @@ export default defineConfig(({ mode }) => {
 
             if (id.includes('@tiptap') || id.includes('prosemirror')) {
               return 'tiptap';
+            }
+
+            // Map library — only used on map pages
+            if (id.includes('leaflet') || id.includes('react-leaflet')) {
+              return 'leaflet';
             }
 
             return undefined;

@@ -127,7 +127,7 @@ const AboutUs: React.FC = () => {
               </div>
 
               <div className="who-image">
-                <img src="/media/about/hero-agriculture.png" alt="Vietnamese agriculture" loading="eager" />
+                <img src="/media/about/hero-agriculture.webp" alt="Vietnamese agriculture" loading="eager" />
               </div>
             </div>
           </FadeIn>
@@ -143,7 +143,7 @@ const AboutUs: React.FC = () => {
           <FadeIn>
             <div className="story-grid">
               <div className="story-image">
-                <img src="/media/about/rice-field-story.png" alt="Vietnamese rice field" loading="lazy" />
+                <img src="/media/about/rice-field-story.webp" alt="Vietnamese rice field" loading="lazy" />
               </div>
 
               <div className="story-content">
@@ -358,11 +358,11 @@ const AboutUs: React.FC = () => {
 
             <div className="standards-grid">
               {[
-                { img: '/media/about/cert-iso22000.png', title: 'ISO 22000', desc: 'Food Safety Management System' },
+                { img: '/media/about/cert-iso22000.webp', title: 'ISO 22000', desc: 'Food Safety Management System' },
                 { img: '/media/about/cert-haccp.avif', title: 'HACCP', desc: 'Hazard Analysis and Critical Control Points' },
-                { img: '/media/about/cert-rainforest.png', title: 'Rainforest Alliance', desc: 'Sustainable Agriculture & Responsible Sourcing' },
-                { img: '/media/about/cert-fda.jpg', title: 'FDA', desc: 'U.S. Food and Drug Administration' },
-                { img: '/media/about/cert-4c.png', title: '40 Years of Experience', desc: 'Delivering Quality Products to Global Markets' },
+                { img: '/media/about/cert-rainforest.webp', title: 'Rainforest Alliance', desc: 'Sustainable Agriculture & Responsible Sourcing' },
+                { img: '/media/about/cert-fda.webp', title: 'FDA', desc: 'U.S. Food and Drug Administration' },
+                { img: '/media/about/cert-4c.webp', title: '40 Years of Experience', desc: 'Delivering Quality Products to Global Markets' },
               ].map((s) => (
                 <div key={s.title} className="standard-card">
                   <img className="standard-card__img" src={s.img} alt={s.title} loading="lazy" />
@@ -390,22 +390,22 @@ const AboutUs: React.FC = () => {
             <div className="portfolio-grid">
               {[
                 {
-                  img: '/media/migrated/products/33b07f55-c6e6-493b-9de3-67d1c6674399-9e43d8f3be87.png',
+                  img: '/media/migrated/products/33b07f55-c6e6-493b-9de3-67d1c6674399-9e43d8f3be87.webp',
                   name: 'Rice',
                   desc: 'Premium-quality rice with excellent grain quality, aroma, and taste.',
                 },
                 {
-                  img: '/media/migrated/products/9a8cac7b-0a16-4d78-924e-404902dcd52c-3f1f026fc1bb.png',
+                  img: '/media/migrated/products/9a8cac7b-0a16-4d78-924e-404902dcd52c-3f1f026fc1bb.webp',
                   name: 'Coffee',
                   desc: 'Sustainably sourced coffee beans with rich flavor and consistent quality.',
                 },
                 {
-                  img: '/media/migrated/products/cashew-ww240-0c42769fe4d5.png',
+                  img: '/media/migrated/products/cashew-ww240-0c42769fe4d5.webp',
                   name: 'Cashew',
                   desc: 'High-quality cashews, carefully processed for great taste and freshness.',
                 },
                 {
-                  img: '/media/pepper/pure-pepper.jpg',
+                  img: '/media/pepper/pure-pepper.webp',
                   name: 'Pepper',
                   desc: 'Premium black pepper with strong aroma and consistent pungency.',
                 },

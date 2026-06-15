@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, startTransition, useContext, useEffect, useMemo, useState } from 'react';
 import { CareerItem, NewsItem, NewsTranslation, Product, ProductCategory, ProductTranslation } from '../types';
 import { api, BackendMode } from '../lib/apiClient';
 import { NEWS as fallbackNewsData, PRODUCTS as fallbackProductData } from '../constants';
@@ -201,13 +201,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
         const payload = await api.getContent();
+        // Critical path: products + categories update urgently (Navbar mega menu)
         setProducts((payload.products ?? []).map(normalizeProduct));
-        setNews((payload.news ?? []).map(normalizeNewsItem));
         setCategories(payload.categories ?? []);
-        setCareers(payload.careers ?? []);
         setDynamicCategories(payload.categories ?? []);
         setBackendMode(payload.backend || 'turso');
         setBackendError(null);
+        // Low-priority: news + careers deferred so they don't block initial paint
+        startTransition(() => {
+          setNews((payload.news ?? []).map(normalizeNewsItem));
+          setCareers(payload.careers ?? []);
+        });
         setIsLoading(false);
         return; // success — exit early
       } catch (error) {

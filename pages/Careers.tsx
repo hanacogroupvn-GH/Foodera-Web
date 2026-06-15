@@ -178,7 +178,7 @@ const Careers: React.FC = () => {
           {/* Right: Hero Image */}
           <div className="careers-hero__image">
             <img
-              src="/media/careers/hero-bg.jpg"
+              src="/media/careers/hero-bg.webp"
               alt={isVi ? 'Đội ngũ FoodEra' : 'FoodEra Team'}
               style={{ backgroundColor: '#e5e7eb' }}
               onError={(e) => {
@@ -229,7 +229,7 @@ const Careers: React.FC = () => {
         <div
           className="careers-about__image"
           style={{
-            backgroundImage: "url('/media/careers/about-bg.jpg')",
+            backgroundImage: "url('/media/careers/about-bg.webp')",
             backgroundColor: '#e5e7eb',
           }}
         />
