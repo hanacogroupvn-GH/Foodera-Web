@@ -555,13 +555,15 @@ const Careers: React.FC = () => {
                 </a>
 
                 <a
-                  href={`mailto:export@foodera.vn`}
+                  href="https://www.foodera.vn"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="careers-contact__item"
                 >
                   <div className="careers-contact__circle">
                     <Globe size={20} />
                   </div>
-                  <span className="careers-contact__item-label">export@foodera.vn</span>
+                  <span className="careers-contact__item-label">www.foodera.vn</span>
                 </a>
               </div>
             </div>

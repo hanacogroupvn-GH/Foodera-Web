@@ -240,7 +240,7 @@ export const careersContentEn: CareersContent = {
     description:
       'Send your CV to the email below. We always welcome exceptional talent to join the FoodEra journey.',
     emailLabel: 'Send CV via email',
-    email: 'hr@foodera.vn',
+    email: 'export@foodera.vn',
   },
 };
 
