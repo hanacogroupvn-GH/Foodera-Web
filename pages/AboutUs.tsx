@@ -390,22 +390,22 @@ const AboutUs: React.FC = () => {
             <div className="portfolio-grid">
               {[
                 {
-                  img: '/media/migrated/products/33b07f55-c6e6-493b-9de3-67d1c6674399-9e43d8f3be87.webp',
+                  img: '/media/products/rice-jasmine-5-optimized.webp',
                   name: 'Rice',
                   desc: 'Premium-quality rice with excellent grain quality, aroma, and taste.',
                 },
                 {
-                  img: '/media/migrated/products/9a8cac7b-0a16-4d78-924e-404902dcd52c-3f1f026fc1bb.webp',
+                  img: '/media/products/cof-rob-g1-s18-cl-optimized.webp',
                   name: 'Coffee',
                   desc: 'Sustainably sourced coffee beans with rich flavor and consistent quality.',
                 },
                 {
-                  img: '/media/migrated/products/cashew-ww240-0c42769fe4d5.webp',
+                  img: '/media/products/cashew-ww240-optimized.webp',
                   name: 'Cashew',
                   desc: 'High-quality cashews, carefully processed for great taste and freshness.',
                 },
                 {
-                  img: '/media/pepper/pure-pepper.webp',
+                  img: '/media/products/bp-cln-550-optimized.webp',
                   name: 'Pepper',
                   desc: 'Premium black pepper with strong aroma and consistent pungency.',
                 },
