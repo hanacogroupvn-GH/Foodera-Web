@@ -1,5 +1,5 @@
 import { api } from './apiClient';
-import { isCloudinaryConfigured, uploadToCloudinary } from './cloudinaryUpload';
+import { isCloudinaryConfigured, uploadToCloudinary, uploadRawToCloudinary } from './cloudinaryUpload';
 import { compressImage } from './imageCompress';
 
 export const CMS_IMAGE_INPUT_ACCEPT =
@@ -59,7 +59,7 @@ export const JD_FILE_INPUT_ACCEPT = [
 const MAX_JD_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 
 /**
- * Upload a JD file (PDF, DOC, DOCX, XLS, etc.) via the local server endpoint.
+ * Upload a JD file (PDF, DOC, DOCX, XLS, etc.) directly to Cloudinary.
  * Returns { publicUrl, fileName }.
  */
 export const uploadCareerJdFile = async (file: File): Promise<{ publicUrl: string; fileName: string }> => {
@@ -67,18 +67,7 @@ export const uploadCareerJdFile = async (file: File): Promise<{ publicUrl: strin
     throw new Error('Tệp JD phải nhỏ hơn 15MB.');
   }
 
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Không thể đọc tệp.'));
-    reader.readAsDataURL(file);
-  });
+  const publicUrl = await uploadRawToCloudinary(file, ['careers', 'jd']);
 
-  const result = await api.uploadCareerJd({
-    dataUrl,
-    contentType: file.type,
-    fileName: file.name,
-  });
-
-  return { publicUrl: result.publicUrl, fileName: result.fileName };
+  return { publicUrl, fileName: file.name };
 };

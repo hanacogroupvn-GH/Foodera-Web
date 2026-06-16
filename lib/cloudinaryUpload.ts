@@ -76,3 +76,56 @@ export const uploadToCloudinary = async (
 
   return publicUrl;
 };
+
+/**
+ * Upload a raw file (PDF, DOC, DOCX, etc.) directly to Cloudinary.
+ */
+export const uploadRawToCloudinary = async (
+  file: File,
+  folderSegments: string[] = []
+): Promise<string> => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error(
+      'Cloudinary is not configured. Set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.'
+    );
+  }
+
+  const folder = ['foodera-cms', ...folderSegments.map((segment) => segment.replace(/[^a-z0-9_-]/gi, '_'))]
+    .filter(Boolean)
+    .join('/');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', folder);
+
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Upload failed with status ${response.status}`;
+    try {
+      const errorPayload = await response.json();
+      if (errorPayload?.error?.message) {
+        errorMessage = errorPayload.error.message;
+      }
+    } catch {
+      // Use default
+    }
+    throw new Error(errorMessage);
+  }
+
+  const result = await response.json();
+  const publicUrl = result.secure_url || result.url;
+
+  if (!publicUrl) {
+    throw new Error('Cloudinary did not return a valid file URL.');
+  }
+
+  return publicUrl;
+};
+
