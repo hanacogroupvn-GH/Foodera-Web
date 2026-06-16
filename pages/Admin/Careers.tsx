@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { CareerItem } from '../../types';
+import { JD_FILE_INPUT_ACCEPT, uploadCareerJdFile } from '../../lib/storageUploads';
 import {
   Search,
   Plus,
@@ -18,6 +19,10 @@ import {
   Building2,
   CheckCircle,
   ChevronLeft,
+  FileUp,
+  FileText,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
 import { AdminSidebar } from '../../components/AdminSidebar';
 
@@ -54,6 +59,8 @@ const emptyFormData: Omit<CareerItem, 'id'> = {
   description: '',
   requirements: [],
   isActive: true,
+  jdFileUrl: '',
+  jdFileName: '',
 };
 
 const AdminCareers: React.FC = () => {
@@ -72,6 +79,11 @@ const AdminCareers: React.FC = () => {
   // Form fields
   const [formData, setFormData] = useState<Omit<CareerItem, 'id'>>(emptyFormData);
   const [requirementsString, setRequirementsString] = useState('');
+
+  // JD file upload state
+  const [jdFile, setJdFile] = useState<File | null>(null);
+  const [isUploadingJd, setIsUploadingJd] = useState(false);
+  const jdInputRef = useRef<HTMLInputElement>(null);
 
   // ── Derived Data ─────────────────────────────────
   const allFilteredCareers = (careers as CareerItem[]).filter((c) =>
@@ -103,12 +115,16 @@ const AdminCareers: React.FC = () => {
         description: item.description,
         requirements: item.requirements,
         isActive: item.isActive,
+        jdFileUrl: item.jdFileUrl || '',
+        jdFileName: item.jdFileName || '',
       });
       setRequirementsString((item.requirements || []).join('\n'));
+      setJdFile(null);
     } else {
       setEditingItem(null);
       setFormData({ ...emptyFormData });
       setRequirementsString('');
+      setJdFile(null);
     }
     setIsFormOpen(true);
   };
@@ -131,6 +147,21 @@ const AdminCareers: React.FC = () => {
 
     setTimeout(async () => {
       try {
+        // Upload JD file first if a new file was selected
+        let jdFileUrl = formData.jdFileUrl || '';
+        let jdFileName = formData.jdFileName || '';
+
+        if (jdFile) {
+          setIsUploadingJd(true);
+          try {
+            const uploadResult = await uploadCareerJdFile(jdFile);
+            jdFileUrl = uploadResult.publicUrl;
+            jdFileName = uploadResult.fileName;
+          } finally {
+            setIsUploadingJd(false);
+          }
+        }
+
         const payload: CareerItem = {
           id: editingItem?.id || slugify(formData.title),
           title: formData.title.trim(),
@@ -140,6 +171,8 @@ const AdminCareers: React.FC = () => {
           description: formData.description.trim(),
           requirements,
           isActive: formData.isActive,
+          jdFileUrl,
+          jdFileName,
         };
 
         if (editingItem) {
@@ -309,11 +342,27 @@ const AdminCareers: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Description preview */}
                     {item.description && (
                       <p className="text-xs text-gray-500 font-medium line-clamp-2 mb-5 leading-relaxed">
                         {item.description}
                       </p>
+                    )}
+
+                    {/* JD File Badge */}
+                    {item.jdFileUrl && (
+                      <div className="mb-4">
+                        <a
+                          href={item.jdFileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-indigo-100 transition-colors"
+                          title={item.jdFileName || 'JD File'}
+                        >
+                          <FileText size={11} />
+                          JD: {item.jdFileName ? (item.jdFileName.length > 20 ? item.jdFileName.slice(0, 20) + '...' : item.jdFileName) : 'Xem tệp'}
+                          <ExternalLink size={9} />
+                        </a>
+                      </div>
                     )}
 
                     {/* Actions */}
@@ -503,6 +552,122 @@ const AdminCareers: React.FC = () => {
                   placeholder="Mô tả chi tiết về vị trí tuyển dụng, trách nhiệm và quyền lợi..."
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest outline-none transition-all resize-none leading-relaxed"
                 />
+              </div>
+
+              {/* JD File Upload */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 block">
+                  Tệp JD (Job Description)
+                </label>
+                <div
+                  className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+                    (formData.jdFileUrl || jdFile)
+                      ? 'border-foodera-forest/30 bg-foodera-forest/5'
+                      : 'border-gray-200 bg-gray-50 hover:border-foodera-forest/20 hover:bg-gray-100'
+                  }`}
+                >
+                  <input
+                    ref={jdInputRef}
+                    type="file"
+                    accept={JD_FILE_INPUT_ACCEPT}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (file && file.size > 15 * 1024 * 1024) {
+                        alert('Tệp JD phải nhỏ hơn 15MB.');
+                        return;
+                      }
+                      setJdFile(file);
+                      // Clear the previous uploaded URL when a new file is picked
+                      if (file) {
+                        updateField('jdFileUrl', '');
+                        updateField('jdFileName', '');
+                      }
+                    }}
+                    className="hidden"
+                    id="jd-file-input"
+                  />
+
+                  {/* Show uploaded file info */}
+                  {(jdFile || formData.jdFileUrl) ? (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 bg-foodera-forest/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText size={20} className="text-foodera-forest" />
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <p className="text-sm font-bold text-gray-800 truncate">
+                            {jdFile ? jdFile.name : (formData.jdFileName || 'Tệp JD')}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-medium">
+                            {jdFile
+                              ? `${(jdFile.size / 1024).toFixed(1)} KB — Sẵn sàng upload`
+                              : 'Đã upload thành công'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {formData.jdFileUrl && !jdFile && (
+                          <a
+                            href={formData.jdFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white text-foodera-forest rounded-lg hover:bg-foodera-forest hover:text-white transition-all shadow-sm border border-gray-200"
+                            title="Xem tệp JD"
+                          >
+                            <Download size={14} />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setJdFile(null);
+                            updateField('jdFileUrl', '');
+                            updateField('jdFileName', '');
+                            if (jdInputRef.current) jdInputRef.current.value = '';
+                          }}
+                          className="p-2 bg-white text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm border border-gray-200"
+                          title="Xóa tệp JD"
+                        >
+                          <X size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => jdInputRef.current?.click()}
+                          className="p-2 bg-white text-gray-500 rounded-lg hover:bg-foodera-forest hover:text-white transition-all shadow-sm border border-gray-200"
+                          title="Thay đổi tệp"
+                        >
+                          <FileUp size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => jdInputRef.current?.click()}
+                      className="flex flex-col items-center gap-2 w-full py-2"
+                    >
+                      <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <FileUp size={24} className="text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-600">Chọn tệp JD từ máy tính</p>
+                        <p className="text-[10px] text-gray-400 font-medium mt-1">
+                          PDF, DOC, DOCX, XLS, XLSX, CSV, TXT hoặc ảnh — tối đa 15MB
+                        </p>
+                      </div>
+                    </button>
+                  )}
+
+                  {isUploadingJd && (
+                    <div className="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center">
+                      <div className="flex items-center gap-2 text-foodera-forest font-bold text-sm">
+                        <Loader2 size={18} className="animate-spin" />
+                        Đang tải tệp JD...
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Requirements */}

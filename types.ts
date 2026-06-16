@@ -140,6 +140,8 @@ export interface CareerItem {
   description: string;
   requirements: string[];
   isActive: boolean;
+  jdFileUrl?: string;
+  jdFileName?: string;
   createdAt?: string;
   updatedAt?: string;
 }

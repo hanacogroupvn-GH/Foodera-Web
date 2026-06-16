@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Globe, TrendingUp, Heart, Sprout, MapPin, Briefcase,
-  Upload, Send, CheckCircle, Search, Mail, Phone, Linkedin, Facebook, MapPinned
+  Upload, Send, CheckCircle, Search, Mail, Phone, Linkedin, Facebook, MapPinned, FileDown
 } from 'lucide-react';
 import { useLocale } from '../context/LocaleContext';
 import { useData } from '../context/DataContext';
@@ -100,6 +100,8 @@ const Careers: React.FC = () => {
     description: c.description,
     requirements: c.requirements,
     isActive: c.isActive,
+    jdFileUrl: c.jdFileUrl || '',
+    jdFileName: c.jdFileName || '',
   }));
   const activePositions = dbPositions.length > 0
     ? dbPositions
@@ -287,6 +289,17 @@ const Careers: React.FC = () => {
                       </span>
                     </div>
                     <p className="careers-pos-card__desc">{position.description}</p>
+                    {position.jdFileUrl && (
+                      <a
+                        href={position.jdFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="careers-pos-card__jd-link"
+                      >
+                        <FileDown size={14} />
+                        {isVi ? 'Xem JD chi tiết' : 'View Job Description'}
+                      </a>
+                    )}
                     <button
                       className="careers-pos-card__apply"
                       onClick={() => scrollToForm(position.title)}

@@ -259,6 +259,11 @@ const PROVINCE_MAP_PROFILE_COLUMNS = [
   ["varieties", "text not null default ''"]
 ];
 
+const CAREER_MIGRATION_COLUMNS = [
+  ['jd_file_url', "text not null default ''"],
+  ['jd_file_name', "text not null default ''"]
+];
+
 const QUOTATION_REQUEST_COLUMNS = [
   ["phone_whatsapp", 'text'],
   ["destination_port", "text not null default ''"],
@@ -457,6 +462,18 @@ export const ensureDatabaseSchema = async (client) => {
     await client.execute(`alter table province_map_profiles add column ${columnName} ${columnDefinition}`);
   }
 
+  // Migrate careers table for JD file attachment
+  const careerColumns = await client.execute('pragma table_info(careers)');
+  const existingCareerColumnNames = new Set(careerColumns.rows.map((row) => String(row.name ?? '').trim()));
+
+  for (const [columnName, columnDefinition] of CAREER_MIGRATION_COLUMNS) {
+    if (existingCareerColumnNames.has(columnName)) {
+      continue;
+    }
+
+    await client.execute(`alter table careers add column ${columnName} ${columnDefinition}`);
+  }
+
   // Seed default product categories if table is empty
   await seedDefaultCategories(client);
 };
@@ -561,6 +578,8 @@ const mapCareerRow = (row) => ({
   description: String(row.description ?? ''),
   requirements: parseJsonColumn(row.requirements, []),
   isActive: Number(row.is_active ?? 1) !== 0,
+  jdFileUrl: String(row.jd_file_url ?? ''),
+  jdFileName: String(row.jd_file_name ?? ''),
   createdAt: row.created_at ? String(row.created_at) : undefined,
   updatedAt: row.updated_at ? String(row.updated_at) : undefined
 });
@@ -941,8 +960,9 @@ export const upsertCareer = async (client, item) => {
     sql: `
       insert into careers (
         id, title, department, location, type, description, requirements, is_active,
+        jd_file_url, jd_file_name,
         created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       on conflict(id) do update set
         title = excluded.title,
         department = excluded.department,
@@ -951,6 +971,8 @@ export const upsertCareer = async (client, item) => {
         description = excluded.description,
         requirements = excluded.requirements,
         is_active = excluded.is_active,
+        jd_file_url = excluded.jd_file_url,
+        jd_file_name = excluded.jd_file_name,
         updated_at = CURRENT_TIMESTAMP
     `,
     args: [
@@ -961,7 +983,9 @@ export const upsertCareer = async (client, item) => {
       String(item.type ?? 'Full-time'),
       String(item.description ?? ''),
       JSON.stringify(Array.isArray(item.requirements) ? item.requirements : []),
-      item.isActive === false ? 0 : 1
+      item.isActive === false ? 0 : 1,
+      String(item.jdFileUrl ?? ''),
+      String(item.jdFileName ?? '')
     ]
   });
 

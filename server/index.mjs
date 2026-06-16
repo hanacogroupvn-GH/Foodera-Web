@@ -95,6 +95,20 @@ const RFQ_ALLOWED_CONTENT_TYPES = new Set([
   'image/webp'
 ]);
 
+const JD_ALLOWED_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+  'text/plain',
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
+const MAX_JD_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+
 const readCookies = (cookieHeader = '') =>
   Object.fromEntries(
     String(cookieHeader)
@@ -1230,6 +1244,46 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         response.json({ ok: true });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete career position.' });
+      }
+    });
+
+    app.post('/api/admin/careers/upload-jd', requireAdmin, async (request, response) => {
+      try {
+        if (!enableLocalUploads) {
+          response.status(501).json({
+            error: 'Local JD file uploads are disabled in the serverless runtime. Use object storage for production.'
+          });
+          return;
+        }
+
+        const { dataUrl, contentType, fileName } = request.body ?? {};
+        const { buffer, mimeType } = parseDataUrl(dataUrl);
+        const resolvedContentType = String(contentType || mimeType || '').trim().toLowerCase();
+
+        if (!JD_ALLOWED_CONTENT_TYPES.has(resolvedContentType)) {
+          throw new Error('Loại tệp không được hỗ trợ. Vui lòng chọn PDF, DOC, DOCX, XLS, XLSX, CSV, TXT hoặc ảnh.');
+        }
+
+        if (buffer.length > MAX_JD_FILE_SIZE_BYTES) {
+          throw new Error('Tệp JD phải nhỏ hơn 15MB.');
+        }
+
+        const safeSegments = sanitizeUploadSegments(['careers', 'jd']);
+        const extension = getFileExtension(fileName, resolvedContentType);
+        const absoluteDir = path.join(uploadsRoot, ...safeSegments);
+
+        await fs.mkdir(absoluteDir, { recursive: true });
+
+        const savedFileName = `${crypto.randomUUID()}.${extension}`;
+        await fs.writeFile(path.join(absoluteDir, savedFileName), buffer);
+
+        response.status(201).json({
+          ok: true,
+          publicUrl: `/uploads/cms/${safeSegments.join('/')}/${savedFileName}`,
+          fileName: String(fileName ?? savedFileName).trim() || savedFileName
+        });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'JD file upload failed.' });
       }
     });
 

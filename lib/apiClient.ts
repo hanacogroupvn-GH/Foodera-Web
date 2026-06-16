@@ -250,5 +250,14 @@ export const api = {
   deleteCareer: (id: string) =>
     apiRequest<{ ok: true }>(`/api/admin/careers/${encodeURIComponent(id)}`, {
       method: 'DELETE'
+    }),
+  uploadCareerJd: (payload: {
+    dataUrl: string;
+    contentType: string;
+    fileName: string;
+  }) =>
+    apiRequest<{ ok: true; publicUrl: string; fileName: string }>('/api/admin/careers/upload-jd', {
+      method: 'POST',
+      body: payload
     })
 };
