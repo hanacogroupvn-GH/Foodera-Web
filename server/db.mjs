@@ -411,6 +411,50 @@ export const seedDefaultCategories = async (client) => {
   }
 };
 
+export const seedDefaultCareers = async (client) => {
+  const existing = await client.execute('select count(*) as cnt from careers');
+  if (Number(existing.rows[0]?.cnt ?? 0) > 0) return;
+
+  const defaultCareers = [
+    {
+      id: 'export-sales-manager',
+      title: 'Export Sales Manager',
+      department: 'Sales',
+      location: '6 Mac Dinh Chi, Sai Gon Ward, Ho Chi Minh City',
+      type: 'Toàn thời gian',
+      description: "Develop and expand international customers for the company's Vietnamese agricultural export products, including rice, coffee, pepper, cashew nuts, and other agricultural products & spices.",
+      requirements: [],
+      is_active: 1,
+      jd_file_url: '',
+      jd_file_name: ''
+    }
+  ];
+
+  for (const item of defaultCareers) {
+    await client.execute({
+      sql: `
+        insert or ignore into careers (
+          id, title, department, location, type, description, requirements, is_active,
+          jd_file_url, jd_file_name,
+          created_at, updated_at
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+      args: [
+        item.id,
+        item.title,
+        item.department,
+        item.location,
+        item.type,
+        item.description,
+        JSON.stringify(item.requirements),
+        item.is_active,
+        item.jd_file_url,
+        item.jd_file_name
+      ]
+    });
+  }
+};
+
 export const ensureDatabaseSchema = async (client) => {
   for (const statement of SCHEMA_STATEMENTS) {
     await client.execute(statement);
@@ -476,6 +520,9 @@ export const ensureDatabaseSchema = async (client) => {
 
   // Seed default product categories if table is empty
   await seedDefaultCategories(client);
+
+  // Seed default career positions if table is empty
+  await seedDefaultCareers(client);
 };
 
 export const slugify = (value) =>
