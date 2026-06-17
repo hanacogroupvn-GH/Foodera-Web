@@ -63,11 +63,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     <aside className="w-60 bg-foodera-forest text-white flex flex-col sticky top-0 h-screen shadow-2xl z-20 flex-shrink-0">
       {/* Brand */}
       <div className="px-6 py-6 border-b border-white/10">
-        <div className="flex items-center h-8 mb-1">
+        <div className="flex items-center h-11 mb-1">
           <img
             src="/logo-era.png"
             alt="FoodEra"
-            className="h-8 w-auto object-contain"
+            className="h-11 w-auto object-contain"
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </div>
