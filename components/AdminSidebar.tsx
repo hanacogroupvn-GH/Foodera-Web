@@ -63,9 +63,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     <aside className="w-60 bg-foodera-forest text-white flex flex-col sticky top-0 h-screen shadow-2xl z-20 flex-shrink-0">
       {/* Brand */}
       <div className="px-6 py-6 border-b border-white/10">
-        <div className="flex items-center gap-1">
-          <span className="text-lg font-[900]">Food</span>
-          <span className="text-lg font-[900] text-foodera-lime">era</span>
+        <div className="flex items-center h-8 mb-1">
+          <img
+            src="/logo-era.png"
+            alt="FoodEra"
+            className="h-8 w-auto object-contain"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
         </div>
         <span className="text-[8px] font-bold text-white/30 tracking-[0.2em] uppercase">
           Staff Portal

@@ -240,7 +240,7 @@ const Navbar: React.FC = () => {
             <div className="flex justify-between h-20">
               <div className="flex items-center">
                 <Link to={appRoutes.home} className="flex-shrink-0 flex items-center">
-                  <img src={Logo} alt="FoodEra" className="w-32 md:w-44 h-auto object-contain scale-[1.3] md:scale-[1.6] origin-left -ml-2" />
+                  <img src={Logo} alt="FoodEra" className="w-[166px] md:w-[282px] h-auto object-contain" />
                 </Link>
               </div>
 
@@ -442,7 +442,7 @@ const Navbar: React.FC = () => {
           <div className="lg:hidden bg-white fixed inset-0 z-[100] overflow-y-auto animate-in fade-in duration-200">
             <div className="p-6">
               <div className="flex justify-between items-center mb-12">
-                <img src={Logo} alt="FoodEra" className="w-32 h-auto object-contain scale-[1.3] origin-left -ml-2" />
+                <img src={Logo} alt="FoodEra" className="w-[166px] h-auto object-contain" />
                 <button onClick={() => setIsOpen(false)} className="p-2 text-gray-500"><X size={32} /></button>
               </div>
 

@@ -178,7 +178,7 @@ export default function ProductInfographicMap({ copy, locale = "en" }) {
             <button type="button" className="ptm-back-btn" onClick={handleBack} aria-label={copy?.backAria ?? "Back"}>
               <ArrowLeft size={18} />
             </button>
-            <img src={Logo} alt="FoodEra" className="ptm-logo" style={{ transform: 'scale(1.6)', transformOrigin: 'left center' }} loading="eager" />
+            <img src={Logo} alt="FoodEra" className="ptm-logo" style={{ height: '51px', width: 'auto' }} loading="eager" />
             <div className="ptm-header-title-group">
               <h1 className="ptm-header-title">{t(data.heroTitle, locale)}</h1>
               <span className="ptm-header-subtitle">{t(data.heroSubtitle, locale)}</span>
