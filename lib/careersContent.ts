@@ -244,9 +244,11 @@ export const careersContentEn: CareersContent = {
   },
 };
 
+import { SupportedLocale } from '../types';
+
 // ─── Locale Selector ───────────────────────────────────────────
 
-export const getCareersContent = (locale: 'en' | 'zh'): CareersContent => {
+export const getCareersContent = (locale: SupportedLocale): CareersContent => {
   // Vietnamese is the default/primary; English for 'en' locale
   // Chinese locale falls back to Vietnamese (same market)
   return locale === 'en' ? careersContentEn : careersContentVi;

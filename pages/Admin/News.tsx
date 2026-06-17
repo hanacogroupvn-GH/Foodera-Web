@@ -160,6 +160,7 @@ const AdminNews: React.FC = () => {
 
   const { news, activeProducts, addNews, updateNews, deleteNews } = useData();
   const { logout } = useAuth();
+  const { locale, setLocale } = useLocale();
     const rawCopy =
     locale === 'vi'
       ? {

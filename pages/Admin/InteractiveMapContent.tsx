@@ -319,7 +319,7 @@ export default function AdminInteractiveMapContent() {
     setIsSuggesting(true);
     setStatus(EMPTY_STATUS);
     try {
-      const result = await api.suggestProvinceMapProfile({ provinceId: selectedProvince.provinceId, provinceName: selectedProvince.provinceName, provinceType: selectedProvince.provinceType, regionLabel: selectedProvince.regionLabel, categoryScope: aiScope });
+      const result = await api.suggestProvinceMapProfile({ provinceId: selectedProvince.provinceId, provinceName: selectedProvince.provinceName, provinceType: selectedProvince.provinceType, regionLabel: selectedProvince.regionLabel, categoryScope: aiScope as 'auto' | 'Rice' | 'Coffee' | 'Cashew' | 'Pepper' | 'Agriculture' });
       setFormState(toFormState(mergeProvinceMapProfile(baseProfile, result.profile)));
       setSuggestionSources(result.sources ?? []);
       setStatus({ type: 'success', message: COPY.aiSuggestSuccess });

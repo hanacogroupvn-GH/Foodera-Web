@@ -481,6 +481,18 @@ const AdminInventory: React.FC = () => {
       : locale === 'zh'
       ? zh(`\u8981\u5c06\u5f53\u524d\u5217\u8868\u4e2d\u7684 ${count} \u4e2a\u4ea7\u54c1\u6279\u91cf\u7ffb\u8bd1\u6210\u4e2d\u6587\u5417\uff1f\u8fd9\u4f1a\u8986\u76d6\u5df2\u6709\u7684\u4e2d\u6587\u5b57\u6bb5\u3002`)
       : `Translate the ${count} products in the current list to Chinese? This will overwrite existing Chinese fields.`;
+  const bulkTranslateSuccessMessage = (successCount: number) =>
+    locale === 'vi'
+      ? `Đã dịch thành công ${successCount} sản phẩm.`
+      : locale === 'zh'
+      ? zh(`成功翻译了 ${successCount} 个产品。`)
+      : `Successfully translated ${successCount} products.`;
+  const bulkTranslatePartialMessage = (successCount: number, failureCount: number) =>
+    locale === 'vi'
+      ? `Đã dịch thành công ${successCount} sản phẩm, thất bại ${failureCount} sản phẩm.`
+      : locale === 'zh'
+      ? zh(`成功翻译 ${successCount} 个，失败 ${failureCount} 个。`)
+      : `Successfully translated ${successCount} products, ${failureCount} failed.`;
   const exportPdfEnButtonLabel = locale === 'zh' ? zh('\u82f1\u6587 PDF') : 'EN PDF';
   const exportPdfCnButtonLabel = locale === 'zh' ? zh('\u4e2d\u6587 PDF') : 'CN PDF';
   const exportPdfBlockedMessage =
@@ -509,6 +521,11 @@ const AdminInventory: React.FC = () => {
   const [isReloadingInventory, setIsReloadingInventory] = useState(false);
   const [isBulkTranslating, setIsBulkTranslating] = useState(false);
   const [bulkTranslateProgress, setBulkTranslateProgress] = useState({ current: 0, total: 0 });
+
+  // Category State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
+  const [categoryForm, setCategoryForm] = useState({ name: '', sortOrder: 0 });
 
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -2214,18 +2231,21 @@ const AdminInventory: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-4 gap-4 mb-6">
-                  {formData.gallery?.map((url, idx) => (
-                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group bg-white border border-gray-100 shadow-sm">
-                      <img src={url} className="w-full h-full object-cover" alt={`detail-${idx}`} />
-                      <button 
-                        type="button"
-                        onClick={() => handleRemoveGalleryImage(idx)}
-                        className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash size={12} />
-                      </button>
-                    </div>
-                  ))}
+                  {formData.gallery?.map((item, idx) => {
+                    const imgUrl = typeof item === 'string' ? item : item?.url || '';
+                    return (
+                      <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group bg-white border border-gray-100 shadow-sm">
+                        <img src={imgUrl} className="w-full h-full object-cover" alt={`detail-${idx}`} />
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveGalleryImage(idx)}
+                          className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash size={12} />
+                        </button>
+                      </div>
+                    );
+                  })}
                   {(!formData.gallery || formData.gallery.length < 3) && (
                     <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300">
                       <ImageIcon size={20} />

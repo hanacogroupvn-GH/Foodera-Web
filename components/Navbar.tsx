@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Download, Sun, Moon } from 'lucide-react';
-import { Product } from '../types';
+import { Product, SupportedLocale } from '../types';
 const Logo = '/logo-era.png';
 import { useData } from '../context/DataContext';
 import { useLocale } from '../context/LocaleContext';
@@ -18,9 +18,12 @@ const MEGA_MENU_SECTIONS: Array<{ category: Product['category'] }> = [
   { category: 'Pepper' }
 ];
 
-const buildSectionSubtitle = (items: Product[], locale: 'en' | 'zh') => {
+const buildSectionSubtitle = (items: Product[], locale: SupportedLocale) => {
   if (locale === 'zh') {
     return `${items.length} 个在售出口 SKU`;
+  }
+  if (locale === 'vi') {
+    return `${items.length} SKU đang hoạt động`;
   }
 
   return `${items.length} active SKU${items.length === 1 ? '' : 's'}`;

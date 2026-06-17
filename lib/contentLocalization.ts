@@ -22,6 +22,13 @@ const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
     Cashew: '\u8170\u679c',
     Agriculture: '\u519c\u4ea7\u54c1',
     Pepper: '\u80e1\u6912'
+  },
+  vi: {
+    Rice: 'Gạo',
+    Coffee: 'Cà phê',
+    Cashew: 'Hạt điều',
+    Agriculture: 'Nông sản',
+    Pepper: 'Hạt tiêu'
   }
 };
 
@@ -35,6 +42,11 @@ const NEWS_CATEGORY_LABELS: Record<SupportedLocale, Record<NewsCategory, string>
     'Product': '\u4ea7\u54c1',
     'Logistics': '\u7269\u6d41',
     'Market Insight': '\u5e02\u573a\u6d1e\u5bdf',
+  },
+  vi: {
+    'Product': 'Sản phẩm',
+    'Logistics': 'Logistics',
+    'Market Insight': 'Nhận định thị trường',
   }
 };
 
@@ -43,7 +55,7 @@ const hasFilterEntries = (record?: Record<string, string>) =>
   Boolean(record && Object.values(record).some((value) => String(value || '').trim()));
 
 export const localizeProduct = (product: Product, locale: SupportedLocale): Product => {
-  if (locale === 'en' || !product.translations?.zh) {
+  if (locale !== 'zh' || !product.translations?.zh) {
     return product;
   }
 
@@ -65,7 +77,7 @@ export const localizeProduct = (product: Product, locale: SupportedLocale): Prod
 };
 
 export const localizeNewsItem = (item: NewsItem, locale: SupportedLocale): NewsItem => {
-  if (locale === 'en' || !item.translations?.zh) {
+  if (locale !== 'zh' || !item.translations?.zh) {
     return item;
   }
 
@@ -96,6 +108,14 @@ export const formatDisplayDate = (rawDate: string, locale: SupportedLocale): str
   const parsed = new Date(rawDate);
   if (Number.isNaN(parsed.getTime())) {
     return rawDate;
+  }
+
+  if (locale === 'vi') {
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(parsed);
   }
 
   return new Intl.DateTimeFormat('zh-CN', {

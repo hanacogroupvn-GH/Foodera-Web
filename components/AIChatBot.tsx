@@ -69,7 +69,9 @@ const summarizeSpecifications = (product: Product) =>
     .map(([key, value]) => `${key}: ${value}`)
     .join(', ');
 
-const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en' | 'zh') => {
+type SupportedLocale = 'en' | 'zh' | 'vi';
+
+const buildLocalCatalogReply = (query: string, products: Product[], locale: SupportedLocale) => {
   const normalizedQuery = query.trim().toLowerCase();
   const matches = products
     .filter((product) =>
@@ -84,46 +86,67 @@ const buildLocalCatalogReply = (query: string, products: Product[], locale: 'en'
     .slice(0, 3);
 
   if (matches.length === 0) {
-    return locale === 'zh'
-      ? [
-          '当前环境尚未配置实时市场情报服务。',
-          '### FoodEra 当前可用产品线',
-          '* **大米** 出口系列',
-          '* **咖啡** 出口系列',
-          '* **腰果** 出口系列',
-          '请输入产品名称、品类或子分类，我会从当前目录中为您检索。'
-        ].join('\n')
-      : [
-          'Live market intelligence is not configured in this environment yet.',
-          '### Available FoodEra portfolios',
-          '* **Rice** export lines',
-          '* **Coffee** export lines',
-          '* **Cashew** export lines',
-          'Mention a product name, category, or sub-category and I will search the current catalog.'
-        ].join('\n');
+    if (locale === 'zh') {
+      return [
+        '当前环境尚未配置实时市场情报服务。',
+        '### FoodEra 当前可用产品线',
+        '* **大米** 出口系列',
+        '* **咖啡** 出口系列',
+        '* **腰果** 出口系列',
+        '请输入产品名称、品类或子分类，我会从当前目录中为您检索。'
+      ].join('\n');
+    } else if (locale === 'vi') {
+      return [
+        'Dịch vụ thông tin thị trường thời gian thực chưa được cấu hình trong môi trường này.',
+        '### Danh mục sản phẩm hiện có của FoodEra',
+        '* Dòng xuất khẩu **Gạo**',
+        '* Dòng xuất khẩu **Cà phê**',
+        '* Dòng xuất khẩu **Hạt điều**',
+        'Vui lòng nhập tên sản phẩm, danh mục hoặc phân loại phụ và tôi sẽ tìm kiếm trong danh mục.'
+      ].join('\n');
+    } else {
+      return [
+        'Live market intelligence is not configured in this environment yet.',
+        '### Available FoodEra portfolios',
+        '* **Rice** export lines',
+        '* **Coffee** export lines',
+        '* **Cashew** export lines',
+        'Mention a product name, category, or sub-category and I will search the current catalog.'
+      ].join('\n');
+    }
   }
 
-  return (
-    locale === 'zh'
-      ? [
-          '当前环境未启用实时市场情报，但我仍可检索 FoodEra 现有产品目录。',
-          '### 匹配到的目录产品',
-          ...matches.map(
-            (product) =>
-              `* **${product.name}** - ${product.shortDescription}。规格：${summarizeSpecifications(product) || '详见产品页。'}`
-          ),
-          '如需完整技术信息，请打开产品页；如需价格，请联系出口团队。'
-        ]
-      : [
-          'Live market intelligence is offline in this environment, but I can still search the current FoodEra catalog.',
-          '### Matching catalog items',
-          ...matches.map(
-            (product) =>
-              `* **${product.name}** - ${product.shortDescription}. Specs: ${summarizeSpecifications(product) || 'Available on product page.'}`
-          ),
-          'Open the product page for full details or contact the export desk for pricing.'
-        ]
-  ).join('\n');
+  if (locale === 'zh') {
+    return [
+      '当前环境未启用实时市场情报，但我仍可检索 FoodEra 现有产品目录。',
+      '### 匹配到的目录产品',
+      ...matches.map(
+        (product) =>
+          `* **${product.name}** - ${product.shortDescription}。规格：${summarizeSpecifications(product) || '详见产品页。'}`
+      ),
+      '如需完整技术信息，请打开产品页；如需价格，请联系出口团队。'
+    ].join('\n');
+  } else if (locale === 'vi') {
+    return [
+      'Thông tin thị trường trực tiếp đang ngoại tuyến, nhưng tôi vẫn có thể tìm kiếm trong danh mục sản phẩm của FoodEra.',
+      '### Các sản phẩm phù hợp',
+      ...matches.map(
+        (product) =>
+          `* **${product.name}** - ${product.shortDescription}. Thông số: ${summarizeSpecifications(product) || 'Có sẵn trên trang sản phẩm.'}`
+      ),
+      'Mở trang sản phẩm để xem chi tiết đầy đủ hoặc liên hệ với bộ phận xuất khẩu để biết giá.'
+    ].join('\n');
+  } else {
+    return [
+      'Live market intelligence is offline in this environment, but I can still search the current FoodEra catalog.',
+      '### Matching catalog items',
+      ...matches.map(
+        (product) =>
+          `* **${product.name}** - ${product.shortDescription}. Specs: ${summarizeSpecifications(product) || 'Available on product page.'}`
+      ),
+      'Open the product page for full details or contact the export desk for pricing.'
+    ].join('\n');
+  }
 };
 
 const AIChatBot: React.FC<AIChatBotProps> = ({ openRequestId = 0 }) => {

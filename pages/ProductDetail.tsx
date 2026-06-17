@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { Product } from '../types';
 import AppShellLoader from '../components/AppShellLoader';
 import {
   ArrowLeft,
