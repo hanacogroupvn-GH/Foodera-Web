@@ -39,13 +39,39 @@ const AdminDashboard: React.FC = () => {
   
   const [importStatus, setImportStatus] = useState<{message: string, type: 'success' | 'error' | null}>({message: '', type: null});
   const rawCopy =
-    locale === 'zh'
+    locale === 'vi'
+      ? {
+          staffPortal: 'Trang nhân viên',
+          dashboard: 'Tổng quan',
+          inventory: 'Sản phẩm',
+          insights: 'SEO',
+          managePosts: 'Quản lý bài đăng',
+          createPost: 'Tạo bài viết',
+          mapContent: 'Nội dung bản đồ',
+          operationsPortal: 'Cổng vận hành',
+          exitHome: 'Quay lại Trang chủ',
+          pageTitle: 'Tổng quan Hệ thống',
+          pageDesc: 'Trạng thái máy chủ được phát hiện tự động.',
+          newExport: 'Thêm sản phẩm',
+          stats: ['Kho hàng xuất khẩu', 'Báo cáo thị trường', 'Vùng toàn cầu', 'Chế độ hệ thống'],
+          localOffline: 'Chế độ',
+          dataManagement: 'Quản lý dữ liệu',
+          exportJson: 'Xuất dữ liệu JSON',
+          importJson: 'Nhập dữ liệu JSON',
+          importSuccess: 'Nhập dữ liệu thành công!',
+          importError: 'Định dạng dữ liệu không hợp lệ.',
+          resetDefaults: 'Đặt lại dữ liệu mặc định',
+          verifiedInventory: 'Kho hàng đã xác minh',
+          globalCatalog: 'Danh mục toàn cầu',
+          cmsLanguage: 'Ngôn ngữ CMS'
+        }
+      : locale === 'zh'
       ? {
           staffPortal: '员工后台',
           dashboard: '总览',
           inventory: 'Product',
           insights: 'SEO',
-          managePosts: 'Quản lí bài đăng',
+          managePosts: 'Quản lý bài đăng',
           createPost: 'Tạo bài viết',
           mapContent: '地图内容',
           operationsPortal: '运营后台',
@@ -94,49 +120,41 @@ const AdminDashboard: React.FC = () => {
   const computedCopy = {
     ...baseCopy,
     pageDesc:
-      locale === 'zh'
+      locale === 'vi'
+        ? isTursoMode
+          ? 'Đã kết nối cơ sở dữ liệu đám mây Turso và quy trình CMS.'
+          : 'Cơ sở dữ liệu đám mây Turso chưa sẵn sàng, đang chạy ở chế độ dự phòng.'
+        : locale === 'zh'
         ? isTursoMode
           ? '已连接 Turso 云端内容库与 CMS 工作流。'
           : 'Turso 后端暂未就绪，当前使用内置回退数据。'
         : isTursoMode
-          ? 'Connected to Turso for live CMS data and content workflows.'
-          : 'Turso is unavailable, so the CMS is running in bundled fallback mode.',
+        ? 'Connected to Turso for live CMS data and content workflows.'
+        : 'Turso is unavailable, so the CMS is running in bundled fallback mode.',
     localOffline:
-      locale === 'zh'
+      locale === 'vi'
+        ? isTursoMode
+          ? 'Đám mây Turso'
+          : 'Chế độ dự phòng'
+        : locale === 'zh'
         ? isTursoMode
           ? 'Turso 云端'
           : '回退模式'
         : isTursoMode
-          ? 'Turso Cloud'
-          : 'Fallback Mode'
+        ? 'Turso Cloud'
+        : 'Fallback Mode'
   };
 
-  const copy = {
-    ...computedCopy,
-    pageDesc:
-      locale === 'zh'
-        ? isTursoMode
-          ? '\u5df2\u8fde\u63a5 Turso \u4e91\u7aef\u5185\u5bb9\u5e93\u4e0e CMS \u5de5\u4f5c\u6d41\u3002'
-          : 'Turso \u540e\u7aef\u6682\u672a\u5c31\u7eea\uff0c\u5f53\u524d\u4f7f\u7528\u5185\u7f6e\u56de\u9000\u6570\u636e\u3002'
-        : isTursoMode
-          ? 'Connected to Turso for live CMS data and content workflows.'
-          : 'Turso is unavailable, so the CMS is running in bundled fallback mode.',
-    localOffline:
-      locale === 'zh'
-        ? isTursoMode
-          ? 'Turso \u4e91\u7aef'
-          : '\u56de\u9000\u6a21\u5f0f'
-        : isTursoMode
-          ? 'Turso Cloud'
-          : 'Fallback Mode'
-  };
+  const copy = { ...computedCopy };
 
   if (isLocalBackendMode) {
     copy.pageDesc =
-      locale === 'zh'
-        ? '\u5f53\u524d\u4f7f\u7528\u672c\u5730 SQLite \u5185\u5bb9\u5e93\u8fd0\u884c CMS\uff0c\u9002\u7528\u4e8e\u672c\u5730\u5f00\u53d1\u4e0e\u9a8c\u8bc1\u3002'
+      locale === 'vi'
+        ? 'Đang chạy CMS trên cơ sở dữ liệu SQLite cục bộ để phát triển.'
+        : locale === 'zh'
+        ? '当前使用本地 SQLite 内容库运行 CMS，适用于本地开发与验证。'
         : 'Running the CMS on a local SQLite database for development.';
-    copy.localOffline = 'Local SQLite';
+    copy.localOffline = locale === 'vi' ? 'SQLite cục bộ' : locale === 'zh' ? '本地 SQLite' : 'Local SQLite';
   }
 
   const handleLogout = () => {
@@ -192,12 +210,16 @@ const AdminDashboard: React.FC = () => {
           <div className="flex gap-4 items-center">
              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
+                <button type="button" onClick={() => setLocale('vi')} className={locale === 'vi' ? 'text-foodera-forest' : ''}>
+                  VIE
+                </button>
+                <span>/</span>
                 <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
                   EN
                 </button>
                 <span>/</span>
                 <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
-                  {'\u4e2d\u6587'}
+                  CN
                 </button>
              </div>
              <button

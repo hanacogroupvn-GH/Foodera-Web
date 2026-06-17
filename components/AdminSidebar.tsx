@@ -13,6 +13,7 @@ import {
   List,
 } from 'lucide-react';
 import { appRoutes } from '../lib/routes';
+import { useLocale } from '../context/LocaleContext';
 
 interface AdminSidebarProps {
   onLogout: () => void;
@@ -39,7 +40,59 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   isInventoryFormOpen = false,
   isNewsFormOpen = false,
 }) => {
+  const { locale } = useLocale();
   const location = useLocation();
+
+  const copy = {
+    vi: {
+      dashboard: 'Tổng quan',
+      product: 'Sản phẩm',
+      managePosts: 'Quản lý bài đăng',
+      createPost: 'Tạo bài viết',
+      seo: 'SEO',
+      mapContent: 'Nội dung bản đồ',
+      careers: 'Tuyển dụng',
+      staffPortal: 'Trang nhân viên',
+      operationsPortal: 'Cổng vận hành',
+      exitHome: 'Quay lại Trang chủ',
+    },
+    en: {
+      dashboard: 'Dashboard',
+      product: 'Product',
+      managePosts: 'Manage posts',
+      createPost: 'Create post',
+      seo: 'SEO',
+      mapContent: 'Map Content',
+      careers: 'Careers',
+      staffPortal: 'Staff Portal',
+      operationsPortal: 'Operations Portal',
+      exitHome: 'Exit to Home',
+    },
+    zh: {
+      dashboard: '总览',
+      product: '产品',
+      managePosts: '管理文章',
+      createPost: '创建文章',
+      seo: 'SEO',
+      mapContent: '地图内容',
+      careers: '招聘',
+      staffPortal: '员工后台',
+      operationsPortal: '运营后台',
+      exitHome: '返回首页',
+    }
+  }[locale] || {
+    dashboard: 'Tổng quan',
+    product: 'Sản phẩm',
+    managePosts: 'Quản lý bài đăng',
+    createPost: 'Tạo bài viết',
+    seo: 'SEO',
+    mapContent: 'Nội dung bản đồ',
+    careers: 'Tuyển dụng',
+    staffPortal: 'Trang nhân viên',
+    operationsPortal: 'Cổng vận hành',
+    exitHome: 'Quay lại Trang chủ',
+  };
+
   const [productOpen, setProductOpen] = useState(
     location.pathname.startsWith(appRoutes.adminInventory)
   );
@@ -72,7 +125,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           />
         </div>
         <span className="text-[8px] font-bold text-white/30 tracking-[0.2em] uppercase">
-          Staff Portal
+          {copy.staffPortal}
         </span>
       </div>
 
@@ -84,7 +137,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           className={`${linkBase} ${isActive(appRoutes.admin) ? linkActive : linkInactive}`}
         >
           <LayoutDashboard size={17} />
-          Dashboard
+          {copy.dashboard}
         </Link>
 
         {/* Product */}
@@ -98,7 +151,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           >
             <span className="flex items-center gap-3">
               <Package size={17} />
-              Product
+              {copy.product}
             </span>
             {productOpen ? (
               <ChevronDown size={13} className="opacity-60" />
@@ -118,12 +171,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     className={`w-full ${subLinkBase} ${subLinkInactive}`}
                   >
                     <List size={13} />
-                    Quản lí bài đăng
+                    {copy.managePosts}
                   </button>
                 ) : (
                   <span className={`${subLinkBase} ${subLinkActive} cursor-default`}>
                     <List size={13} />
-                    Quản lí bài đăng
+                    {copy.managePosts}
                   </span>
                 )
               ) : (
@@ -132,7 +185,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   className={`${subLinkBase} ${subLinkInactive}`}
                 >
                   <List size={13} />
-                  Quản lí bài đăng
+                  {copy.managePosts}
                 </Link>
               )}
 
@@ -146,7 +199,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   }`}
                 >
                   <Plus size={13} />
-                  Tạo bài viết
+                  {copy.createPost}
                 </button>
               ) : (
                 <Link
@@ -154,7 +207,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   className={`${subLinkBase} ${subLinkInactive}`}
                 >
                   <Plus size={13} />
-                  Tạo bài viết
+                  {copy.createPost}
                 </Link>
               )}
             </div>
@@ -172,7 +225,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           >
             <span className="flex items-center gap-3">
               <FileText size={17} />
-              SEO
+              {copy.seo}
             </span>
             {seoOpen ? (
               <ChevronDown size={13} className="opacity-60" />
@@ -192,12 +245,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     className={`w-full ${subLinkBase} ${subLinkInactive}`}
                   >
                     <List size={13} />
-                    Quản lí bài đăng
+                    {copy.managePosts}
                   </button>
                 ) : (
                   <span className={`${subLinkBase} ${subLinkActive} cursor-default`}>
                     <List size={13} />
-                    Quản lí bài đăng
+                    {copy.managePosts}
                   </span>
                 )
               ) : (
@@ -206,7 +259,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   className={`${subLinkBase} ${subLinkInactive}`}
                 >
                   <List size={13} />
-                  Quản lí bài đăng
+                  {copy.managePosts}
                 </Link>
               )}
 
@@ -220,7 +273,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   }`}
                 >
                   <Plus size={13} />
-                  Tạo bài viết
+                  {copy.createPost}
                 </button>
               ) : (
                 <Link
@@ -228,7 +281,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   className={`${subLinkBase} ${subLinkInactive}`}
                 >
                   <Plus size={13} />
-                  Tạo bài viết
+                  {copy.createPost}
                 </Link>
               )}
             </div>
@@ -243,7 +296,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           }`}
         >
           <MapPinned size={17} />
-          Map Content
+          {copy.mapContent}
         </Link>
 
         {/* Careers (Tuyển dụng) */}
@@ -254,7 +307,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           }`}
         >
           <Briefcase size={17} />
-          Tuyển dụng
+          {copy.careers}
         </Link>
       </nav>
 
@@ -275,10 +328,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </div>
           <div className="text-left min-w-0">
             <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">
-              Operations Portal
+              {copy.operationsPortal}
             </p>
             <p className="text-xs font-black text-white group-hover:text-foodera-lime transition-colors truncate">
-              Exit to Home
+              {copy.exitHome}
             </p>
           </div>
         </Link>

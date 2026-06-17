@@ -160,9 +160,65 @@ const AdminNews: React.FC = () => {
 
   const { news, activeProducts, addNews, updateNews, deleteNews } = useData();
   const { logout } = useAuth();
-  const { locale, setLocale } = useLocale();
-  const rawCopy =
-    locale === 'zh'
+    const rawCopy =
+    locale === 'vi'
+      ? {
+          exitHome: 'Quay lại Trang chủ',
+          portalTitle: 'Trung tâm Tin tức & SEO',
+          createPost: 'Viết bài mới',
+          importFromSheet: 'Nhập CSV từ Google Sheets',
+          importLink: 'Liên kết nhập dữ liệu',
+          importing: 'Đang nhập...',
+          uploadCsv: 'Tải lên CSV',
+          searchPlaceholder: 'Tìm bài viết theo tiêu đề hoặc danh mục...',
+          editInsight: 'Chỉnh sửa bài viết',
+          composeInsight: 'Soạn thảo bài viết mới',
+          translationSection: 'Bản dịch Tiếng Trung',
+          translationNote: 'Các trường tiếng Trung tùy chọn cho xuất bản đa ngôn ngữ.',
+          discardDraft: 'Hủy bản nháp',
+          updatePublication: 'Cập nhật xuất bản',
+          publishPortal: 'Xuất bản lên Trang web',
+          manageDesc: 'Quản lý tin tức doanh nghiệp và báo cáo phân tích thị trường toàn cầu.',
+          articleIntel: 'Thông tin bài viết',
+          category: 'Danh mục',
+          publishDate: 'Ngày xuất bản',
+          actions: 'Thao tác',
+          noMatches: 'Không tìm thấy bài viết phù hợp',
+          cmsLanguage: 'Ngôn ngữ CMS',
+          imageUploadFailed: 'Tải ảnh lên thất bại.',
+          saveFailed: 'Không thể lưu bài viết này. Vui lòng kiểm tra quyền truy cập API hoặc cơ sở dữ liệu Turso.',
+          csvLinkRequired: 'Vui lòng nhập liên kết Google Sheets trước.',
+          csvImportFailed: 'Nhập CSV thất bại.',
+          supportedColumns: 'Các cột tin tức được hỗ trợ: id, title, slug, category, date, excerpt, content (hoặc content_1/content_2...), image.',
+          slugLabel: 'Đường dẫn thân thiện (Slug)',
+          modalSubtitle: 'Trung tâm Truyền thông & Phân tích Thị trường',
+          coverImageLabel: 'Ảnh bìa nổi bật (URL hoặc tải lên)',
+          coverUrlPlaceholder: 'Nhập link ảnh từ Unsplash hoặc link trực tiếp...',
+          uploadingImage: 'Đang tải ảnh lên...',
+          uploadFromComputer: 'Tải lên từ máy tính',
+          resolutionHint: 'Độ phân giải khuyến nghị: 1200x800px, hiển thị tốt trên màn hình độ nét cao.',
+          headlineLabel: 'Tiêu đề bài viết',
+          headlinePlaceholder: 'Ví dụ: Phân tích tính ổn định của xuất khẩu gạo Q4...',
+          seoSlugLabel: 'SEO Slug (Tùy chọn)',
+          canonicalUrlLabel: 'Canonical URL',
+          categoryLabel: 'Danh mục tin tức',
+          releaseDateLabel: 'Ngày phát hành',
+          releaseDatePlaceholder: '15 Tháng 2, 2024',
+          excerptLabel: 'Tóm tắt bài viết (Mô tả ngắn)',
+          excerptPlaceholder: 'Giới thiệu ngắn hiển thị trên lưới tin tức...',
+          zhHeadlineLabel: 'Tiêu đề tiếng Trung',
+          zhExcerptLabel: 'Tóm tắt tiếng Trung',
+          fullContentLabel: 'Nội dung chi tiết bài viết',
+          fullContentHint: 'Xuống dòng để tạo đoạn văn mới',
+          zhContentLabel: 'Nội dung tiếng Trung',
+          zhContentHint: 'Xuống dòng để tạo đoạn văn tiếng Trung mới',
+          saveFailedPrefix: 'Lưu thất bại: ',
+          imageAltLabel: 'Alt Text ảnh bìa (SEO)',
+          imageAltPlaceholder: 'Ví dụ: Bao bì gạo lài xuất khẩu Việt Nam - FoodEra',
+          imageAltHint: 'Chứa từ khóa chính. Tối đa 125 ký tự. Để trống sẽ tự động lấy tiêu đề bài viết.',
+          imageSizeWarning: '⚠ Kích thước ảnh vượt quá 500KB - Khuyến nghị nén ảnh trước khi tải lên để trang web tải nhanh hơn.'
+        }
+      : locale === 'zh'
       ? {
           exitHome: '返回首页',
           portalTitle: '资讯与新闻中心',
@@ -277,26 +333,32 @@ const AdminNews: React.FC = () => {
         };
   const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
   const zh = repairMojibakeText;
-  const activeStatusLabel = locale === 'zh' ? zh('\u542f\u7528') : 'Active';
-  const inactiveStatusLabel = locale === 'zh' ? zh('\u505c\u7528') : 'Inactive';
-  const statusFieldLabel = locale === 'zh' ? zh('\u72b6\u6001') : 'Status';
+  const activeStatusLabel = locale === 'vi' ? 'Hoạt động' : locale === 'zh' ? zh('\u542f\u7528') : 'Active';
+  const inactiveStatusLabel = locale === 'vi' ? 'Ngừng hoạt động' : locale === 'zh' ? zh('\u505c\u7528') : 'Inactive';
+  const statusFieldLabel = locale === 'vi' ? 'Trạng thái' : locale === 'zh' ? zh('\u72b6\u6001') : 'Status';
   const statusHelpText =
-    locale === 'zh'
+    locale === 'vi'
+      ? 'Bài viết ngừng hoạt động sẽ không hiển thị trên website công cộng.'
+      : locale === 'zh'
       ? zh('\u505c\u7528\u540e\uff0c\u8be5\u6587\u7ae0\u5c06\u4e0d\u518d\u5728\u516c\u5f00\u7f51\u7ad9\u4e0a\u663e\u793a\u3002')
       : 'Inactive articles are hidden from the public website.';
-  const translateButtonLabel = locale === 'zh' ? zh('\u7ffb\u8bd1\u6210\u4e2d\u6587') : 'Translate to Chinese';
-  const translatingButtonLabel = locale === 'zh' ? zh('\u7ffb\u8bd1\u4e2d...') : 'Translating...';
+  const translateButtonLabel = locale === 'vi' ? 'Dịch sang tiếng Trung' : locale === 'zh' ? zh('\u7ffb\u8bd1\u6210\u4e2d\u6587') : 'Translate to Chinese';
+  const translatingButtonLabel = locale === 'vi' ? 'Đang dịch...' : locale === 'zh' ? zh('\u7ffb\u8bd1\u4e2d...') : 'Translating...';
   const translateMissingKeyMessage =
-    locale === 'zh'
+    locale === 'vi'
+      ? 'Dịch vụ dịch thuật Ollama chưa sẵn sàng. Hãy kiểm tra cài đặt.'
+      : locale === 'zh'
       ? zh('Ollama \u7ffb\u8bd1\u672a\u5c31\u7eea\uff0c\u8bf7\u68c0\u67e5 VITE_OLLAMA_BASE_URL\u3001VITE_OLLAMA_MODEL \u6216\u672c\u5730 Ollama \u670d\u52a1\u3002')
       : 'Ollama translation is unavailable. Check VITE_OLLAMA_BASE_URL, VITE_OLLAMA_MODEL, or the local Ollama service.';
   const translateSuccessMessage =
-    locale === 'zh' ? zh('\u5df2\u751f\u6210\u4e2d\u6587\u7ffb\u8bd1\u5e76\u4fdd\u5b58\u3002') : 'Chinese translation generated and saved.';
+    locale === 'vi' ? 'Đã dịch sang tiếng Trung và lưu lại.' : locale === 'zh' ? zh('\u5df2\u751f\u6210\u4e2d\u6587\u7ffb\u8bd1\u5e76\u4fdd\u5b58\u3002') : 'Chinese translation generated and saved.';
   const translateDraftSuccessMessage =
-    locale === 'zh' ? zh('\u5df2\u586b\u5145\u4e2d\u6587\u7ffb\u8bd1\u8349\u7a3f\u3002') : 'Chinese translation draft populated.';
-  const translateFailedPrefix = locale === 'zh' ? zh('\u7ffb\u8bd1\u5931\u8d25\uff1a') : 'Translation failed: ';
+    locale === 'vi' ? 'Đã điền bản nháp tiếng Trung.' : locale === 'zh' ? zh('\u5df2\u586b\u5145\u4e2d\u6587\u7ffb\u8bd1\u8349\u7a3f\u3002') : 'Chinese translation draft populated.';
+  const translateFailedPrefix = locale === 'vi' ? 'Dịch thất bại: ' : locale === 'zh' ? zh('\u7ffb\u8bd1\u5931\u8d25\uff1a') : 'Translation failed: ';
   const translateDraftRequirementMessage =
-    locale === 'zh'
+    locale === 'vi'
+      ? 'Cần điền tiêu đề và nội dung tiếng Anh trước khi dịch.'
+      : locale === 'zh'
       ? zh('\u8bf7\u5148\u586b\u5199\u82f1\u6587\u6807\u9898\u548c\u6b63\u6587\uff0c\u518d\u6267\u884c\u7ffb\u8bd1\u3002')
       : 'Fill in the English title and content before translating.';
   const [searchTerm, setSearchTerm] = useState('');
@@ -826,12 +888,16 @@ const AdminNews: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
+                <button type="button" onClick={() => setLocale('vi')} className={locale === 'vi' ? 'text-foodera-forest' : ''}>
+                  VIE
+                </button>
+                <span>/</span>
                 <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
                   EN
                 </button>
                 <span>/</span>
                 <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
-                  {'\u4e2d\u6587'}
+                  CN
                 </button>
               </div>
               <button 

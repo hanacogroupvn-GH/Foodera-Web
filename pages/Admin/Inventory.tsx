@@ -141,13 +141,81 @@ const buildNextProductId = (requestedId: string, existingIds: string[], excluded
 const AdminInventory: React.FC = () => {
   const { products, categories, addProduct, updateProduct, deleteProduct, upsertCategory, deleteCategory, refresh } = useData();
   const dynamicCategories = useMemo(() => getDynamicCategories(), [categories]);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
-  const [categoryForm, setCategoryForm] = useState({ name: '', sortOrder: 0 });
   const { logout } = useAuth();
   const { locale, setLocale } = useLocale();
   const rawCopy =
-    locale === 'zh'
+    locale === 'vi'
+      ? {
+          exitHome: 'Quay lại Trang chủ',
+          inventoryTitle: 'Danh mục Sản phẩm',
+          addCommodity: 'Thêm sản phẩm mới',
+          importFromSheet: 'Nhập CSV từ Google Sheets',
+          importLink: 'Liên kết nhập dữ liệu',
+          importing: 'Đang nhập dữ liệu...',
+          uploadCsv: 'Tải lên CSV',
+          searchPlaceholder: 'Tìm kiếm theo tên sản phẩm, loại, danh mục hoặc ID...',
+          editCommodity: 'Chỉnh sửa sản phẩm',
+          createCommodity: 'Đăng ký sản phẩm mới',
+          translationSection: 'Bản dịch Tiếng Trung',
+          translationNote: 'Các trường tùy chọn cho danh mục tiếng Trung. Để trống sẽ tự động hiển thị tiếng Anh.',
+          updatePortfolio: 'Lưu thay đổi sản phẩm',
+          initializeCommodity: 'Khởi tạo sản phẩm mới',
+          manageDesc: 'Quản lý thông số kỹ thuật và tình trạng hàng xuất khẩu B2B.',
+          allCategories: 'Tất cả danh mục',
+          productIntel: 'Thông tin sản phẩm',
+          category: 'Danh mục',
+          status: 'Trạng thái',
+          actions: 'Thao tác',
+          activeExport: 'Đang xuất khẩu',
+          noMatches: 'Không tìm thấy sản phẩm phù hợp',
+          cmsLanguage: 'Ngôn ngữ CMS',
+          imageUploadFailed: 'Tải ảnh lên thất bại.',
+          productIdRequired: 'ID sản phẩm là bắt buộc.',
+          saveFailed: 'Không thể lưu sản phẩm.',
+          csvLinkRequired: 'Vui lòng nhập liên kết Google Sheets trước.',
+          csvImportFailed: 'Nhập CSV thất bại.',
+          uploadingImage: 'Đang tải ảnh lên...',
+          uploadFromComputer: 'Tải lên từ máy tính',
+          primaryImageHint: 'Đây là ảnh chính hiển thị trong danh mục.',
+          productPdfSection: 'Tài liệu kỹ thuật / Spec PDF (Tùy chọn)',
+          productPdfPlaceholder: 'https://example.com/spec-sheet.pdf',
+          productPdfInvalid: 'Vui lòng nhập link PDF hợp lệ (phải kết thúc bằng .pdf).',
+          productPdfHelp: 'Liên kết đến file tài liệu hoặc chứng nhận PDF để hiển thị ở trang chi tiết.',
+          galleryTitle: 'Thư viện ảnh chi tiết',
+          galleryDesc: 'Thêm ảnh chụp cận cảnh hạt, bao bì xuất khẩu...',
+          emptySlot: 'Vị trí trống',
+          addPhoto: 'Thêm ảnh',
+          varietyName: 'Tên sản phẩm / Loại hạt',
+          globalCategory: 'Danh mục chính',
+          subCategoryLabel: 'Danh mục phụ',
+          subCategoryPlaceholder: 'Ví dụ: Gạo thơm cao cấp',
+          shortDescriptionLabel: 'Mô tả ngắn thương mại',
+          shortDescriptionPlaceholder: 'Giới thiệu ngắn thu hút khách hàng...',
+          descriptionLabel: 'Mô tả kỹ thuật chi tiết',
+          descriptionPlaceholder: 'Mô tả đầy đủ chi tiết sản phẩm và quy trình chế biến...',
+          zhNameLabel: 'Tên tiếng Trung',
+          zhNamePlaceholder: 'Tên tiếng Trung của sản phẩm',
+          zhSubCategoryLabel: 'Danh mục phụ tiếng Trung',
+          zhSubCategoryPlaceholder: 'Danh mục phụ tiếng Trung',
+          zhShortDescriptionLabel: 'Mô tả ngắn tiếng Trung',
+          zhShortDescriptionPlaceholder: 'Mô tả ngắn tiếng Trung',
+          zhDescriptionLabel: 'Mô tả chi tiết tiếng Trung',
+          zhDescriptionPlaceholder: 'Mô tả chi tiết tiếng Trung',
+          specsTitle: 'Chỉ số chất lượng / Thông số kỹ thuật',
+          specsDesc: 'Các chỉ số đo lường phòng thí nghiệm',
+          addAttribute: 'Thêm thông số',
+          noSpecs: 'Chưa có thông số chất lượng nào được định nghĩa',
+          zhSpecsTitle: 'Thông số kỹ thuật tiếng Trung',
+          zhSpecsDesc: 'Các nhãn tương ứng cho danh mục tiếng Trung',
+          addZhAttribute: 'Thêm thông số tiếng Trung',
+          noZhSpecs: 'Chưa có thông số tiếng Trung nào được định nghĩa',
+          discardChanges: 'Hủy thay đổi',
+          specsLabelPlaceholder: 'Tên thông số (Ví dụ: Độ ẩm)',
+          specsValuePlaceholder: 'Giá trị (Ví dụ: Tối đa 14.0%)',
+          zhSpecsLabelPlaceholder: 'Tên thông số (Ví dụ: Độ ẩm)',
+          zhSpecsValuePlaceholder: 'Giá trị (Ví dụ: Tối đa 14.0%)'
+        }
+      : locale === 'zh'
       ? {
           exitHome: '返回首页',
           inventoryTitle: '全球产品库',
@@ -158,16 +226,16 @@ const AdminInventory: React.FC = () => {
           uploadCsv: '上传 CSV',
           searchPlaceholder: '按品名、等级、品类或 ID 搜索...',
           editCommodity: '编辑产品',
-        createCommodity: '新建产品',
-        translationSection: '中文翻译',
-        translationNote: '用于简体中文目录输出；留空时默认回退到英文。',
-        updatePortfolio: '提交产品更新',
-        initializeCommodity: '创建产品条目',
-        manageDesc: '管理 B2B 出口产品的规格与供货信息。',
-        allCategories: '全部分类',
-        productIntel: '产品情报',
-        category: '分类',
-        status: '状态',
+          createCommodity: '新建产品',
+          translationSection: '中文翻译',
+          translationNote: '用于简体中文目录输出；留空时默认回退到英文。',
+          updatePortfolio: '提交产品更新',
+          initializeCommodity: '创建产品条目',
+          manageDesc: '管理 B2B 出口产品的规格与供货信息。',
+          allCategories: '全部分类',
+          productIntel: '产品情报',
+          category: '分类',
+          status: '状态',
           actions: '操作',
           activeExport: '有效出口中',
           noMatches: '未找到匹配产品',
@@ -292,7 +360,34 @@ const AdminInventory: React.FC = () => {
   const baseCopy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
   const copy = {
     ...baseCopy,
-    ...(locale === 'zh'
+    ...(locale === 'vi'
+      ? {
+          packagingTitle: 'Đóng gói & Xếp hàng',
+          packagingDesc: 'Đóng bao, xếp container và lưu kho',
+          addPackagingAttribute: 'Thêm đóng gói',
+          noPackaging: 'Chưa có thông số đóng gói',
+          packagingLabelPlaceholder: 'Nhãn (ví dụ: Đóng gói)',
+          packagingValuePlaceholder: 'Giá trị (ví dụ: Bao PP 25kg / 50kg)',
+          paymentTitle: 'Thanh toán & Giao hàng',
+          paymentDesc: 'Incoterms, điều kiện thanh toán và thời gian giao nhận',
+          addPaymentAttribute: 'Thêm thanh toán',
+          noPayment: 'Chưa có thông số thanh toán',
+          paymentLabelPlaceholder: 'Nhãn (ví dụ: Incoterms)',
+          paymentValuePlaceholder: 'Giá trị (ví dụ: FOB Ho Chi Minh)',
+          zhPackagingTitle: 'Đóng gói tiếng Trung',
+          zhPackagingDesc: 'Thông số đóng gói cho danh mục tiếng Trung',
+          addZhPackagingAttribute: 'Thêm đóng gói tiếng Trung',
+          noZhPackaging: 'Chưa có thông số đóng gói tiếng Trung',
+          zhPackagingLabelPlaceholder: 'Nhãn',
+          zhPackagingValuePlaceholder: 'Giá trị',
+          zhPaymentTitle: 'Thanh toán tiếng Trung',
+          zhPaymentDesc: 'Thông số giao hàng cho danh mục tiếng Trung',
+          addZhPaymentAttribute: 'Thêm thanh toán tiếng Trung',
+          noZhPayment: 'Chưa có thanh toán tiếng Trung',
+          zhPaymentLabelPlaceholder: 'Nhãn',
+          zhPaymentValuePlaceholder: 'Giá trị'
+        }
+      : locale === 'zh'
       ? {
           packagingTitle: zh('\u5305\u88c5\u4e0e\u88c5\u8fd0'),
           packagingDesc: zh('\u5305\u88c5\u89c4\u683c\u3001\u5185\u886c\u3001\u88c5\u67dc\u4e0e\u50a8\u5b58\u8bf4\u660e'),
@@ -346,46 +441,46 @@ const AdminInventory: React.FC = () => {
           zhPaymentValuePlaceholder: 'Value'
         })
   };
-  const activeStatusLabel = locale === 'zh' ? zh('\u542f\u7528') : 'Active';
-  const inactiveStatusLabel = locale === 'zh' ? zh('\u505c\u7528') : 'Inactive';
+  const activeStatusLabel = locale === 'vi' ? 'Hoạt động' : locale === 'zh' ? zh('\u542f\u7528') : 'Active';
+  const inactiveStatusLabel = locale === 'vi' ? 'Ngừng hoạt động' : locale === 'zh' ? zh('\u505c\u7528') : 'Inactive';
   const statusHelpText =
-    locale === 'zh'
+    locale === 'vi'
+      ? 'Sản phẩm ngừng hoạt động sẽ không hiển thị trên website công cộng.'
+      : locale === 'zh'
       ? zh('\u505c\u7528\u540e\uff0c\u8be5\u4ea7\u54c1\u5c06\u4e0d\u518d\u5728\u516c\u5f00\u7f51\u7ad9\u4e0a\u663e\u793a\u3002')
       : 'Inactive products are hidden from the public website.';
-  const translateButtonLabel = locale === 'zh' ? zh('\u7ffb\u8bd1\u6210\u4e2d\u6587') : 'Translate to Chinese';
-  const translatingButtonLabel = locale === 'zh' ? zh('\u7ffb\u8bd1\u4e2d...') : 'Translating...';
+  const translateButtonLabel = locale === 'vi' ? 'Dịch sang tiếng Trung' : locale === 'zh' ? zh('\u7ffb\u8bd1\u6210\u4e2d\u6587') : 'Translate to Chinese';
+  const translatingButtonLabel = locale === 'vi' ? 'Đang dịch...' : locale === 'zh' ? zh('\u7ffb\u8bd1\u4e2d...') : 'Translating...';
   const translateMissingKeyMessage =
-    locale === 'zh'
+    locale === 'vi'
+      ? 'Dịch vụ dịch thuật Ollama chưa sẵn sàng. Hãy kiểm tra cài đặt.'
+      : locale === 'zh'
       ? zh('Ollama \u7ffb\u8bd1\u672a\u5c31\u7eea\uff0c\u8bf7\u68c0\u67e5 VITE_OLLAMA_BASE_URL\u3001VITE_OLLAMA_MODEL \u6216\u672c\u5730 Ollama \u670d\u52a1\u3002')
       : 'Ollama translation is unavailable. Check VITE_OLLAMA_BASE_URL, VITE_OLLAMA_MODEL, or the local Ollama service.';
   const translateSuccessMessage =
-    locale === 'zh' ? zh('\u5df2\u751f\u6210\u4e2d\u6587\u4ea7\u54c1\u7ffb\u8bd1\u5e76\u4fdd\u5b58\u3002') : 'Chinese product translation generated and saved.';
+    locale === 'vi' ? 'Đã dịch sang tiếng Trung và lưu lại.' : locale === 'zh' ? zh('\u5df2\u751f\u6210\u4e2d\u6587\u4ea7\u54c1\u7ffb\u8bd1\u5e76\u4fdd\u5b58\u3002') : 'Chinese product translation generated and saved.';
   const translateDraftSuccessMessage =
-    locale === 'zh' ? zh('\u5df2\u586b\u5145\u4e2d\u6587\u4ea7\u54c1\u7ffb\u8bd1\u8349\u7a3f\u3002') : 'Chinese product translation draft populated.';
-  const translateFailedPrefix = locale === 'zh' ? zh('\u7ffb\u8bd1\u5931\u8d25\uff1a') : 'Translation failed: ';
+    locale === 'vi' ? 'Đã điền bản nháp tiếng Trung.' : locale === 'zh' ? zh('\u5df2\u586b\u5145\u4e2d\u6587\u4ea7\u54c1\u7ffb\u8bd1\u8349\u7a3f\u3002') : 'Chinese product translation draft populated.';
+  const translateFailedPrefix = locale === 'vi' ? 'Dịch thất bại: ' : locale === 'zh' ? zh('\u7ffb\u8bd1\u5931\u8d25\uff1a') : 'Translation failed: ';
   const translateDraftRequirementMessage =
-    locale === 'zh'
+    locale === 'vi'
+      ? 'Cần điền tên tiếng Anh của sản phẩm trước khi dịch.'
+      : locale === 'zh'
       ? zh('\u8bf7\u5148\u586b\u5199\u82f1\u6587\u4ea7\u54c1\u540d\u79f0\uff0c\u518d\u6267\u884c\u7ffb\u8bd1\u3002')
       : 'Fill in the English product name before translating.';
-  const reloadButtonLabel = locale === 'zh' ? zh('\u91cd\u65b0\u52a0\u8f7d') : 'Reload';
-  const reloadingButtonLabel = locale === 'zh' ? zh('\u52a0\u8f7d\u4e2d...') : 'Reloading...';
-  const reloadSuccessMessage = locale === 'zh' ? zh('\u5df2\u91cd\u65b0\u52a0\u8f7d\u4ea7\u54c1\u6570\u636e\u3002') : 'Inventory reloaded from Turso.';
-  const bulkTranslateButtonLabel = locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u5f53\u524d\u5217\u8868') : 'Bulk Translate List';
-  const bulkTranslatingButtonLabel = locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u4e2d') : 'Bulk Translating';
+  const reloadButtonLabel = locale === 'vi' ? 'Tải lại từ Turso' : locale === 'zh' ? zh('\u91cd\u65b0\u52a0\u8f7d') : 'Reload';
+  const reloadingButtonLabel = locale === 'vi' ? 'Đang tải...' : locale === 'zh' ? zh('\u52a0\u8f7d\u4e2d...') : 'Reloading...';
+  const reloadSuccessMessage = locale === 'vi' ? 'Đã tải lại danh mục từ Turso.' : locale === 'zh' ? zh('\u5df2\u91cd\u65b0\u52a0\u8f7d\u4ea7\u54c1\u6570\u636e\u3002') : 'Inventory reloaded from Turso.';
+  const bulkTranslateButtonLabel = locale === 'vi' ? 'Dịch hàng loạt danh sách' : locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u5f53\u524d\u5217\u8868') : 'Bulk Translate List';
+  const bulkTranslatingButtonLabel = locale === 'vi' ? 'Đang dịch hàng loạt...' : locale === 'zh' ? zh('\u6279\u91cf\u7ffb\u8bd1\u4e2d') : 'Bulk Translating';
   const bulkTranslateEmptyMessage =
-    locale === 'zh' ? zh('\u5f53\u524d\u7b5b\u9009\u7ed3\u679c\u4e2d\u6ca1\u6709\u53ef\u7ffb\u8bd1\u7684\u4ea7\u54c1\u3002') : 'No products match the current list filters.';
+    locale === 'vi' ? 'Không có sản phẩm nào phù hợp bộ lọc.' : locale === 'zh' ? zh('\u5f53\u524d\u7b5b\u9009\u7ed3\u679c\u4e2d\u6ca1\u6709\u53ef\u7ffb\u8bd1\u7684\u4ea7\u54c1\u3002') : 'No products match the current list filters.';
   const bulkTranslateConfirmMessage = (count: number) =>
-    locale === 'zh'
+    locale === 'vi'
+      ? `Dịch hàng loạt ${count} sản phẩm trong danh sách sang tiếng Trung? Việc này sẽ ghi đè lên bản dịch cũ.`
+      : locale === 'zh'
       ? zh(`\u8981\u5c06\u5f53\u524d\u5217\u8868\u4e2d\u7684 ${count} \u4e2a\u4ea7\u54c1\u6279\u91cf\u7ffb\u8bd1\u6210\u4e2d\u6587\u5417\uff1f\u8fd9\u4f1a\u8986\u76d6\u5df2\u6709\u7684\u4e2d\u6587\u5b57\u6bb5\u3002`)
       : `Translate the ${count} products in the current list to Chinese? This will overwrite existing Chinese fields.`;
-  const bulkTranslateSuccessMessage = (successCount: number) =>
-    locale === 'zh'
-      ? zh(`\u5df2\u5b8c\u6210 ${successCount} \u4e2a\u4ea7\u54c1\u7684\u4e2d\u6587\u6279\u91cf\u7ffb\u8bd1\u3002`)
-      : `Chinese translations completed for ${successCount} products.`;
-  const bulkTranslatePartialMessage = (successCount: number, failureCount: number) =>
-    locale === 'zh'
-      ? zh(`\u6279\u91cf\u7ffb\u8bd1\u5b8c\u6210\uff0c\u6210\u529f ${successCount} \u4e2a\uff0c\u5931\u8d25 ${failureCount} \u4e2a\u3002`)
-      : `Bulk translation finished with ${successCount} success and ${failureCount} failure(s).`;
   const exportPdfEnButtonLabel = locale === 'zh' ? zh('\u82f1\u6587 PDF') : 'EN PDF';
   const exportPdfCnButtonLabel = locale === 'zh' ? zh('\u4e2d\u6587 PDF') : 'CN PDF';
   const exportPdfBlockedMessage =
@@ -1442,12 +1537,16 @@ const AdminInventory: React.FC = () => {
             <div className="flex w-full flex-wrap items-center gap-3 md:flex-nowrap xl:w-auto xl:flex-nowrap">
               <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
+                <button type="button" onClick={() => setLocale('vi')} className={locale === 'vi' ? 'text-foodera-forest' : ''}>
+                  VIE
+                </button>
+                <span>/</span>
                 <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
                   EN
                 </button>
                 <span>/</span>
                 <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
-                  {'\u4e2d\u6587'}
+                  CN
                 </button>
               </div>
               <button

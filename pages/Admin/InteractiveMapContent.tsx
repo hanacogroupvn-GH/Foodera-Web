@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, FileText, Loader2, LogOut, MapPinned, Package, RefreshCw, Save, Trash2, Wrench } from 'lucide-react';
 import { AdminSidebar } from '../../components/AdminSidebar';
 
+import { useLocale } from '../../context/LocaleContext';
 import { useAuth } from '../../context/AuthContext';
 import { api, ApiError } from '../../lib/apiClient';
 import { getFeatureCenterCoordinates } from '../../lib/provinceMapGeometry';
@@ -40,7 +41,87 @@ type FormState = {
 type StatusState = { type: 'success' | 'error' | null; message: string };
 type MapAiScope = 'auto' | CategoryType;
 
-const COPY = {
+const COPY_VI = {
+  title: 'Bộ biên tập Bản đồ',
+  description: 'Quản lý dữ liệu nông học của các tỉnh cho bản đồ tương tác.',
+  province: 'Tỉnh/Thành phố',
+  type: 'Loại hình',
+  region: 'Vùng miền',
+  gpsLatitude: 'Vĩ độ GPS',
+  gpsLongitude: 'Kinh độ GPS',
+  cultivatedArea: 'Diện tích canh tác (hecta)',
+  averageOutput: 'Sản lượng trung bình (tấn/năm)',
+  sowingPeriod: 'Thời vụ gieo hạt',
+  harvestPeriod: 'Thời vụ thu hoạch',
+  cropsPerYear: 'Số vụ mỗi năm',
+  characteristics: 'Đặc điểm sinh trưởng',
+  varieties: 'Giống cây trồng',
+  reload: 'Tải lại',
+  reset: 'Đặt lại',
+  resetting: 'Đang đặt lại...',
+  save: 'Lưu thay đổi',
+  saving: 'Đang lưu...',
+  loading: 'Đang tải...',
+  saveSuccess: 'Đã lưu dữ liệu nông học lên Turso.',
+  resetSuccess: 'Đã đặt lại dữ liệu mặc định của tỉnh.',
+  loadError: 'Không thể tải dữ liệu.',
+  saveError: 'Không thể lưu dữ liệu.',
+  resetError: 'Không thể đặt lại dữ liệu.',
+  preview: 'Xem trước',
+  lastUpdated: 'Cập nhật lần cuối',
+  defaultContent: 'Nội dung mặc định',
+  emptyValue: 'Chưa thiết lập',
+  aiTitle: 'Gợi ý từ AI',
+  aiScope: 'Lĩnh vực AI',
+  aiSuggest: 'Tạo bản nháp',
+  aiSuggesting: 'Đang tạo...',
+  aiSuggestSuccess: 'Bản nháp AI đã được điền. Vui lòng xem lại trước khi lưu.',
+  aiSuggestError: 'Không thể tạo bản nháp từ AI.',
+  aiSources: 'Nguồn tham khảo AI',
+  aiNoSources: 'Không có nguồn tham khảo ngoài nào.'
+};
+
+const COPY_ZH = {
+  title: '地图内容编辑器',
+  description: '管理交互式地图的省份农艺数据。',
+  province: '省份',
+  type: '类型',
+  region: '区域',
+  gpsLatitude: 'GPS 纬度',
+  gpsLongitude: 'GPS 经度',
+  cultivatedArea: '种植面积（公顷）',
+  averageOutput: '平均产量（吨/年）',
+  sowingPeriod: '播种期',
+  harvestPeriod: '收获期',
+  cropsPerYear: '年作物熟制',
+  characteristics: '特征描述',
+  varieties: '主要品种',
+  reload: '重新加载',
+  reset: '重置',
+  resetting: '重置中...',
+  save: '保存修改',
+  saving: '保存中...',
+  loading: '加载编辑器中...',
+  saveSuccess: '省份农艺内容已保存至 Turso。',
+  resetSuccess: '省份内容已重置为默认。',
+  loadError: '无法加载省份数据。',
+  saveError: '无法保存省份内容。',
+  resetError: '无法重置省份内容。',
+  preview: '预览',
+  lastUpdated: '最后更新',
+  defaultContent: '默认内容',
+  emptyValue: '未设置',
+  aiTitle: 'AI 建议',
+  aiScope: 'AI 范围',
+  aiSuggest: '生成草稿',
+  aiSuggesting: '生成中...',
+  aiSuggestSuccess: 'AI 草稿已加载到表单中。保存前请先检查。',
+  aiSuggestError: '无法生成 AI 草稿。',
+  aiSources: 'AI 来源',
+  aiNoSources: '当前提供商未返回外部来源。'
+};
+
+const COPY_EN = {
   title: 'Map Content Editor',
   description: 'Manage province agronomy data for the interactive map.',
   province: 'Province',
@@ -78,7 +159,7 @@ const COPY = {
   aiSuggestError: 'Unable to generate an AI draft.',
   aiSources: 'AI Sources',
   aiNoSources: 'No external sources were returned by the current provider.'
-} as const;
+};
 
 const EMPTY_STATUS: StatusState = { type: null, message: '' };
 const AI_SCOPE_OPTIONS: MapAiScope[] = ['auto', 'Rice', 'Coffee', 'Cashew', 'Pepper', 'Agriculture'];
@@ -132,6 +213,14 @@ const labelClassName = 'mb-2 block text-[10px] font-black uppercase tracking-[0.
 
 export default function AdminInteractiveMapContent() {
   const { logout } = useAuth();
+  const { locale } = useLocale();
+
+  const COPY = useMemo(() => {
+    if (locale === 'vi') return COPY_VI;
+    if (locale === 'zh') return COPY_ZH;
+    return COPY_EN;
+  }, [locale]);
+
   const [provinceOptions, setProvinceOptions] = useState<ProvinceOption[]>([]);
   const [savedProfilesById, setSavedProfilesById] = useState<Record<string, ProvinceMapProfile>>({});
   const [selectedProvinceId, setSelectedProvinceId] = useState('');

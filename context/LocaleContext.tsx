@@ -12,16 +12,18 @@ export const LocaleContext = createContext<LocaleContextType | undefined>(undefi
 
 const resolveInitialLocale = (): SupportedLocale => {
   if (typeof window === 'undefined') {
-    return 'en';
+    return 'vi';
   }
 
   const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-  if (stored === 'en' || stored === 'zh') {
+  if (stored === 'en' || stored === 'zh' || stored === 'vi') {
     return stored;
   }
 
   const browserLanguage = window.navigator.language.toLowerCase();
-  return browserLanguage.startsWith('zh') ? 'zh' : 'en';
+  if (browserLanguage.startsWith('vi')) return 'vi';
+  if (browserLanguage.startsWith('zh')) return 'zh';
+  return 'vi';
 };
 
 export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,7 +33,7 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
     }
-    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en';
+    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale === 'vi' ? 'vi-VN' : 'en';
   }, [locale]);
 
   const value = useMemo(

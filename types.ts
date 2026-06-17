@@ -11,7 +11,7 @@ export interface ProductCategory {
 
 export type NewsCategory = 'Product' | 'Logistics' | 'Market Insight';
 
-export type SupportedLocale = 'en' | 'zh';
+export type SupportedLocale = 'en' | 'zh' | 'vi';
 export type ContentLocale = Exclude<SupportedLocale, 'en'>;
 
 export interface ProductFilters {
