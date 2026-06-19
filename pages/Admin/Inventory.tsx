@@ -1551,7 +1551,7 @@ const AdminInventory: React.FC = () => {
               <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.inventoryTitle}</h1>
               <p className="text-gray-500 font-medium">{copy.manageDesc}</p>
             </div>
-            <div className="flex w-full flex-wrap items-center gap-3 md:flex-nowrap xl:w-auto xl:flex-nowrap">
+            <div className="flex w-full flex-wrap items-center gap-3 xl:w-auto">
               <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
                 <button type="button" onClick={() => setLocale('vi')} className={locale === 'vi' ? 'text-foodera-forest' : ''}>
