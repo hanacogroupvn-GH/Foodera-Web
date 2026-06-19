@@ -138,7 +138,7 @@ const FILTER_VALUE_LABELS: Partial<Record<SupportedLocale, Record<string, string
 const normalizeLookupKey = (value: string) => value.trim().toLowerCase();
 
 export const translateFilterValue = (value: string, locale: SupportedLocale): string => {
-  if (locale === 'en') {
+  if (locale !== 'zh') {
     return value;
   }
 

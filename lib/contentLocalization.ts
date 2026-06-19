@@ -92,10 +92,10 @@ export const localizeNewsItem = (item: NewsItem, locale: SupportedLocale): NewsI
 };
 
 export const getCategoryLabel = (category: CategoryType, locale: SupportedLocale): string =>
-  CATEGORY_LABELS[locale]?.[category] || category;
+  locale === 'zh' ? CATEGORY_LABELS[locale]?.[category] || category : category;
 
 export const getNewsCategoryLabel = (category: NewsCategory, locale: SupportedLocale): string =>
-  NEWS_CATEGORY_LABELS[locale][category];
+  locale === 'zh' ? NEWS_CATEGORY_LABELS[locale]?.[category] || category : category;
 
 export const getLocalizedFilterValue = (value: string, locale: SupportedLocale): string =>
   translateFilterValue(value, locale);
