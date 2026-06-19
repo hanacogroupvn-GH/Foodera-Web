@@ -878,7 +878,7 @@ const AdminNews: React.FC = () => {
       />
 
       {isModalOpen ? null : (
-        <main className="flex-grow p-8 md:p-12 overflow-y-auto">
+        <main className="flex-grow px-6 py-10 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">

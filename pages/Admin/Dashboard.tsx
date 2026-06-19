@@ -201,7 +201,7 @@ const AdminDashboard: React.FC = () => {
       <AdminSidebar onLogout={handleLogout} />
 
       {/* Main Content */}
-      <main className="flex-grow p-8 md:p-12 overflow-y-auto">
+      <main className="flex-grow px-6 py-10 overflow-y-auto">
         <div className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.pageTitle}</h1>
