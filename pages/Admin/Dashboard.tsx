@@ -205,7 +205,6 @@ const AdminDashboard: React.FC = () => {
         <div className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">{copy.pageTitle}</h1>
-            <p className="text-gray-500 text-sm font-medium">{copy.pageDesc}</p>
           </div>
           <div className="flex gap-4 items-center">
              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
@@ -246,67 +245,25 @@ const AdminDashboard: React.FC = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            {/* Backup Card */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-foodera-forest/5 text-foodera-forest rounded-xl"><Database size={20} /></div>
-                <h3 className="text-lg font-black tracking-tight">{copy.dataManagement}</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <button 
-                  onClick={handleExport}
-                  className="w-full py-4 bg-gray-50 text-gray-900 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-100 transition-all"
-                >
-                  <Download size={14} /> {copy.exportJson}
-                </button>
-                
-                <label className="w-full py-4 bg-gray-50 text-gray-900 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-100 transition-all cursor-pointer">
-                  <Upload size={14} /> {copy.importJson}
-                  <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                </label>
-
-                {importStatus.type && (
-                  <div className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${importStatus.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                    {importStatus.type === 'success' ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
-                    {importStatus.message}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-8 border-t border-gray-50 pt-6">
-                 <button 
-                   onClick={resetToDefaults}
-                   className="w-full py-2 text-[10px] font-black text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                 >
-                   <Trash2 size={12} /> {copy.resetDefaults}
-                 </button>
-              </div>
-            </div>
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{copy.verifiedInventory}</h3>
+            <Link to={appRoutes.adminInventory} className="text-xs font-black text-foodera-forest hover:text-foodera-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
           </div>
-
-          <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{copy.verifiedInventory}</h3>
-              <Link to={appRoutes.adminInventory} className="text-xs font-black text-foodera-forest hover:text-foodera-lime flex items-center gap-1 uppercase tracking-widest">{copy.globalCatalog} <ArrowRight size={14} /></Link>
-            </div>
-            <div className="space-y-4">
-              {products.slice(0, 6).map(p => (
-                <div key={p.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-2xl border border-transparent hover:border-gray-100 transition-all group">
-                  <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={p.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={localizeProduct(p, locale).name} />
-                  </div>
-                  <div className="flex-grow">
-                    <p className="text-sm font-black text-gray-900">{localizeProduct(p, locale).name}</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                      {getCategoryLabel(p.category, locale)} / {localizeProduct(p, locale).subCategory}
-                    </p>
-                  </div>
+          <div className="space-y-4">
+            {products.slice(0, 6).map(p => (
+              <div key={p.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-2xl border border-transparent hover:border-gray-100 transition-all group">
+                <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                  <img src={p.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={localizeProduct(p, locale).name} />
                 </div>
-              ))}
-            </div>
+                <div className="flex-grow">
+                  <p className="text-sm font-black text-gray-900">{localizeProduct(p, locale).name}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    {getCategoryLabel(p.category, locale)} / {localizeProduct(p, locale).subCategory}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </main>
