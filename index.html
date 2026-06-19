@@ -76,20 +76,11 @@
     <!-- Preload LCP hero image -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1769149797509-d005e2d32940?auto=format&fit=crop&q=80&w=1600" />
 
-    <!-- Theme Initialization -->
+    <!-- Theme Initialization (Forced Light Theme) -->
     <script>
       (function() {
-        function applyTheme() {
-          const stored = localStorage.getItem('theme');
-          if (stored === 'dark' || stored === 'light') {
-            document.documentElement.classList.toggle('dark', stored === 'dark');
-            return;
-          }
-          // Default to light theme
-          document.documentElement.classList.toggle('dark', false);
-        }
-
-        applyTheme();
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
       })();
     </script>
   </head>

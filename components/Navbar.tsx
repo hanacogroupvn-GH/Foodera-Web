@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Download, Sun, Moon } from 'lucide-react';
+import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Download } from 'lucide-react';
 import { Product, SupportedLocale } from '../types';
 const Logo = '/logo-era.png';
 import { useData } from '../context/DataContext';
@@ -170,17 +170,12 @@ const Navbar: React.FC = () => {
 
 
   useEffect(() => {
-    setIsDarkMode(document.documentElement.classList.contains('dark'));
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+    setIsDarkMode(false);
   }, []);
 
-
-
-  const handleThemeToggle = () => {
-    const nextIsDark = !document.documentElement.classList.contains('dark');
-    document.documentElement.classList.toggle('dark', nextIsDark);
-    localStorage.setItem('theme', nextIsDark ? 'dark' : 'light');
-    setIsDarkMode(nextIsDark);
-  };
+  const handleThemeToggle = () => {};
 
   return (
     <>
@@ -204,15 +199,6 @@ const Navbar: React.FC = () => {
                 <BarChart3 size={14} />
                 {copy.commercialTool}
               </Link>
-              <button
-                onClick={handleThemeToggle}
-                className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-foodera-forest transition-colors uppercase tracking-widest"
-                aria-label={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
-                title={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
-              >
-                {isDarkMode ? <Sun size={14} className="text-foodera-lime" /> : <Moon size={14} className="text-foodera-forest" />}
-                {isDarkMode ? copy.themeLight : copy.themeDark}
-              </button>
               <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <Globe size={12} />
                 <div className="flex items-center gap-1.5">
@@ -404,14 +390,6 @@ const Navbar: React.FC = () => {
                 <Link to={appRoutes.careers} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{locale === 'zh' ? '招聘' : 'Careers'}</Link>
                 
               <div className="flex items-center space-x-6">
-                <button
-                  onClick={handleThemeToggle}
-                  className="text-gray-500 hover:text-foodera-forest transition-colors p-2 rounded-full hover:bg-gray-50"
-                  aria-label={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
-                  title={locale === 'zh' ? '切换深浅模式' : 'Toggle dark mode'}
-                >
-                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
                 <button 
                   onClick={() => setIsSearchOpen(true)}
                   className="text-gray-500 hover:text-foodera-forest transition-colors p-2 rounded-full hover:bg-gray-50"
