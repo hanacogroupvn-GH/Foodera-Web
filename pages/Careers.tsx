@@ -231,7 +231,7 @@ const Careers: React.FC = () => {
         <div
           className="careers-about__image"
           style={{
-            backgroundImage: "url('/media/careers/about-bg.webp')",
+            backgroundImage: "url('/media/careers/about-bg.webp?v=2')",
             backgroundColor: '#e5e7eb',
           }}
         />
