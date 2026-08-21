@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Download } from 'lucide-react';
 import { Product, SupportedLocale } from '../types';
-const Logo = '/logo-era.png';
+const Logo = '/logo-navbar.png';
 import { useData } from '../context/DataContext';
 import { useLocale } from '../context/LocaleContext';
 import { getCategoryLabel, localizeProduct } from '../lib/contentLocalization';
@@ -229,7 +229,7 @@ const Navbar: React.FC = () => {
             <div className="flex justify-between h-20">
               <div className="flex items-center">
                 <Link to={appRoutes.home} className="flex-shrink-0 flex items-center">
-                  <img src={Logo} alt="FoodEra" className="w-[166px] md:w-[282px] h-auto object-contain" />
+                  <img src={Logo} alt="FoodEra" className="h-10 md:h-12 w-auto max-w-[190px] md:max-w-[220px] object-contain" />
                 </Link>
               </div>
 
@@ -423,7 +423,7 @@ const Navbar: React.FC = () => {
           <div className="lg:hidden bg-white fixed inset-0 z-[100] overflow-y-auto animate-in fade-in duration-200">
             <div className="p-6">
               <div className="flex justify-between items-center mb-12">
-                <img src={Logo} alt="FoodEra" className="w-[166px] h-auto object-contain" />
+                <img src={Logo} alt="FoodEra" className="h-9 w-auto max-w-[150px] object-contain" />
                 <button onClick={() => setIsOpen(false)} className="p-2 text-gray-500"><X size={32} /></button>
               </div>
 
