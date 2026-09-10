@@ -14,21 +14,30 @@ const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
     Coffee: 'Coffee',
     Cashew: 'Cashew',
     Agriculture: 'Agriculture',
-    Pepper: 'Pepper'
+    Pepper: 'Pepper',
+    Coconut: 'Coconut',
+    Durian: 'Durian',
+    Spices: 'Spices'
   },
   zh: {
     Rice: '\u5927\u7c73',
     Coffee: '\u5496\u5561',
     Cashew: '\u8170\u679c',
     Agriculture: '\u519c\u4ea7\u54c1',
-    Pepper: '\u80e1\u6912'
+    Pepper: '\u80e1\u6912',
+    Coconut: '\u6930\u5b50',
+    Durian: '\u69b4\u83b2',
+    Spices: '\u9999\u6599'
   },
   vi: {
     Rice: 'Gạo',
     Coffee: 'Cà phê',
     Cashew: 'Hạt điều',
     Agriculture: 'Nông sản',
-    Pepper: 'Hạt tiêu'
+    Pepper: 'Hạt tiêu',
+    Coconut: 'Dừa',
+    Durian: 'Sầu riêng',
+    Spices: 'Gia vị'
   }
 };
 

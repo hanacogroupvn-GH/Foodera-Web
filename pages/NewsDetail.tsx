@@ -1,14 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight, Home, Megaphone, Tag, Anchor, Package, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Share2, Printer, Clock, CalendarDays, ChevronRight, Home, Megaphone, Tag } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { getNewsPath, getNewsSlug, normalizeNewsSlug } from '../lib/newsSeo';
 import AppShellLoader from '../components/AppShellLoader';
 import { useLocale } from '../context/LocaleContext';
-import { usePersonalization } from '../context/PersonalizationContext';
-import { formatDisplayDate, getNewsCategoryLabel, localizeNewsItem } from '../lib/contentLocalization';
+import { formatDisplayDate, localizeNewsItem } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
-import { normalizeProductCategorySlug } from '../lib/productCategories';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -356,9 +354,8 @@ const NewsDetail: React.FC = () => {
     legacySlug?: string;
   }>();
   const navigate = useNavigate();
-  const { activeNews: news, activeProducts, isLoading } = useData();
+  const { activeNews: news, isLoading } = useData();
   const { locale } = useLocale();
-  const { personalizedNews, hasPersonalizedContent, trackEvent } = usePersonalization();
   const primarySegment = useMemo(() => decodeRouteSegment(rawSlug), [rawSlug]);
   const legacyId = useMemo(() => decodeRouteSegment(rawLegacyId), [rawLegacyId]);
   const routeSlugSource = useMemo(
@@ -394,14 +391,11 @@ const NewsDetail: React.FC = () => {
         backToInsights: '返回洞察列表',
         minRead: '分钟阅读',
         marketIntel: 'FoodEra 市场情报',
-        onThisPage: '本页目录',
-        continuousBrief: '这篇文章以单篇连续简报形式呈现。',
-        discussInsight: '咨询这篇洞察',
         relatedInsights: '相关文章',
         home: '首页',
         newsAndInsights: '新闻与洞察',
         writtenBy: '作者',
-        authorName: 'FoodEra Trade Desk',
+        authorName: 'Foodera Media',
       }
     : {
         loader: 'Loading article...',
@@ -410,27 +404,16 @@ const NewsDetail: React.FC = () => {
         backToInsights: 'Back to Insights',
         minRead: 'Min Read',
         marketIntel: 'FoodEra Market Intelligence',
-        onThisPage: 'On This Page',
-        continuousBrief: 'This article is presented as a single continuous brief.',
-        discussInsight: 'Discuss this insight',
         relatedInsights: 'Related Insights',
         home: 'Home',
         newsAndInsights: 'News & Insights',
         writtenBy: 'By',
-        authorName: 'FoodEra Trade Desk',
+        authorName: 'Foodera Media',
       };
-  const personalizedRelatedNews = useMemo(
-    () => (article ? personalizedNews.filter((item) => item.id !== article.id).slice(0, 3) : []),
-    [article, personalizedNews]
+  const relatedNews = useMemo(
+    () => localizedNews.filter((item) => item.id !== article?.id).slice(0, 3),
+    [article?.id, localizedNews]
   );
-  const relatedNews = useMemo(() => {
-    if (hasPersonalizedContent && personalizedRelatedNews.length > 0) {
-      return personalizedRelatedNews;
-    }
-
-    return localizedNews.filter((item) => item.id !== article?.id).slice(0, 3);
-  }, [article?.id, hasPersonalizedContent, localizedNews, personalizedRelatedNews]);
-  const isUsingPersonalizedRelatedNews = hasPersonalizedContent && personalizedRelatedNews.length > 0;
 
   const paragraphs = useMemo(() => {
     if (!localizedArticle) return [];
@@ -471,7 +454,6 @@ const NewsDetail: React.FC = () => {
       return true;
     });
   }, [blocks]);
-  const headingBlocks = useMemo(() => displayBlocks.filter((block) => block.type === 'heading'), [displayBlocks]);
   const readingMinutes = useMemo(() => estimateReadTime(paragraphs), [paragraphs]);
   const publishedIso = article ? toIsoDate(article.date) : null;
   const canonicalPath = article ? getNewsPath(article) : '';
@@ -511,29 +493,6 @@ const NewsDetail: React.FC = () => {
   useEffect(() => {
     setIsImageBroken(false);
   }, [article?.id, article?.image]);
-
-  useEffect(() => {
-    if (!article) {
-      return;
-    }
-
-    void trackEvent(
-      {
-        entityType: 'news',
-        action: 'view',
-        itemId: article.id,
-        newsCategory: article.category,
-        locale,
-        metadata: {
-          surface: 'news_detail'
-        }
-      },
-      {
-        dedupeKey: `news-view:${article.id}`,
-        dedupeTtlMs: 2500
-      }
-    );
-  }, [article, locale, trackEvent]);
 
   useEffect(() => {
     if (!article) return;
@@ -709,50 +668,42 @@ const NewsDetail: React.FC = () => {
 
       <article ref={articleRef} className="py-10 md:py-14" itemScope itemType="https://schema.org/NewsArticle">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl">
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="px-3 py-1 bg-foodera-forest/10 text-foodera-forest text-[10px] font-black uppercase tracking-widest rounded-full">
-                {getNewsCategoryLabel(article.category, locale)}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400">
-                <Clock size={14} />
-                {readingMinutes} {copy.minRead}
-              </span>
-              <span className="text-xs font-bold text-gray-300">&bull;</span>
-              <time
-                dateTime={publishedIso || undefined}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-widest"
-                itemProp="datePublished"
-              >
-                <CalendarDays size={14} />
-                {formatDisplayDate(article.date, locale)}
-              </time>
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400">
+              <Clock size={14} />
+              {readingMinutes} {copy.minRead}
+            </span>
+            <span className="text-xs font-bold text-gray-300">&bull;</span>
+            <time
+              dateTime={publishedIso || undefined}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-widest"
+              itemProp="datePublished"
+            >
+              <CalendarDays size={14} />
+              {formatDisplayDate(article.date, locale)}
+            </time>
+          </div>
+
+          <h1 className="text-xl md:text-2xl font-[900] text-gray-900 mb-6 leading-[1.3] tracking-tight" itemProp="headline">
+            {localizedArticle?.title || article.title}
+          </h1>
+
+          {localizedArticle?.excerpt?.trim() && (
+            <p className="sr-only" itemProp="description">
+              {localizedArticle?.excerpt}
+            </p>
+          )}
+
+          {/* Author info block */}
+          <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-100" itemProp="author" itemScope itemType="https://schema.org/Organization">
+            <div className="w-11 h-11 rounded-full bg-foodera-forest/10 flex items-center justify-center flex-shrink-0">
+              <img src="/logo-era.png" alt="FoodEra" className="w-7 h-7 object-contain" />
             </div>
-
-            <h1 className="text-4xl md:text-6xl font-[900] text-gray-900 mb-6 leading-[1.08] tracking-tight" itemProp="headline">
-              {localizedArticle?.title || article.title}
-            </h1>
-
-            {localizedArticle?.excerpt?.trim() && (
-              <p
-                className="text-lg md:text-2xl text-gray-600 leading-relaxed mb-8 font-medium max-w-3xl text-justify [text-align:justify] [text-justify:inter-word]"
-                itemProp="description"
-              >
-                {localizedArticle?.excerpt}
+            <div>
+              <p className="text-sm font-black text-gray-900" itemProp="name">{copy.authorName}</p>
+              <p className="text-xs text-gray-400 font-medium">
+                {copy.writtenBy} • {formatDisplayDate(article.date, locale)}
               </p>
-            )}
-
-            {/* Author info block */}
-            <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-100" itemProp="author" itemScope itemType="https://schema.org/Organization">
-              <div className="w-11 h-11 rounded-full bg-foodera-forest/10 flex items-center justify-center flex-shrink-0">
-                <img src="/logo-era.png" alt="FoodEra" className="w-7 h-7 object-contain" />
-              </div>
-              <div>
-                <p className="text-sm font-black text-gray-900" itemProp="name">{copy.authorName}</p>
-                <p className="text-xs text-gray-400 font-medium">
-                  {copy.writtenBy} • {formatDisplayDate(article.date, locale)}
-                </p>
-              </div>
             </div>
           </div>
 
@@ -761,7 +712,7 @@ const NewsDetail: React.FC = () => {
               <img
                 src={article.image}
                 alt={article.imageAlt || localizedArticle?.title || article.title}
-                className="w-full h-[260px] md:h-[460px] object-cover"
+                className="w-full h-auto max-h-[70vh] object-contain bg-gray-50"
                 itemProp="image"
                 loading="eager"
                 onError={() => setIsImageBroken(true)}
@@ -776,23 +727,22 @@ const NewsDetail: React.FC = () => {
             </figcaption>
           </figure>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-12">
-            <section className="min-w-0">
-              <div itemProp="articleBody">
+          <section className="min-w-0">
+            <div itemProp="articleBody">
                 {/* ── HTML content from Tiptap editor (priority) ── */}
                 {article.contentHtml ? (
                   <div
                     className={[
-                      'prose prose-lg max-w-none',
-                      'prose-h1:text-3xl prose-h1:font-black prose-h1:text-gray-900 prose-h1:mt-8 prose-h1:mb-4',
-                      'prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:font-black prose-h2:text-gray-900 prose-h2:mt-12 prose-h2:mb-5',
-                      'prose-h3:text-xl prose-h3:font-bold prose-h3:text-gray-800 prose-h3:mt-8 prose-h3:mb-3',
-                      'prose-p:text-lg md:prose-p:text-[1.32rem] prose-p:text-gray-700 prose-p:leading-[1.85] prose-p:font-medium prose-p:mb-6 prose-p:text-justify',
-                      'prose-ul:pl-6 prose-ul:mb-4 prose-li:text-lg prose-li:text-gray-700 prose-li:font-medium prose-li:mb-2',
+                      'prose max-w-none',
+                      'prose-h1:text-xl prose-h1:font-bold prose-h1:text-gray-900 prose-h1:mt-8 prose-h1:mb-3',
+                      'prose-h2:text-xl md:prose-h2:text-2xl prose-h2:font-bold prose-h2:text-gray-900 prose-h2:mt-10 prose-h2:mb-4',
+                      'prose-h3:text-lg prose-h3:font-bold prose-h3:text-gray-800 prose-h3:mt-6 prose-h3:mb-2',
+                      'prose-p:text-base md:prose-p:text-lg prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-5',
+                      'prose-ul:pl-6 prose-ul:mb-4 prose-li:text-base md:prose-li:text-lg prose-li:text-gray-700 prose-li:mb-2',
                       'prose-ol:pl-6 prose-ol:mb-4',
-                      'prose-blockquote:border-l-4 prose-blockquote:border-foodera-forest prose-blockquote:pl-6 prose-blockquote:py-3 prose-blockquote:my-8 prose-blockquote:text-lg prose-blockquote:italic prose-blockquote:text-gray-600 prose-blockquote:font-medium',
+                      'prose-blockquote:border-l-4 prose-blockquote:border-foodera-forest prose-blockquote:pl-6 prose-blockquote:py-3 prose-blockquote:my-6 prose-blockquote:text-base prose-blockquote:italic prose-blockquote:text-gray-600',
                       'prose-a:text-foodera-forest prose-a:underline prose-a:hover:text-foodera-lime prose-a:transition-colors',
-                      'prose-strong:font-black prose-strong:text-gray-900',
+                      'prose-strong:font-bold prose-strong:text-gray-900',
                       'prose-em:italic prose-em:text-gray-700',
                       'prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono',
                       'prose-table:w-full prose-table:border-collapse',
@@ -807,17 +757,12 @@ const NewsDetail: React.FC = () => {
                 /* ── Legacy block renderer for plain-text content ── */
                 <>
                 {displayBlocks.map((block, idx) => {
-                  const isFirstParagraph = block.type === 'paragraph' && idx === displayBlocks.findIndex(b => b.type === 'paragraph');
-
                   switch (block.type) {
                     case 'heading':
                       return (
-                        <div key={`${block.id}-${idx}`} className="mt-12 mb-5">
-                          <div className="w-10 h-1 bg-foodera-lime rounded-full mb-4" />
-                          <h2 id={block.id} className="text-2xl md:text-3xl font-black text-gray-900">
-                            {block.text}
-                          </h2>
-                        </div>
+                        <h2 key={`${block.id}-${idx}`} id={block.id} className="text-xl md:text-2xl font-bold text-gray-900 mt-10 mb-4">
+                          {block.text}
+                        </h2>
                       );
 
                     case 'image':
@@ -871,9 +816,9 @@ const NewsDetail: React.FC = () => {
 
                     case 'bullet':
                       return (
-                        <div key={`bullet-${idx}`} className="flex gap-3 mb-3 text-lg text-gray-700">
-                          <span className="text-foodera-forest font-bold mt-1">•</span>
-                          <span className="font-medium">{block.text}</span>
+                        <div key={`bullet-${idx}`} className="flex gap-3 mb-2 text-base text-gray-700">
+                          <span className="text-foodera-forest mt-1">•</span>
+                          <span>{block.text}</span>
                         </div>
                       );
 
@@ -915,17 +860,13 @@ const NewsDetail: React.FC = () => {
                       return hasInlineFormatting ? (
                         <p
                           key={`paragraph-${idx}`}
-                          className={`text-lg md:text-[1.32rem] text-gray-700 leading-[1.85] font-medium text-justify [text-align:justify] [text-justify:inter-word] mb-6${
-                            isFirstParagraph ? ' first-letter:text-[3.2rem] first-letter:font-[900] first-letter:text-foodera-forest first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-none' : ''
-                          }`}
+                          className="text-base md:text-lg text-gray-700 leading-relaxed mb-5"
                           dangerouslySetInnerHTML={{ __html: html }}
                         />
                       ) : (
                         <p
                           key={`paragraph-${idx}`}
-                          className={`text-lg md:text-[1.32rem] text-gray-700 leading-[1.85] font-medium text-justify [text-align:justify] [text-justify:inter-word] mb-6${
-                            isFirstParagraph ? ' first-letter:text-[3.2rem] first-letter:font-[900] first-letter:text-foodera-forest first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-none' : ''
-                          }`}
+                          className="text-base md:text-lg text-gray-700 leading-relaxed mb-5"
                         >
                           {block.text}
                         </p>
@@ -934,115 +875,15 @@ const NewsDetail: React.FC = () => {
                   }
                 })}</>
                 )}
-              </div>
-            </section>
-
-            <aside className="lg:sticky lg:top-24 h-fit bg-gray-50 rounded-2xl border border-gray-100 p-6">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">{copy.onThisPage}</h2>
-              <div className="space-y-3">
-                {headingBlocks.length > 0 ? (
-                  headingBlocks.slice(0, 7).map((heading) => (
-                    <a
-                      key={heading.id}
-                      href={`#${heading.id}`}
-                      className="flex items-start gap-2 text-sm font-bold text-gray-600 hover:text-foodera-forest transition-colors leading-snug"
-                    >
-                      <ChevronRight size={16} className="mt-0.5 flex-shrink-0" />
-                      <span>{heading.text}</span>
-                    </a>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 font-medium">{copy.continuousBrief}</p>
-                )}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <Link
-                  to={appRoutes.contact}
-                  className="w-full inline-flex items-center justify-center px-4 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-lg"
-                >
-                  {copy.discussInsight}
-                </Link>
-              </div>
-
-              {/* ── Related Products ── */}
-              {article.relatedProducts && article.relatedProducts.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Package size={13} className="text-foodera-forest" />
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      {locale === 'zh' ? '相关产品' : 'Related Products'}
-                    </h3>
-                  </div>
-                  <div className="space-y-3">
-                    {article.relatedProducts.slice(0, 6).map((rp, idx) => {
-                      const isProduct = rp.type === 'product';
-                      const linkedProduct = isProduct
-                        ? activeProducts.find(p => p.id === rp.productId)
-                        : null;
-                      const categorySlug = !isProduct && rp.category
-                        ? normalizeProductCategorySlug(rp.category)
-                        : null;
-                      const href = isProduct
-                        ? appRoutes.productById(rp.productId!)
-                        : categorySlug
-                          ? appRoutes.productsByCategory(categorySlug)
-                          : appRoutes.products;
-                      const displayLabel = rp.label ||
-                        (isProduct ? (linkedProduct?.name ?? rp.productId ?? '') : (rp.category ?? ''));
-                      const thumbSrc = isProduct ? linkedProduct?.image : undefined;
-
-                      return (
-                        <Link
-                          key={`rp-${idx}`}
-                          to={href}
-                          className="group flex items-center gap-3 p-2.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100"
-                        >
-                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
-                            {thumbSrc ? (
-                              <img
-                                src={thumbSrc}
-                                alt={displayLabel}
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package size={16} className="text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-gray-700 leading-snug line-clamp-2 group-hover:text-foodera-forest transition-colors">
-                              {displayLabel}
-                            </p>
-                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 uppercase tracking-wide">
-                              {isProduct
-                                ? (locale === 'zh' ? '查看产品' : 'View Product')
-                                : (locale === 'zh' ? '浏览分类' : 'Browse Category')}
-                            </p>
-                          </div>
-                          <ExternalLink size={12} className="text-gray-300 group-hover:text-foodera-forest flex-shrink-0 transition-colors" />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </aside>
-          </div>
-
-          </div>
+            </div>
+          </section>
+        </div>
       </article>
 
       <section className="bg-gray-50 py-20 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-black text-gray-900 mb-10 uppercase tracking-widest">
-            {isUsingPersonalizedRelatedNews
-              ? locale === 'zh'
-                ? '为此设备推荐的资讯'
-                : 'Recommended Insights for This Device'
-              : copy.relatedInsights}
+            {copy.relatedInsights}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {relatedNews.map((related) => (
@@ -1050,24 +891,6 @@ const NewsDetail: React.FC = () => {
                   key={related.id}
                   to={getNewsPath(related)}
                   className="group block"
-                  onClick={() => {
-                    void trackEvent(
-                      {
-                        entityType: 'news',
-                        action: 'click',
-                        itemId: related.id,
-                        newsCategory: related.category,
-                        locale,
-                        metadata: {
-                          surface: 'news_related'
-                        }
-                      },
-                      {
-                        dedupeKey: `news-click:${related.id}:related`,
-                        dedupeTtlMs: 1200
-                      }
-                    );
-                  }}
                 >
                   <article className="h-full rounded-2xl border border-gray-100 bg-white p-3 shadow-sm group-hover:shadow-xl transition-all">
                     <div className="aspect-[16/9] rounded-xl overflow-hidden mb-5 border border-gray-100">

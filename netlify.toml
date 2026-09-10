@@ -10,7 +10,7 @@
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["express", "serverless-http", "@libsql/client", "@google/genai", "helmet", "express-rate-limit"]
-  included_files = ["server/**"]
+  included_files = ["server/**", "data/**"]
 
 # Static assets (JS/CSS) — Vite hashed filenames, safe to cache forever
 [[headers]]

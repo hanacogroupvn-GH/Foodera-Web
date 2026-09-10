@@ -22,7 +22,6 @@ const MEDIA_ROOT = path.join(process.cwd(), 'public/media');
 const TARGETS = [
   { dir: 'about', maxWidth: 1600, quality: 80 },
   { dir: 'pepper', maxWidth: 1200, quality: 80 },
-  { dir: 'careers', maxWidth: 1600, quality: 80 },
   { dir: 'migrated/products', maxWidth: 1200, quality: 80 },
 ];
 

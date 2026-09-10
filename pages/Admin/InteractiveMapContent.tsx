@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, FileText, Loader2, LogOut, MapPinned, Package, RefreshCw, Save, Trash2, Wrench } from 'lucide-react';
+import { Loader2, RefreshCw, Save, Trash2, Wrench } from 'lucide-react';
 import { AdminSidebar } from '../../components/AdminSidebar';
 
 import { useLocale } from '../../context/LocaleContext';

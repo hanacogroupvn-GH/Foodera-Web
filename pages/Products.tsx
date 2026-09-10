@@ -5,14 +5,20 @@ import { useData } from '../context/DataContext';
 import SectionHeading from '../components/SectionHeading';
 import ProductCard from '../components/ProductCard';
 import AppShellLoader from '../components/AppShellLoader';
-import { Filter, X, ChevronDown, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, X, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { findProductCategoryBySlug, normalizeProductCategorySlug, getDynamicCategories } from '../lib/productCategories';
 import { useLocale } from '../context/LocaleContext';
-import { usePersonalization } from '../context/PersonalizationContext';
-import { getCategoryLabel, getLocalizedFilterValue, localizeProduct } from '../lib/contentLocalization';
+import { getCategoryLabel, localizeProduct } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
 import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
 const ITEMS_PER_PAGE = 9;
+
+// Category-specific header background photo (footer-style: image + dark
+// gradient overlay so the title stays legible). Categories without an entry
+// keep the plain light header.
+const CATEGORY_HEADER_IMAGES: Partial<Record<string, string>> = {
+  Rice: '/media/about/rice-mekong-delta.webp'
+};
 
 interface ProductsProps {
   categorySlug?: string;
@@ -21,7 +27,6 @@ interface ProductsProps {
 const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
   const { activeProducts: products, isLoading } = useData();
   const { locale } = useLocale();
-  const { trackEvent } = usePersonalization();
   const navigate = useNavigate();
   const { category } = useParams<{ category?: string }>();
   const location = useLocation();
@@ -30,7 +35,6 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
   const activeCategory = findProductCategoryBySlug(categorySlug || category);
   const filterCategory = activeCategory ? normalizeProductCategorySlug(activeCategory) : 'all';
   const filterSub = (subCategoryParam || 'all').toLowerCase();
-  const [filterProcessing, setFilterProcessing] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -40,13 +44,10 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
         all: '全部',
         titleAll: '我们的出口产品目录',
         titlePortfolioSuffix: '产品系列',
-        subtitle: '面向国际市场的高品质农产品，严格按照全球食品安全标准处理。',
         mainCategory: '主分类',
         productLines: '产品线',
         allVarieties: '全部品类',
         filters: '筛选',
-        processingMethod: '加工方式',
-        allProcesses: '全部工艺',
         showing: '当前显示',
         verifiedItems: '个已验证出口产品',
         page: '页',
@@ -62,13 +63,10 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
         all: 'All',
         titleAll: 'Our Export Portfolios',
         titlePortfolioSuffix: 'Portfolio',
-        subtitle: 'Premium agricultural commodities processed to the highest global food safety standards.',
         mainCategory: 'Main Category',
         productLines: 'Product Lines',
         allVarieties: 'All Varieties',
         filters: 'Filters',
-        processingMethod: 'Processing Method',
-        allProcesses: 'All Processes',
         showing: 'Showing',
         verifiedItems: 'verified export items',
         page: 'Page',
@@ -90,10 +88,6 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
     canonicalUrl: `${BASE_URL}${activeCategory ? appRoutes.productsByCategory(activeCategory) : appRoutes.products}`,
     ogUrl: `${BASE_URL}${activeCategory ? appRoutes.productsByCategory(activeCategory) : appRoutes.products}`,
   });
-
-  useEffect(() => {
-    setFilterProcessing('all');
-  }, [filterCategory, filterSub]);
 
   const handleCategoryChange = (newCat: string) => {
     if (newCat === copy.all) {
@@ -117,15 +111,13 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
 
   const handleClearFilters = () => {
     navigate(appRoutes.products);
-    setFilterProcessing('all');
     setShowFilters(false);
   };
 
   const filteredProducts = products.filter(p => {
     const catMatch = !activeCategory || p.category === activeCategory;
     const subMatch = filterSub === 'all' || p.subCategory.toLowerCase() === filterSub.toLowerCase();
-    const procMatch = filterProcessing === 'all' || (p.filters.processing && p.filters.processing.toLowerCase() === filterProcessing.toLowerCase());
-    return catMatch && subMatch && procMatch;
+    return catMatch && subMatch;
   }).sort((a, b) => {
     const aPinned = a.pinOrder != null;
     const bPinned = b.pinOrder != null;
@@ -137,11 +129,11 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterCategory, filterSub, filterProcessing]);
+  }, [filterCategory, filterSub]);
 
   const categories = useMemo(
-    () => [copy.all, ...getDynamicCategories().filter((cat) => products.some((product) => product.category === cat))],
-    [copy.all, products]
+    () => [copy.all, ...getDynamicCategories()],
+    [copy.all]
   );
 
   const subs = useMemo(
@@ -163,35 +155,6 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
   );
 
   const activeSubCategories = activeCategory ? subs[activeCategory] || [] : [];
-  const activeCategoryKey = activeCategory ? normalizeProductCategorySlug(activeCategory) : 'all';
-
-  useEffect(() => {
-    if (!activeCategory && filterSub === 'all' && filterProcessing === 'all') {
-      return;
-    }
-
-    void trackEvent(
-      {
-        entityType: 'category',
-        action: 'view',
-        category: activeCategory || undefined,
-        subCategory: filterSub !== 'all' ? subCategoryParam || undefined : undefined,
-        locale,
-        metadata: {
-          processing: filterProcessing !== 'all' ? filterProcessing : undefined
-        }
-      },
-      {
-        dedupeKey: `product-category:${activeCategoryKey}:${filterSub}:${filterProcessing}`,
-        dedupeTtlMs: 1600
-      }
-    );
-  }, [activeCategory, activeCategoryKey, filterProcessing, filterSub, locale, subCategoryParam, trackEvent]);
-
-  const processingMethods = {
-    'rice': ['Standard', 'Soft', 'Premium', 'Luxury'],
-    'coffee': ['Wet Polished', 'Semi Washed', 'Cleaned', 'Fully Washed', 'Dry Processed']
-  };
 
   // Capitalize category for display in the heading
   const displayCategory = (() => {
@@ -215,16 +178,39 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
     return <AppShellLoader compact label={copy.loader} />;
   }
 
+  const headerImage = activeCategory ? CATEGORY_HEADER_IMAGES[activeCategory] : undefined;
+
   return (
     <div className="bg-white min-h-screen">
-      <div className="bg-gray-50 py-20 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeading 
-            title={filterCategory === 'all' ? copy.titleAll : `${displayCategory} ${copy.titlePortfolioSuffix}`}
-            subtitle={copy.subtitle}
-            centered={false}
-          />
-        </div>
+      <div className={`relative overflow-hidden py-20 ${headerImage ? 'bg-foodera-forest' : 'bg-gray-50 border-b border-gray-100'}`}>
+        {headerImage ? (
+          <>
+            <div className="absolute inset-0 z-0" aria-hidden="true">
+              <img
+                src={headerImage}
+                alt=""
+                className="w-full h-full object-cover opacity-80"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-foodera-forest via-foodera-forest/40 to-transparent"></div>
+            </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+              <div className="flex justify-center mb-6">
+                <div className="h-1.5 w-24 bg-foodera-lime rounded-full shadow-[0_0_15px_rgba(140,198,63,0.5)]"></div>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black text-white leading-tight drop-shadow-2xl tracking-tight">
+                {filterCategory === 'all' ? copy.titleAll : `${displayCategory} ${copy.titlePortfolioSuffix}`}
+              </h1>
+            </div>
+          </>
+        ) : (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <SectionHeading
+              title={filterCategory === 'all' ? copy.titleAll : `${displayCategory} ${copy.titlePortfolioSuffix}`}
+              centered={false}
+            />
+          </div>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -293,32 +279,6 @@ const Products: React.FC<ProductsProps> = ({ categorySlug }) => {
                    </div>
                 )}
 
-                {(activeCategoryKey === 'rice' || activeCategoryKey === 'coffee') && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 border-b border-gray-100 pb-4 flex items-center gap-2">
-                      <Settings2 size={12} className="text-foodera-lime" /> {copy.processingMethod}
-                    </h4>
-                    <div className="flex flex-col gap-1">
-                       <button 
-                          onClick={() => setFilterProcessing('all')}
-                          className={`text-xs text-left px-3 py-2 rounded-lg transition-all ${filterProcessing === 'all' ? 'text-foodera-forest font-black bg-foodera-forest/5' : 'text-gray-400 hover:text-gray-900'}`}
-                        >
-                          {copy.allProcesses}
-                        </button>
-                        {processingMethods[activeCategoryKey as keyof typeof processingMethods].map(method => (
-                          <button
-                            key={method}
-                            onClick={() => setFilterProcessing(method.toLowerCase())}
-                            className={`block w-full text-xs text-left px-3 py-2 rounded-lg transition-all ${
-                              filterProcessing === method.toLowerCase() ? 'bg-foodera-forest/5 text-foodera-forest font-black' : 'text-gray-400 hover:text-gray-700'
-                            }`}
-                          >
-                            {getLocalizedFilterValue(method, locale)}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </aside>

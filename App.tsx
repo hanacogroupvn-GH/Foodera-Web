@@ -4,16 +4,11 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useParams, Navigat
 import { DataProvider } from './context/DataContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider, useLocale } from './context/LocaleContext';
-import { PersonalizationProvider } from './context/PersonalizationContext';
-import BackendStatusBanner from './components/BackendStatusBanner';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import FloatingContact from './components/FloatingContact';
-import LazyAIChatBot from './components/LazyAIChatBot';
 import AppShellLoader from './components/AppShellLoader';
 import AppErrorBoundary from './components/AppErrorBoundary';
-import { Toaster } from 'react-hot-toast';
-import PersonalizationRouteTracker from './components/PersonalizationRouteTracker';
 import { appRoutes } from './lib/routes';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -24,22 +19,24 @@ const AboutUs = lazy(() => import('./pages/AboutUs'));
 const Contact = lazy(() => import('./pages/Contact'));
 const News = lazy(() => import('./pages/News'));
 const NewsDetail = lazy(() => import('./pages/NewsDetail'));
+const Gallery = lazy(() => import('./pages/Gallery'));
 const CommercialTool = lazy(() => import('./pages/CommercialTool'));
-const Operations = lazy(() => import('./pages/Operations'));
-const Careers = lazy(() => import('./pages/Careers'));
 const Login = lazy(() => import('./pages/Login'));
-const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
-const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
-const AdminNews = lazy(() => import('./pages/Admin/News'));
 const AdminInteractiveMapContent = lazy(() => import('./pages/Admin/InteractiveMapContent'));
-const AdminCareers = lazy(() => import('./pages/Admin/Careers'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const ScrollToTop = () => {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
     window.scrollTo(0, 0);
-  }, [pathname]);
+  }, [pathname, hash]);
   return null;
 };
 
@@ -71,14 +68,12 @@ const PublicLayout: React.FC = () => {
   return (
     <>
         <Navbar />
-        <BackendStatusBanner />
         <main className="flex-grow">
         <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载页面...' : 'Loading page...'} compact />}>
           <Outlet />
         </Suspense>
       </main>
       <FloatingContact />
-      <LazyAIChatBot />
       <Footer />
     </>
   );
@@ -123,9 +118,7 @@ const AppRoutes: React.FC = () => {
       <AuthProvider>
         <DataProvider>
           <Router>
-            <PersonalizationProvider>
             <ScrollToTop />
-            <PersonalizationRouteTracker />
             <div className="min-h-screen flex flex-col font-sans antialiased text-gray-900 bg-white">
               <Routes>
                 <Route
@@ -138,33 +131,7 @@ const AppRoutes: React.FC = () => {
                 />
                 <Route
                   path={appRoutes.admin}
-                  element={
-                    <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载后台总览...' : 'Loading dashboard...'} compact />}>
-                        <AdminDashboard />
-                      </Suspense>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path={appRoutes.adminInventory}
-                  element={
-                    <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载产品库...' : 'Loading inventory...'} compact />}>
-                        <AdminInventory />
-                      </Suspense>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path={appRoutes.adminNews}
-                  element={
-                    <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载资讯中心...' : 'Loading insights...'} compact />}>
-                        <AdminNews />
-                      </Suspense>
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to={appRoutes.adminMapContent} replace />}
                 />
                 <Route
                   path={appRoutes.adminMapContent}
@@ -172,16 +139,6 @@ const AppRoutes: React.FC = () => {
                     <ProtectedRoute>
                       <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载地图内容...' : 'Loading map content...'} compact />}>
                         <AdminInteractiveMapContent />
-                      </Suspense>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path={appRoutes.adminCareers}
-                  element={
-                    <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载招聘管理...' : 'Loading careers...'} compact />}>
-                        <AdminCareers />
                       </Suspense>
                     </ProtectedRoute>
                   }
@@ -204,14 +161,12 @@ const AppRoutes: React.FC = () => {
                   <Route path={appRoutes.news} element={<News />} />
                   <Route path={`${appRoutes.news}/:slug`} element={<NewsDetail />} />
                   <Route path={`${appRoutes.news}/:legacyId/:legacySlug`} element={<NewsDetail />} />
-                  <Route path={appRoutes.operations} element={<Operations />} />
-                  <Route path={appRoutes.careers} element={<Careers />} />
+                  <Route path={appRoutes.gallery} element={<Gallery />} />
                   <Route path={appRoutes.contact} element={<Contact />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
             </div>
-            </PersonalizationProvider>
           </Router>
         </DataProvider>
       </AuthProvider>
@@ -223,17 +178,6 @@ const App: React.FC = () => {
   return (
     <LocaleProvider>
       <AppRoutes />
-      <Toaster 
-        position="bottom-right"
-        toastOptions={{ 
-          duration: 4000,
-          style: {
-            fontSize: '13px',
-            fontWeight: 600,
-            borderRadius: '12px',
-          }
-        }} 
-      />
     </LocaleProvider>
   );
 };

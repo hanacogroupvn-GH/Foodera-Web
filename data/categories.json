@@ -1,0 +1,51 @@
+[
+  {
+    "id": "rice",
+    "name": "Rice",
+    "slug": "rice",
+    "sortOrder": 0,
+    "isActive": true
+  },
+  {
+    "id": "coffee",
+    "name": "Coffee",
+    "slug": "coffee",
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "id": "cashew",
+    "name": "Cashew",
+    "slug": "cashew",
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "id": "pepper",
+    "name": "Pepper",
+    "slug": "pepper",
+    "sortOrder": 3,
+    "isActive": true
+  },
+  {
+    "id": "coconut",
+    "name": "Coconut",
+    "slug": "coconut",
+    "sortOrder": 4,
+    "isActive": true
+  },
+  {
+    "id": "durian",
+    "name": "Durian",
+    "slug": "durian",
+    "sortOrder": 5,
+    "isActive": true
+  },
+  {
+    "id": "spices",
+    "name": "Spices",
+    "slug": "spices",
+    "sortOrder": 6,
+    "isActive": true
+  }
+]

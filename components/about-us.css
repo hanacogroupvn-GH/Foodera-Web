@@ -195,7 +195,8 @@
 
 .who-image img {
   width: 100%;
-  height: 500px;
+  aspect-ratio: 1600 / 1220;
+  height: auto;
   object-fit: cover;
   border-radius: 12px 120px 120px 12px;
   box-shadow: 0 24px 64px rgba(27, 107, 58, 0.12);
@@ -698,110 +699,150 @@
 }
 
 /* ════════════════════════════════════════════
-   Section 7 — International Standards
+   Section 7 — Certifications
    ════════════════════════════════════════════ */
-.standards-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1.5rem;
+.cert-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 2.75rem;
 }
 
-.standard-card {
+.cert-group__title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 1.25rem;
+}
+
+.cert-group__title::before {
+  content: "";
+  width: 6px;
+  height: 22px;
+  border-radius: 3px;
+  background: #1B6B3A;
+  flex-shrink: 0;
+}
+
+.cert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1.25rem;
+}
+
+.cert-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 1.75rem 1rem;
+  padding: 1.5rem 1rem;
   text-align: center;
   transition: all 0.35s ease;
 }
 
-.standard-card:hover {
+.cert-card:hover {
   border-color: rgba(27, 107, 58, 0.25);
   box-shadow: 0 12px 36px rgba(27, 107, 58, 0.08);
   transform: translateY(-4px);
 }
 
-.standard-card__img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+.cert-card__img {
+  width: 72px;
+  height: 72px;
   object-fit: contain;
-  margin: 0 auto 1rem;
+  margin: 0 auto 0.85rem;
   background: #f9fafb;
+  border-radius: 50%;
   padding: 8px;
 }
 
-.standard-card__title {
-  font-size: 0.85rem;
-  font-weight: 800;
+.cert-card__name {
+  font-size: 0.78rem;
+  font-weight: 700;
   color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-
-.standard-card__desc {
-  font-size: 0.72rem;
-  color: #6b7280;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 /* ════════════════════════════════════════════
-   Section 8 — Product Portfolio
+   Section 9 — Our Team
    ════════════════════════════════════════════ */
-.portfolio-grid {
+.team-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
 }
 
-.portfolio-card {
+.team-grid--leadership {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 720px;
+  margin: 0 auto 3rem;
+}
+
+.team-grid--sales {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.team-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 24px;
-  overflow: hidden;
+  padding: 1.75rem 1.5rem 2rem;
   text-align: center;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.portfolio-card:hover {
+.team-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 20px 48px rgba(27, 107, 58, 0.1);
   border-color: rgba(27, 107, 58, 0.2);
 }
 
-.portfolio-card__img-wrap {
-  padding: 1.5rem 1.5rem 0.75rem;
-}
-
-.portfolio-card__img-wrap img {
+.team-card__photo {
   width: 170px;
   height: 170px;
   border-radius: 50%;
+  margin: 0 auto 1.25rem;
+  background: #f0f5ed;
+  color: #1B6B3A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px dashed rgba(27, 107, 58, 0.25);
+  transition: all 0.3s ease;
+}
+
+.team-card__photo img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  margin: 0 auto;
-  border: 3px solid rgba(27, 107, 58, 0.12);
-  transition: transform 0.35s ease;
 }
 
-.portfolio-card:hover .portfolio-card__img-wrap img {
-  transform: scale(1.06);
+.team-card__photo--sm {
+  width: 130px;
+  height: 130px;
 }
 
-.portfolio-card__body {
-  padding: 0 1.5rem 2rem;
+.team-card:hover .team-card__photo {
+  border-color: rgba(27, 107, 58, 0.5);
+  background: #e7f0e2;
 }
 
-.portfolio-card__name {
-  font-size: 1.2rem;
+.team-card__name {
+  font-size: 1.05rem;
   font-weight: 900;
-  text-transform: uppercase;
   color: #1f2937;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 }
 
-.portfolio-card__desc {
-  font-size: 0.82rem;
-  color: #6b7280;
-  line-height: 1.6;
+.team-card__role {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1B6B3A;
 }
 
 /* ════════════════════════════════════════════
@@ -822,7 +863,10 @@
     gap: 2.5rem;
   }
 
-  .who-image img,
+  .who-image img {
+    border-radius: 20px;
+  }
+
   .story-image img {
     height: 340px;
     border-radius: 20px;
@@ -869,12 +913,14 @@
     bottom: -3px;
   }
 
-  .standards-grid {
+  .cert-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .portfolio-grid {
+  .team-grid--leadership,
+  .team-grid--sales {
     grid-template-columns: repeat(2, 1fr);
+    max-width: 480px;
   }
 }
 
@@ -907,17 +953,23 @@
     grid-template-columns: 1fr;
   }
 
-  .standards-grid {
+  .cert-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .portfolio-grid {
-    grid-template-columns: 1fr;
-    max-width: 320px;
-    margin: 0 auto;
-  }
 
   .mv-values {
     grid-template-columns: 1fr;
+  }
+
+  .team-grid--leadership,
+  .team-grid--sales {
+    grid-template-columns: 1fr;
+    max-width: 260px;
+    margin: 0 auto;
+  }
+
+  .team-grid--leadership {
+    margin-bottom: 2.5rem;
   }
 }

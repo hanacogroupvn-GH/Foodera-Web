@@ -12,9 +12,10 @@ interface SearchOverlayProps {
   onClose: () => void;
   products: Product[];
   news: NewsItem[];
+  initialQuery?: string;
 }
 
-const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchOpen, onClose, products, news }) => {
+const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchOpen, onClose, products, news, initialQuery }) => {
   const { locale } = useLocale();
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -92,8 +93,9 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ searchOpen, onClose, prod
   );
 
   useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
+    if (searchOpen) {
+      setSearchQuery(initialQuery ?? '');
+      searchInputRef.current?.focus();
       document.body.style.overflow = 'hidden';
     }
 

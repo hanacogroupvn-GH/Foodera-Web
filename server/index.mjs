@@ -11,36 +11,17 @@ import { GoogleGenAI } from '@google/genai';
 import {
   createDatabaseConnection,
   deleteProvinceMapProfileById,
-  deleteNewsById,
-  deleteProductById,
-  deleteCategoryById,
-  deleteCareerById,
   ensureDatabaseSchema,
   findAdminByEmail,
-  getContentSnapshot,
   hashPassword,
-  importContentSnapshot,
-  insertPersonalizationEvent,
   insertContactInquiry,
   insertQuotationRequest,
   listProvinceMapProfiles,
-  listPublicNews,
-  listProducts,
-  listCategories,
-  listActiveCareers,
-  updateProductRecord,
   upsertAdminUser,
   upsertProvinceMapProfile,
-  upsertNews,
-  upsertCategory,
-  upsertCareer,
   verifyPassword
 } from './db.mjs';
 import { loadProjectEnv } from './loadEnv.mjs';
-import {
-  createNormalizedPersonalizationEvent,
-  getRecommendationsForVisitor
-} from './personalization.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,21 +29,36 @@ const projectRoot = path.resolve(__dirname, '..');
 const distRoot = path.join(projectRoot, 'dist');
 const publicRoot = path.join(projectRoot, 'public');
 const uploadsRoot = path.join(publicRoot, 'uploads', 'cms');
-const localSeedContentPath = path.join(projectRoot, 'generated', 'local-seed-content.json');
+const staticProductsPath = path.join(projectRoot, 'data', 'products.json');
+const staticNewsPath = path.join(projectRoot, 'data', 'news.json');
+const staticCategoriesPath = path.join(projectRoot, 'data', 'categories.json');
 
 await loadProjectEnv(projectRoot);
 
 const PORT = Number(process.env.PORT || 8787);
 const SESSION_COOKIE = 'foodmax_session';
-const VISITOR_COOKIE = 'foodmax_visitor';
-const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_RFQ_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024;
 const OLLAMA_DEFAULT_BASE_URL = 'http://localhost:11434';
 const OLLAMA_DEFAULT_MODEL = 'qwen2.5:7b';
 const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAP_AI_SCOPE_VALUES = new Set(['Rice', 'Coffee', 'Cashew', 'Agriculture']);
-const PERSONALIZATION_ENTITY_TYPES = new Set(['page', 'category', 'product', 'news', 'quote_request']);
-const PERSONALIZATION_ACTIONS = new Set(['view', 'click', 'submit']);
+
+// Products/news/categories are static JSON files edited directly in the
+// repo (no CMS/DB for content). Cached in memory since the process only
+// needs to read these once at startup — restart the server after editing.
+let staticContentCache = null;
+const loadStaticContent = async () => {
+  if (!staticContentCache) {
+    const [products, news, categories] = await Promise.all([
+      fs.readFile(staticProductsPath, 'utf8').then(JSON.parse),
+      fs.readFile(staticNewsPath, 'utf8').then(JSON.parse),
+      fs.readFile(staticCategoriesPath, 'utf8').then(JSON.parse)
+    ]);
+    staticContentCache = { products, news, categories };
+  }
+
+  return staticContentCache;
+};
 
 const FILE_EXTENSION_BY_MIME = {
   'image/avif': 'avif',
@@ -94,20 +90,6 @@ const RFQ_ALLOWED_CONTENT_TYPES = new Set([
   'image/png',
   'image/webp'
 ]);
-
-const JD_ALLOWED_CONTENT_TYPES = new Set([
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'text/csv',
-  'text/plain',
-  'image/jpeg',
-  'image/png',
-  'image/webp'
-]);
-const MAX_JD_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 
 const readCookies = (cookieHeader = '') =>
   Object.fromEntries(
@@ -190,95 +172,6 @@ const clearSessionCookie = (response) => {
   });
 };
 
-const hashIdentifier = (value) =>
-  crypto.createHash('sha256').update(String(value ?? '')).digest('hex');
-
-const normalizeRequestIp = (request) => {
-  const forwardedFor = request.headers['x-forwarded-for'];
-  const forwardedValue = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
-  const rawIp =
-    String(forwardedValue ?? '')
-      .split(',')[0]
-      .trim() ||
-    String(request.ip ?? '').trim() ||
-    String(request.socket?.remoteAddress ?? '').trim() ||
-    'unknown';
-
-  return rawIp.replace(/^::ffff:/, '').trim() || 'unknown';
-};
-
-const setVisitorCookie = (response, visitorId) => {
-  const expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
-  response.cookie(VISITOR_COOKIE, String(visitorId), {
-    httpOnly: false,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    expires: expiresAt
-  });
-};
-
-const getVisitorContext = (request, response) => {
-  const cookies = readCookies(request.headers.cookie);
-  const ipHash = hashIdentifier(normalizeRequestIp(request));
-  const userAgentHash = hashIdentifier(request.headers['user-agent'] || '');
-  let visitorId = String(cookies[VISITOR_COOKIE] ?? '').trim();
-
-  if (!visitorId) {
-    visitorId = `v_${hashIdentifier(`${ipHash}:${userAgentHash}`).slice(0, 24)}`;
-    setVisitorCookie(response, visitorId);
-  }
-
-  return {
-    visitorId,
-    ipHash,
-    userAgentHash
-  };
-};
-
-const getActiveSnapshot = (snapshot) => ({
-  products: Array.isArray(snapshot?.products) ? snapshot.products.filter((item) => item?.isActive !== false) : [],
-  news: Array.isArray(snapshot?.news) ? snapshot.news.filter((item) => item?.isActive !== false) : []
-});
-
-const getPublicContentSnapshot = async (client) => {
-  const [products, news, categories, careers] = await Promise.all([listProducts(client), listPublicNews(client), listCategories(client), listActiveCareers(client)]);
-  return { products, news, categories, careers };
-};
-
-const seedLocalDatabaseIfEmpty = async (client) => {
-  const snapshot = await getContentSnapshot(client);
-  const productCount = Array.isArray(snapshot?.products) ? snapshot.products.length : 0;
-  const newsCount = Array.isArray(snapshot?.news) ? snapshot.news.length : 0;
-
-  if (productCount > 0 || newsCount > 0) {
-    return false;
-  }
-
-  try {
-    const rawSeed = await fs.readFile(localSeedContentPath, 'utf8');
-    const seedSnapshot = JSON.parse(rawSeed);
-    await importContentSnapshot(client, seedSnapshot);
-    return true;
-  } catch (error) {
-    throw new Error(
-      `Local database is empty and seed import failed: ${error instanceof Error ? error.message : 'unknown error'}`
-    );
-  }
-};
-
-const slugifyPathSegment = (value, fallback = 'item') =>
-  String(value ?? '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || fallback;
-
-const sanitizeUploadSegments = (segments = []) => {
-  const safeSegments = Array.isArray(segments) ? segments.filter(Boolean) : [];
-  return (safeSegments.length > 0 ? safeSegments : ['uploads']).map((segment, index) =>
-    slugifyPathSegment(segment, index === 0 ? 'uploads' : 'item')
-  );
-};
 
 const getFileExtension = (fileName, contentType) => {
   if (contentType && FILE_EXTENSION_BY_MIME[contentType]) {
@@ -756,23 +649,6 @@ const getLoginCredentials = (request) => {
   };
 };
 
-const getPersonalizedContentForRequest = async (request, response, options = {}) => {
-  const visitorContext = request.visitorContext || getVisitorContext(request, response);
-  const snapshot = await getContentSnapshot(request.app.locals.db);
-  const activeSnapshot = getActiveSnapshot(snapshot);
-
-  return getRecommendationsForVisitor({
-    client: request.app.locals.db,
-    visitorId: visitorContext.visitorId,
-    ipHash: visitorContext.ipHash,
-    userAgentHash: visitorContext.userAgentHash,
-    products: activeSnapshot.products,
-    news: activeSnapshot.news,
-    productLimit: Number(options?.productLimit) || 4,
-    newsLimit: Number(options?.newsLimit) || 3
-  });
-};
-
 const requireAdmin = async (request, response, next) => {
   const session = getRequestSession(request);
   if (!session?.email) {
@@ -816,23 +692,14 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
     app.use(normalizeServerlessRequestBody);
 
     const globalRateLimiter = rateLimit({
-      windowMs: 15 * 60 * 1000, 
-      max: 200, 
-      standardHeaders: true, 
+      windowMs: 15 * 60 * 1000,
+      max: 200,
+      standardHeaders: true,
       legacyHeaders: false,
       message: { error: 'Too many requests, please try again later.' }
     });
-    
-    const eventsRateLimiter = rateLimit({
-      windowMs: 1 * 60 * 1000, 
-      max: 60, 
-      standardHeaders: true, 
-      legacyHeaders: false,
-      message: { error: 'Too many events submitted, please slow down.' }
-    });
-    
+
     app.use('/api/', globalRateLimiter);
-    app.use('/api/personalization/events', eventsRateLimiter);
 
     app.use((request, _response, next) => {
       const functionPrefix = '/.netlify/functions/api';
@@ -846,10 +713,6 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
       next();
     });
-    app.use((request, response, next) => {
-      request.visitorContext = getVisitorContext(request, response);
-      next();
-    });
 
     let db = null;
     let databaseConfig = {
@@ -860,16 +723,13 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
     let startupError = null;
 
     try {
-      const connection = createDatabaseConnection(process.env, {
+      const connection = await createDatabaseConnection(process.env, {
         projectRoot,
         allowLocalFallback: !Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME)
       });
       db = connection.client;
       databaseConfig = connection.config;
       await ensureDatabaseSchema(db);
-      if (databaseConfig.mode === 'local') {
-        await seedLocalDatabaseIfEmpty(db);
-      }
       await ensureBootstrapAdmin(db);
     } catch (error) {
       startupError = error instanceof Error ? error : new Error('Failed to initialize the database connection.');
@@ -910,79 +770,6 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
 
       next();
-    });
-
-    app.get('/api/content', async (request, response) => {
-      try {
-        // Authenticated admins see ALL content (including scheduled articles);
-        // public visitors only see published content.
-        const session = getRequestSession(request);
-        const isAdmin = session?.email
-          ? Boolean(await findAdminByEmail(request.app.locals.db, session.email))
-          : false;
-
-        const snapshot = isAdmin
-          ? await getContentSnapshot(request.app.locals.db)
-          : await getPublicContentSnapshot(request.app.locals.db);
-
-        response.json({
-          backend: request.app.locals.backendMode,
-          ...snapshot
-        });
-      } catch (error) {
-        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load content.' });
-      }
-    });
-
-    app.get('/api/personalization/recommendations', async (request, response) => {
-      try {
-        const productLimit = Math.max(1, Math.min(8, Number(request.query?.productLimit) || 4));
-        const newsLimit = Math.max(1, Math.min(6, Number(request.query?.newsLimit) || 3));
-        const recommendations = await getPersonalizedContentForRequest(request, response, {
-          productLimit,
-          newsLimit
-        });
-
-        response.json(recommendations);
-      } catch (error) {
-        response.status(500).json({
-          error: error instanceof Error ? error.message : 'Failed to load personalized recommendations.'
-        });
-      }
-    });
-
-    app.post('/api/personalization/events', async (request, response) => {
-      try {
-        const event = createNormalizedPersonalizationEvent(request.body ?? {});
-
-        if (!PERSONALIZATION_ENTITY_TYPES.has(event.entityType)) {
-          response.status(400).json({ error: 'Unsupported personalization entity type.' });
-          return;
-        }
-
-        if (!PERSONALIZATION_ACTIONS.has(event.action)) {
-          response.status(400).json({ error: 'Unsupported personalization action.' });
-          return;
-        }
-
-        const visitorContext = request.visitorContext || getVisitorContext(request, response);
-        await insertPersonalizationEvent(request.app.locals.db, {
-          ...event,
-          visitorId: visitorContext.visitorId,
-          ipHash: visitorContext.ipHash,
-          userAgentHash: visitorContext.userAgentHash
-        });
-
-        const recommendations = await getPersonalizedContentForRequest(request, response);
-        response.status(201).json({
-          ok: true,
-          ...recommendations
-        });
-      } catch (error) {
-        response.status(400).json({
-          error: error instanceof Error ? error.message : 'Failed to record personalization event.'
-        });
-      }
     });
 
     app.get('/api/map-profiles', async (request, response) => {
@@ -1126,167 +913,6 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
     });
 
-    app.post('/api/admin/import', requireAdmin, async (request, response) => {
-      try {
-        await importContentSnapshot(request.app.locals.db, request.body ?? {});
-        const snapshot = await getContentSnapshot(request.app.locals.db);
-        response.json({
-          ok: true,
-          ...snapshot
-        });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Import failed.' });
-      }
-    });
-
-    app.post('/api/admin/products/upsert', requireAdmin, async (request, response) => {
-      try {
-        const product = request.body?.product;
-        if (!product || typeof product !== 'object') {
-          response.status(400).json({ error: 'Product data is required.' });
-          return;
-        }
-
-        const oldId = request.body?.oldId;
-        const savedProduct = await updateProductRecord(request.app.locals.db, product, oldId);
-        response.json({ ok: true, product: savedProduct });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save product.' });
-      }
-    });
-
-    app.delete('/api/admin/products/:id', requireAdmin, async (request, response) => {
-      try {
-        await deleteProductById(request.app.locals.db, request.params.id);
-        response.json({ ok: true });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete product.' });
-      }
-    });
-
-    // ── Product Categories ──────────────────────────────────
-
-    app.get('/api/admin/categories', requireAdmin, async (request, response) => {
-      try {
-        const categories = await listCategories(request.app.locals.db);
-        response.json({ categories });
-      } catch (error) {
-        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load categories.' });
-      }
-    });
-
-    app.post('/api/admin/categories/upsert', requireAdmin, async (request, response) => {
-      try {
-        const category = request.body?.category;
-        if (!category || typeof category !== 'object') {
-          response.status(400).json({ error: 'Category data is required.' });
-          return;
-        }
-
-        const saved = await upsertCategory(request.app.locals.db, category);
-        response.json({ ok: true, category: saved });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save category.' });
-      }
-    });
-
-    app.delete('/api/admin/categories/:id', requireAdmin, async (request, response) => {
-      try {
-        await deleteCategoryById(request.app.locals.db, request.params.id);
-        response.json({ ok: true });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete category.' });
-      }
-    });
-
-    app.post('/api/admin/news/upsert', requireAdmin, async (request, response) => {
-      try {
-        const item = request.body?.item;
-        if (!item || typeof item !== 'object') {
-          response.status(400).json({ error: 'News article data is required.' });
-          return;
-        }
-
-        const savedNews = await upsertNews(request.app.locals.db, item);
-        response.json({ ok: true, item: savedNews });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save article.' });
-      }
-    });
-
-    app.delete('/api/admin/news/:id', requireAdmin, async (request, response) => {
-      try {
-        await deleteNewsById(request.app.locals.db, request.params.id);
-        response.json({ ok: true });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete article.' });
-      }
-    });
-
-    app.post('/api/admin/careers/upsert', requireAdmin, async (request, response) => {
-      try {
-        const item = request.body?.item;
-        if (!item || typeof item !== 'object') {
-          response.status(400).json({ error: 'Career position data is required.' });
-          return;
-        }
-
-        const savedCareer = await upsertCareer(request.app.locals.db, item);
-        response.json({ ok: true, item: savedCareer });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save career position.' });
-      }
-    });
-
-    app.delete('/api/admin/careers/:id', requireAdmin, async (request, response) => {
-      try {
-        await deleteCareerById(request.app.locals.db, request.params.id);
-        response.json({ ok: true });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete career position.' });
-      }
-    });
-
-    app.post('/api/admin/careers/upload-jd', requireAdmin, async (request, response) => {
-      try {
-        if (!enableLocalUploads) {
-          response.status(501).json({
-            error: 'Local JD file uploads are disabled in the serverless runtime. Use object storage for production.'
-          });
-          return;
-        }
-
-        const { dataUrl, contentType, fileName } = request.body ?? {};
-        const { buffer, mimeType } = parseDataUrl(dataUrl);
-        const resolvedContentType = String(contentType || mimeType || '').trim().toLowerCase();
-
-        if (!JD_ALLOWED_CONTENT_TYPES.has(resolvedContentType)) {
-          throw new Error('Loại tệp không được hỗ trợ. Vui lòng chọn PDF, DOC, DOCX, XLS, XLSX, CSV, TXT hoặc ảnh.');
-        }
-
-        if (buffer.length > MAX_JD_FILE_SIZE_BYTES) {
-          throw new Error('Tệp JD phải nhỏ hơn 15MB.');
-        }
-
-        const safeSegments = sanitizeUploadSegments(['careers', 'jd']);
-        const extension = getFileExtension(fileName, resolvedContentType);
-        const absoluteDir = path.join(uploadsRoot, ...safeSegments);
-
-        await fs.mkdir(absoluteDir, { recursive: true });
-
-        const savedFileName = `${crypto.randomUUID()}.${extension}`;
-        await fs.writeFile(path.join(absoluteDir, savedFileName), buffer);
-
-        response.status(201).json({
-          ok: true,
-          publicUrl: `/uploads/cms/${safeSegments.join('/')}/${savedFileName}`,
-          fileName: String(fileName ?? savedFileName).trim() || savedFileName
-        });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'JD file upload failed.' });
-      }
-    });
-
     app.post('/api/admin/map-profiles/upsert', requireAdmin, async (request, response) => {
       try {
         const profile = request.body?.profile;
@@ -1324,8 +950,8 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
           return;
         }
 
-        const snapshot = await getContentSnapshot(request.app.locals.db);
-        const allProducts = Array.isArray(snapshot?.products) ? snapshot.products.filter((item) => item?.isActive !== false) : [];
+        const { products: staticProducts } = await loadStaticContent();
+        const allProducts = staticProducts.filter((item) => item?.isActive !== false);
         const existingProfiles = await listProvinceMapProfiles(request.app.locals.db);
         const currentProfile =
           existingProfiles.find((item) => String(item?.provinceId ?? '') === provinceId) ?? null;
@@ -1377,83 +1003,10 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
     });
 
-    app.post('/api/admin/uploads/images', requireAdmin, async (request, response) => {
-      try {
-        if (!enableLocalUploads) {
-          response.status(501).json({
-            error: 'Local image uploads are disabled in the serverless runtime. Use external object storage instead.'
-          });
-          return;
-        }
-
-        const { dataUrl, contentType, fileName, folderSegments } = request.body ?? {};
-        const { buffer, mimeType } = parseDataUrl(dataUrl);
-        const resolvedContentType = String(contentType || mimeType || '').trim();
-
-        if (!resolvedContentType.startsWith('image/')) {
-          throw new Error('Please choose a valid image file.');
-        }
-
-        if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
-          throw new Error('Image size must be 10MB or smaller.');
-        }
-
-        const safeSegments = sanitizeUploadSegments(folderSegments);
-        const extension = getFileExtension(fileName, resolvedContentType);
-        const fileId = crypto.randomUUID();
-        const relativeDir = path.join(...safeSegments);
-        const absoluteDir = path.join(uploadsRoot, relativeDir);
-
-        await fs.mkdir(absoluteDir, { recursive: true });
-
-        const savedFileName = `${fileId}.${extension}`;
-        await fs.writeFile(path.join(absoluteDir, savedFileName), buffer);
-
-        response.status(201).json({
-          ok: true,
-          publicUrl: `/uploads/cms/${safeSegments.join('/')}/${savedFileName}`
-        });
-      } catch (error) {
-        response.status(400).json({ error: error instanceof Error ? error.message : 'Image upload failed.' });
-      }
-    });
-
-    app.post('/api/admin/translate', requireAdmin, async (request, response) => {
-      try {
-        const prompt = String(request.body?.prompt ?? '').trim();
-        if (!prompt) {
-          response.status(400).json({ error: 'Prompt is required.' });
-          return;
-        }
-
-        const translation = await callOllama(prompt);
-        response.json({ translation });
-      } catch (error) {
-        response.status(502).json({ error: error instanceof Error ? error.message : 'Translation failed.' });
-      }
-    });
-
     app.get('/sitemap.xml', async (request, response) => {
       try {
-        const sitemapDb = request.app.locals.db;
-        if (!sitemapDb) {
-          response.status(503).end();
-          return;
-        }
+        const { products, news: allNews, categories } = await loadStaticContent();
 
-        // Only include published products (status='published' or legacy is_active=1 with no status)
-        const { rows: products } = await sitemapDb.execute(
-          `SELECT id, slug, category, status, is_active, updated_at FROM products ORDER BY id ASC`
-        );
-        // Only include active, non-scheduled news
-        const { rows: news } = await sitemapDb.execute(
-          `SELECT id, slug, title, date, is_active, scheduled_at FROM news WHERE is_active = 1 ORDER BY date DESC, _rowid_ DESC`
-        );
-        // Active product categories for category listing pages
-        const { rows: categories } = await sitemapDb.execute(
-          `SELECT id, slug, name FROM product_categories WHERE is_active = 1 ORDER BY sort_order ASC, name ASC`
-        );
-        
         const stripDiacritics = (val) => val.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/\u0110/g, 'd');
         const normalizeNewsSlug = (val) => stripDiacritics(val).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
         const getNewsSlug = (item) => {
@@ -1472,7 +1025,6 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
           { url: '/product', priority: '0.9', changefreq: 'weekly' },
           { url: '/about', priority: '0.7', changefreq: 'monthly' },
           { url: '/news', priority: '0.7', changefreq: 'weekly' },
-          { url: '/operations', priority: '0.6', changefreq: 'monthly' },
           { url: '/contact', priority: '0.6', changefreq: 'monthly' },
           { url: '/interactive-map', priority: '0.5', changefreq: 'monthly' },
           { url: '/commercial-tools', priority: '0.5', changefreq: 'monthly' }
@@ -1487,13 +1039,14 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
         // Product category listing pages (e.g., /product/rice, /product/coffee)
         for (const cat of categories) {
+          if (cat.isActive === false) continue;
           const catSlug = encodeURIComponent(cat.slug || cat.id);
           xml += `  <url>\n    <loc>${baseUrl}/product/${catSlug}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         }
 
         // Products: only published, use slug for URL
         for (const product of products) {
-          const productStatus = product.status || (Number(product.is_active) === 0 ? 'archived' : 'published');
+          const productStatus = product.status || (product.isActive === false ? 'archived' : 'published');
           if (productStatus !== 'published') continue;
 
           const urlPath = product.slug || product.id;
@@ -1502,11 +1055,13 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
 
         // News: only active and not scheduled in the future
         const now = new Date();
-        for (const item of news) {
+        for (const item of allNews) {
+          if (item.isActive === false) continue;
+
           // Skip future-scheduled articles
-          if (item.scheduled_at) {
+          if (item.scheduledAt) {
             try {
-              const scheduledDate = new Date(item.scheduled_at);
+              const scheduledDate = new Date(item.scheduledAt);
               if (scheduledDate > now) continue;
             } catch {}
           }

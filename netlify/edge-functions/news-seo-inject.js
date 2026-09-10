@@ -1,8 +1,11 @@
 // Netlify Edge Function: inject news/article-specific SEO meta + body content into index.html
 // This runs at the CDN edge, modifying HTML before it reaches the browser/Googlebot.
 // Mirrors the product seo-inject.js pattern but for /news/:slug pages.
+//
+// News is static data bundled with the repo (data/news.json) rather than
+// fetched from a backend API.
+import allNews from '../../data/news.json' with { type: 'json' };
 
-const API_ORIGIN = 'https://foodera.vn';
 const BASE_URL = 'https://foodera.vn';
 
 // Strip diacritics and normalize to URL-friendly slug (must match server/frontend logic)
@@ -49,28 +52,11 @@ export default async function handler(request, context) {
   const response = await context.next();
   const html = await response.text();
 
-  // Fetch news data from the API
-  let article = null;
-  try {
-    const apiRes = await fetch(`${API_ORIGIN}/api/content`, {
-      headers: { 'Accept': 'application/json' }
-    });
-    if (apiRes.ok) {
-      const data = await apiRes.json();
-      const allNews = data.news || [];
-      // Match by slug (exact or generated from title/id), same logic as frontend
-      article = allNews.find((item) => {
-        const itemSlug = getNewsSlug(item);
-        return itemSlug === slugOrId;
-      });
-      // Fallback: try matching by id directly
-      if (!article) {
-        article = allNews.find((item) => item.id === slugOrId);
-      }
-    }
-  } catch (err) {
-    console.error('News SEO inject: API fetch failed', err);
-    return new Response(html, { status: response.status, headers: response.headers });
+  // Match by slug (exact or generated from title/id), same logic as frontend
+  let article = allNews.find((item) => getNewsSlug(item) === slugOrId);
+  // Fallback: try matching by id directly
+  if (!article) {
+    article = allNews.find((item) => item.id === slugOrId);
   }
 
   if (!article) {

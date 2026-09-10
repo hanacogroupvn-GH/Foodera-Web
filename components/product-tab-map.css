@@ -233,6 +233,36 @@
   .ptm-header-top { padding: 10px 20px; }
   .ptm-tabs { padding: 0 20px 8px; }
   .ptm-footer { padding: 16px 20px; flex-direction: column; gap: 6px; text-align: center; }
+
+  /* Stacked layout: the sticky/full-viewport-height desktop columns don't
+     make sense once map and cards are stacked — they'd trap the page in a
+     tall sticky map plus a separately-scrolling cards box. Let both flow
+     with the page instead. */
+  .ptm-map-col {
+    position: static;
+    height: 340px;
+    min-height: 260px;
+    max-height: 420px;
+  }
+  .ptm-cards-col {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .ptm-header-top { padding: 8px 16px; }
+  .ptm-header-title { font-size: 1rem; }
+  .ptm-header-subtitle { font-size: 0.66rem; }
+  .ptm-logo { height: 26px; }
+  .ptm-tabs { padding: 0 16px 8px; }
+  .ptm-map-row { padding: 0 16px 16px; }
+  .ptm-stats-row, .ptm-practices-row { padding: 0 16px 16px; gap: 16px; }
+  .ptm-map-col { height: 280px; min-height: 220px; }
+  .ptm-footer { padding: 14px 16px; }
 }
 
 /* ── Region Info Cards (used by RegionInfoCards.jsx) ── */

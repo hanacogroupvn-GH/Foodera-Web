@@ -1,8 +1,11 @@
 // Netlify Edge Function: inject product-specific SEO meta + body content into index.html
 // This runs at the CDN edge, modifying HTML before it reaches the browser/Googlebot.
 // Fixes Google "Soft 404" for SPA product pages by providing real rendered content.
+//
+// Products are static data bundled with the repo (data/products.json) rather
+// than fetched from a backend API.
+import products from '../../data/products.json' with { type: 'json' };
 
-const API_ORIGIN = 'https://foodera.vn';
 const BASE_URL = 'https://foodera.vn';
 
 export default async function handler(request, context) {
@@ -21,21 +24,7 @@ export default async function handler(request, context) {
   const response = await context.next();
   const html = await response.text();
 
-  // Fetch product data from the API
-  let product = null;
-  try {
-    const apiRes = await fetch(`${API_ORIGIN}/api/content`, {
-      headers: { 'Accept': 'application/json' }
-    });
-    if (apiRes.ok) {
-      const data = await apiRes.json();
-      const products = data.products || [];
-      product = products.find(p => p.slug === slugOrId) || products.find(p => p.id === slugOrId);
-    }
-  } catch (err) {
-    console.error('SEO inject: API fetch failed', err);
-    return new Response(html, { status: response.status, headers: response.headers });
-  }
+  const product = products.find(p => p.slug === slugOrId) || products.find(p => p.id === slugOrId);
 
   if (!product) {
     return new Response(html, { status: response.status, headers: response.headers });

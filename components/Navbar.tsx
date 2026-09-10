@@ -1,22 +1,32 @@
 
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Download } from 'lucide-react';
+import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Sparkles, Package } from 'lucide-react';
 import { Product, SupportedLocale } from '../types';
-const Logo = '/logo-navbar.png';
+const Logo = '/logo-era.png';
 import { useData } from '../context/DataContext';
 import { useLocale } from '../context/LocaleContext';
-import { getCategoryLabel, localizeProduct } from '../lib/contentLocalization';
+import { localizeProduct } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
 
 const LazySearchOverlay = lazy(() => import('./SearchOverlay'));
 
 const MEGA_MENU_SECTIONS: Array<{ category: Product['category'] }> = [
-  { category: 'Rice' },
-  { category: 'Coffee' },
   { category: 'Cashew' },
-  { category: 'Pepper' }
+  { category: 'Pepper' },
+  { category: 'Coconut' },
+  { category: 'Durian' },
+  { category: 'Spices' }
 ];
+
+// Placeholder SKUs shown for categories that don't have real catalog data yet.
+// Remove an entry here once real products exist for that category — the mega
+// menu will then automatically switch to showing live catalog items instead.
+const MOCK_SUBCATEGORIES: Partial<Record<Product['category'], string[]>> = {
+  Coconut: ['Desiccated Coconut', 'Coconut Water'],
+  Durian: ['Frozen Durian', 'Durian Puree'],
+  Spices: ['Star Anise', 'Cinnamon']
+};
 
 const buildSectionSubtitle = (items: Product[], locale: SupportedLocale) => {
   if (locale === 'zh') {
@@ -39,6 +49,9 @@ interface MegaMenuItem {
   name: string;
   path: string;
   sub: string;
+  isMock?: boolean;
+  image?: string;
+  imageAlt?: string;
 }
 
 const Navbar: React.FC = () => {
@@ -47,25 +60,20 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
 
   const copy = locale === 'zh'
     ? {
-        products: '产品',
+        rice: '大米',
+        coffee: '咖啡',
+        otherProducts: '其他产品',
         news: '新闻',
+        gallery: '活动相册',
         about: '关于我们',
         contact: '联系',
         commercialTool: '互动地图',
-        themeDark: '深色',
-        themeLight: '浅色',
         productGroupsEmpty: '目录中有产品后，这里会自动显示分组。',
-        catalogHighlight: '精选目录',
-        currentCatalogUpdating: '当前目录正在更新',
-        addProductsHint: '在库存后台添加产品后，这张精选卡片会自动更新。',
-        viewProductDetails: '查看产品详情',
-        browseFullCatalog: '浏览完整目录',
-        requestQuote: '申请报价',
         globalLogistics: '全球物流',
         shippingToCountries: '覆盖 30+ 个国家',
         qcProtocol: '质控协议',
@@ -74,28 +82,30 @@ const Navbar: React.FC = () => {
         directTradingDesk: '直接贸易窗口',
         mainMenu: '主菜单',
         contactUs: '联系我们',
+        searchPlaceholder: '搜索...',
         sectionTitles: {
-          Rice: '大米产品线',
-          Coffee: '咖啡出口',
           Cashew: '腰果出口',
-          Pepper: '胡椒产地系列'
-        }
+          Pepper: '胡椒产地系列',
+          Coconut: '椰子产品',
+          Durian: '榴莲产品',
+          Spices: '香料'
+        },
+        comingSoon: '即将上线',
+        privateLabelTitle: '定制品牌服务',
+        privateLabelDesc: '专属包装、配方与品牌定制，打造您自己的产品线。',
+        privateLabelCta: '了解更多',
+        privateLabelBadge: '热门'
       }
     : {
-        products: 'Products',
+        rice: 'Rice',
+        coffee: 'Coffee',
+        otherProducts: 'Other Products',
         news: 'News',
+        gallery: 'Gallery',
         about: 'About Us',
         contact: 'Contact',
         commercialTool: 'Interactive Map',
-        themeDark: 'Dark',
-        themeLight: 'Light',
         productGroupsEmpty: 'Product groups will appear here as soon as items are available in the current catalog.',
-        catalogHighlight: 'Catalog Highlight',
-        currentCatalogUpdating: 'Current catalog is updating',
-        addProductsHint: 'Add products in the inventory panel to populate this featured card automatically.',
-        viewProductDetails: 'View Product Details',
-        browseFullCatalog: 'Browse Full Catalog',
-        requestQuote: 'Request Quote',
         globalLogistics: 'Global Logistics',
         shippingToCountries: 'Shipping to 30+ Countries',
         qcProtocol: 'QC Protocol',
@@ -104,12 +114,19 @@ const Navbar: React.FC = () => {
         directTradingDesk: 'Direct Trading Desk',
         mainMenu: 'Main Menu',
         contactUs: 'Contact Us',
+        searchPlaceholder: 'Search...',
         sectionTitles: {
-          Rice: 'Rice Portfolios',
-          Coffee: 'Coffee Exports',
           Cashew: 'Cashew Exports',
-          Pepper: 'Pepper Origins'
-        }
+          Pepper: 'Pepper Origins',
+          Coconut: 'Coconut Products',
+          Durian: 'Durian Products',
+          Spices: 'Spices'
+        },
+        comingSoon: 'Coming Soon',
+        privateLabelTitle: 'Private Label Service',
+        privateLabelDesc: 'Custom packaging, formulation, and branding to build your own product line.',
+        privateLabelCta: 'Learn More',
+        privateLabelBadge: 'Popular'
       };
 
 
@@ -138,11 +155,24 @@ const Navbar: React.FC = () => {
           });
         });
 
-        const items: MegaMenuItem[] = Array.from(groupedItems.values()).map((item) => ({
+        let items: MegaMenuItem[] = Array.from(groupedItems.values()).map((item) => ({
           name: item.name,
           path: item.path,
-          sub: buildSectionSubtitle(item.products, locale)
+          sub: buildSectionSubtitle(item.products, locale),
+          image: item.products[0]?.image,
+          imageAlt: item.products[0]?.imageAlt || item.name
         }));
+
+        // No real catalog data yet for this category — show placeholder SKUs
+        // so the section is still visible in the menu until real products are added.
+        if (items.length === 0 && MOCK_SUBCATEGORIES[section.category]) {
+          items = MOCK_SUBCATEGORIES[section.category]!.map((subCategory) => ({
+            name: subCategory,
+            path: appRoutes.productLine(section.category, subCategory),
+            sub: copy.comingSoon,
+            isMock: true
+          }));
+        }
 
         return {
           ...section,
@@ -150,32 +180,13 @@ const Navbar: React.FC = () => {
           items
         };
       }).filter((section) => section.items.length > 0),
-    [copy.sectionTitles, locale, products]
-  );
-
-  const featuredProduct = useMemo(() => {
-    if (products.length === 0) {
-      return null;
-    }
-
-    return products.find((product) => product.pdfUrl?.trim()) ?? products[0];
-  }, [products]);
-  const featuredProductDisplay = useMemo(
-    () => (featuredProduct ? localizeProduct(featuredProduct, locale) : null),
-    [featuredProduct, locale]
+    [copy.sectionTitles, copy.comingSoon, locale, products]
   );
 
 
 
 
 
-  useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
-    setIsDarkMode(false);
-  }, []);
-
-  const handleThemeToggle = () => {};
 
   return (
     <>
@@ -229,133 +240,107 @@ const Navbar: React.FC = () => {
             <div className="flex justify-between h-20">
               <div className="flex items-center">
                 <Link to={appRoutes.home} className="flex-shrink-0 flex items-center">
-                  <img src={Logo} alt="FoodEra" className="h-10 md:h-12 w-auto max-w-[190px] md:max-w-[220px] object-contain" />
+                  <img src={Logo} alt="FoodEra" className="h-9 md:h-12 w-auto object-contain" />
                 </Link>
               </div>
 
               {/* Desktop Nav */}
-              <div className="hidden lg:flex items-center space-x-10">
-                <div 
+              <div className="hidden lg:flex items-center space-x-6 xl:space-x-9">
+                <Link to={appRoutes.about} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.about}</Link>
+                <Link to={appRoutes.productsByCategory('Rice')} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.rice}</Link>
+                <Link to={appRoutes.productsByCategory('Coffee')} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.coffee}</Link>
+
+                <div
                   className="h-full flex items-center"
                   onMouseEnter={() => setIsMegaMenuOpen(true)}
                   onMouseLeave={() => setIsMegaMenuOpen(false)}
                 >
-                  <Link 
+                  <Link
                     to={appRoutes.products}
                     onClick={() => setIsMegaMenuOpen(false)}
-                    className={`flex items-center text-xs font-black transition-colors tracking-[0.2em] uppercase py-8 ${isMegaMenuOpen ? 'text-foodera-forest' : 'text-gray-700 hover:text-foodera-forest'}`}
+                    className={`flex items-center whitespace-nowrap text-xs font-black transition-colors tracking-[0.2em] uppercase py-8 ${isMegaMenuOpen ? 'text-foodera-forest' : 'text-gray-700 hover:text-foodera-forest'}`}
                   >
-                    {copy.products} <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+                    {copy.otherProducts} <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
                   </Link>
 
                   {/* FULL WIDTH MEGA MENU */}
                   {isMegaMenuOpen && (
                     <div className="absolute top-full left-0 w-full bg-white shadow-[0_40px_60px_-15px_rgba(0,0,0,0.1)] border-t border-gray-100 animate-in slide-in-from-top-2 duration-300 z-[100]">
                       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                        <div className="grid grid-cols-12 gap-12">
-                          {megaMenuSections.length > 0 ? (
-                            megaMenuSections.map((section, index) => (
-                              <div key={section.category} className={`col-span-3 ${index > 0 ? 'border-l border-gray-100 pl-12' : ''}`}>
-                                <h3 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-foodera-lime"></div>
-                                  {section.title}
-                                </h3>
-                                <ul className="space-y-4">
-                                  {section.items.map((item) => (
-                                    <li key={item.path} className="group/item">
-                                      <Link
-                                        to={item.path}
-                                        className="block"
-                                        onClick={() => setIsMegaMenuOpen(false)}
-                                      >
-                                        <p className="text-sm font-black text-gray-900 group-hover/item:text-foodera-forest transition-colors">
-                                          {item.name}
-                                        </p>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                                          {item.sub}
-                                        </p>
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
+                        <div>
+                          {/* Private Label Service — highlighted */}
+                          <Link
+                            to={appRoutes.contact}
+                            onClick={() => setIsMegaMenuOpen(false)}
+                            className="group/pl flex items-center justify-between gap-6 mb-10 p-6 rounded-2xl bg-foodera-lime/10 border border-foodera-lime/40 hover:border-foodera-lime transition-all"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-11 h-11 rounded-xl bg-foodera-forest text-white flex items-center justify-center flex-shrink-0">
+                                <Sparkles size={18} />
                               </div>
-                            ))
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="text-sm font-black text-gray-900">{copy.privateLabelTitle}</h4>
+                                  <span className="px-2 py-0.5 bg-foodera-forest text-white text-[8px] font-black uppercase tracking-widest rounded-full">
+                                    {copy.privateLabelBadge}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-600 font-medium">{copy.privateLabelDesc}</p>
+                              </div>
+                            </div>
+                            <ArrowRight size={18} className="text-foodera-forest group-hover/pl:translate-x-1 transition-transform flex-shrink-0" />
+                          </Link>
+
+                          {megaMenuSections.length > 0 ? (
+                            <div className="grid grid-cols-5 gap-8">
+                              {megaMenuSections.map((section, index) => (
+                                <div key={section.category} className={index > 0 ? 'border-l border-gray-100 pl-8' : ''}>
+                                  <h3 className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.4em] mb-6 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-foodera-lime"></div>
+                                    {section.title}
+                                  </h3>
+                                  <ul className="space-y-4">
+                                    {section.items.map((item) => (
+                                      <li key={item.path} className="group/item">
+                                        <Link
+                                          to={item.path}
+                                          className="flex items-center gap-3"
+                                          onClick={() => setIsMegaMenuOpen(false)}
+                                        >
+                                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                                            <Package size={16} className="text-gray-300" />
+                                            {item.image && (
+                                              <img
+                                                src={item.image}
+                                                alt={item.imageAlt}
+                                                loading="lazy"
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                              />
+                                            )}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <p className={`text-sm font-black transition-colors truncate ${item.isMock ? 'text-gray-500' : 'text-gray-900 group-hover/item:text-foodera-forest'}`}>
+                                              {item.name}
+                                            </p>
+                                            <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 truncate ${item.isMock ? 'text-gray-300 italic' : 'text-gray-400'}`}>
+                                              {item.sub}
+                                            </p>
+                                          </div>
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
                           ) : (
-                            <div className="col-span-9 flex items-center rounded-[2rem] border border-dashed border-gray-200 bg-gray-50 px-8 py-12">
+                            <div className="flex items-center rounded-[2rem] border border-dashed border-gray-200 bg-gray-50 px-8 py-12">
                               <p className="text-sm font-bold text-gray-500">
                                 {copy.productGroupsEmpty}
                               </p>
                             </div>
                           )}
-
-                          {/* Column 4: Featured Portfolio (Visual) */}
-                          <div className="col-span-3 pl-4">
-                            <div className="bg-gray-50 rounded-[2rem] p-8 h-full flex flex-col relative overflow-hidden group/featured">
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-foodera-forest/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/featured:bg-foodera-lime/10 transition-colors duration-700"></div>
-                              
-                              <div className="relative z-10 flex flex-col h-full">
-                                <span className="text-[10px] font-black text-foodera-forest uppercase tracking-[0.3em] mb-4 block">
-                                  {copy.catalogHighlight}
-                                </span>
-                                {featuredProductDisplay ? (
-                                  <>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.28em] mb-3">
-                                      {getCategoryLabel(featuredProduct.category, locale)} / {featuredProductDisplay.subCategory}
-                                    </p>
-                                    <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">
-                                      {featuredProductDisplay.name}
-                                    </h4>
-                                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
-                                      {featuredProductDisplay.shortDescription}
-                                    </p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <h4 className="text-xl font-black text-gray-900 leading-tight mb-4">
-                                      {copy.currentCatalogUpdating}
-                                    </h4>
-                                    <p className="text-xs text-gray-500 font-medium leading-relaxed mb-8 flex-grow">
-                                      {copy.addProductsHint}
-                                    </p>
-                                  </>
-                                )}
-                                
-                                <div className="space-y-3">
-                                  {featuredProduct ? (
-                                    <Link
-                                      to={appRoutes.productById(featuredProduct.id)}
-                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodera-forest transition-all"
-                                      onClick={() => setIsMegaMenuOpen(false)}
-                                    >
-                                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
-                                        {copy.viewProductDetails}
-                                      </span>
-                                      <ArrowRight size={14} className="text-foodera-forest" />
-                                    </Link>
-                                  ) : (
-                                    <Link
-                                      to={appRoutes.products}
-                                      className="flex items-center justify-between w-full p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-foodera-forest transition-all"
-                                      onClick={() => setIsMegaMenuOpen(false)}
-                                    >
-                                      <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
-                                        {copy.browseFullCatalog}
-                                      </span>
-                                      <ArrowRight size={14} className="text-foodera-forest" />
-                                    </Link>
-                                  )}
-                                  <Link 
-                                    to={appRoutes.contact} 
-                                    className="flex items-center justify-between w-full p-4 bg-foodera-forest text-white rounded-xl shadow-lg hover:bg-foodera-lime hover:text-foodera-forest transition-all"
-                                    onClick={() => setIsMegaMenuOpen(false)}
-                                  >
-                                    <span className="text-[10px] font-black uppercase tracking-widest">{copy.requestQuote}</span>
-                                    <Download size={14} />
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
                         </div>
 
                         {/* Mega Menu Footer */}
@@ -385,20 +370,21 @@ const Navbar: React.FC = () => {
                   )}
                 </div>
 
-                <Link to={appRoutes.news} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.news}</Link>
-                <Link to={appRoutes.about} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.about}</Link>
-                <Link to={appRoutes.careers} className="text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{locale === 'zh' ? '招聘' : 'Careers'}</Link>
-                
+                <Link to={appRoutes.news} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.news}</Link>
+                <Link to={appRoutes.gallery} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.gallery}</Link>
+
               <div className="flex items-center space-x-6">
-                <button 
-                  onClick={() => setIsSearchOpen(true)}
-                  className="text-gray-500 hover:text-foodera-forest transition-colors p-2 rounded-full hover:bg-gray-50"
-                >
-                    <Search size={20} />
-                  </button>
                   <Link to={appRoutes.contact} className="px-7 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
                     {copy.contact}
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchOpen(true)}
+                    aria-label={copy.searchPlaceholder}
+                    className="w-10 h-10 rounded-xl bg-foodera-lime/15 text-foodera-forest flex items-center justify-center hover:bg-foodera-lime/30 transition-colors flex-shrink-0"
+                  >
+                    <Search size={18} />
+                  </button>
                 </div>
               </div>
 
@@ -423,7 +409,7 @@ const Navbar: React.FC = () => {
           <div className="lg:hidden bg-white fixed inset-0 z-[100] overflow-y-auto animate-in fade-in duration-200">
             <div className="p-6">
               <div className="flex justify-between items-center mb-12">
-                <img src={Logo} alt="FoodEra" className="h-9 w-auto max-w-[150px] object-contain" />
+                <img src={Logo} alt="FoodEra" className="w-[166px] h-auto object-contain" />
                 <button onClick={() => setIsOpen(false)} className="p-2 text-gray-500"><X size={32} /></button>
               </div>
 
@@ -463,10 +449,12 @@ const Navbar: React.FC = () => {
 
                 <div className="space-y-6">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">{copy.mainMenu}</p>
-                  <Link to={appRoutes.products} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.products}</Link>
-                  <Link to={appRoutes.news} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
                   <Link to={appRoutes.about} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.about}</Link>
-                  <Link to={appRoutes.careers} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{locale === 'zh' ? '招聘' : 'Careers'}</Link>
+                  <Link to={appRoutes.productsByCategory('Rice')} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.rice}</Link>
+                  <Link to={appRoutes.productsByCategory('Coffee')} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.coffee}</Link>
+                  <Link to={appRoutes.products} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.otherProducts}</Link>
+                  <Link to={appRoutes.news} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.news}</Link>
+                  <Link to={appRoutes.gallery} className="block text-3xl font-black text-gray-900 border-b border-gray-100 pb-4" onClick={() => setIsOpen(false)}>{copy.gallery}</Link>
                   <Link to={appRoutes.contact} className="block w-full py-5 bg-foodera-forest text-white text-center rounded-2xl text-xl font-black tracking-widest uppercase shadow-xl mt-10" onClick={() => setIsOpen(false)}>
                     {copy.contactUs}
                   </Link>
@@ -482,9 +470,13 @@ const Navbar: React.FC = () => {
         <Suspense fallback={<div className="fixed inset-0 z-[200] bg-white" />}>
           <LazySearchOverlay
             searchOpen={isSearchOpen}
-            onClose={() => setIsSearchOpen(false)}
+            onClose={() => {
+              setIsSearchOpen(false);
+              setSearchQuery('');
+            }}
             products={products}
             news={news}
+            initialQuery={searchQuery}
           />
         </Suspense>
       )}

@@ -11,7 +11,7 @@ import path from 'node:path';
  */
 
 const MEDIA_ROOT = path.join(process.cwd(), 'public/media');
-const TARGETS = ['about', 'pepper', 'careers', 'migrated/products'];
+const TARGETS = ['about', 'pepper', 'migrated/products'];
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg']);
 const isDryRun = process.argv.includes('--dry-run');
 
