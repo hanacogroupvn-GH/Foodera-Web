@@ -1,5 +1,5 @@
-const CLOUDINARY_CLOUD_NAME = "diovi" + "7v3k";
-const CLOUDINARY_UPLOAD_PRESET = "foodmax_" + "cms";
+const CLOUDINARY_CLOUD_NAME = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined)?.trim() || 'diovi7v3k';
+const CLOUDINARY_UPLOAD_PRESET = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined)?.trim() || 'foodmax_cms';
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 

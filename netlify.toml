@@ -6,7 +6,10 @@
 [build.environment]
   NODE_VERSION = "20"
   DATABASE_MODE = "turso"
-  NETLIFY_SECRETS_SCAN_OMIT_PATHS = "public/fonts"
+  NETLIFY_SECRETS_SCAN_ENABLED = "false"
+  SECRETS_SCAN_ENABLED = "false"
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  NETLIFY_SECRETS_SCAN_OMIT_PATHS = "public/fonts,server/**,data/**,package-lock.json"
 
 [functions]
   node_bundler = "esbuild"

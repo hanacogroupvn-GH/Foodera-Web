@@ -96,16 +96,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleFillSample = () => {
-    if (emailRef.current) {
-      emailRef.current.value = 'hanacogroupvn@gmail.com';
-    }
-    if (passwordRef.current) {
-      passwordRef.current.value = 'Foodera@2026';
-    }
-    setErrorMsg(null);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
@@ -117,26 +107,6 @@ const Login: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">{copy.title}</h1>
             <p className="text-gray-600 text-sm">{copy.subtitle}</p>
           </div>
-        </div>
-
-        {/* Quick Sample Account Helper */}
-        <div className="mb-5 rounded-2xl bg-emerald-50/80 border border-emerald-200 p-3.5 text-xs text-emerald-900 flex items-center justify-between shadow-xs">
-          <div className="space-y-0.5">
-            <p className="font-bold text-emerald-950 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              {copy.sampleAccount}:
-            </p>
-            <p className="font-mono text-[11px] text-emerald-800">
-              hanacogroupvn@gmail.com &bull; Foodera@2026
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleFillSample}
-            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-xs transition cursor-pointer"
-          >
-            {copy.fillSample}
-          </button>
         </div>
 
         {(errorMsg || adminCheckError) && (
