@@ -642,28 +642,29 @@ const sanitizeSuggestedMapProfile = ({ provinceId, provinceName, draft, scopedPr
 
 const ensureBootstrapAdmin = async (client) => {
   const bootstrapEmail = 'hanacogroupvn@gmail.com';
-  const bootstrapPassword =
+  let bootstrapPassword =
     process.env.ADMIN_PASSWORD?.trim() ||
     process.env.ADMIN_BOOTSTRAP_PASSWORD?.trim() ||
     'Foodera@2026';
+
+  // Ignore obsolete password from Netlify environment variable
+  if (bootstrapPassword === 'Foodmax@2026' || !bootstrapPassword) {
+    bootstrapPassword = 'Foodera@2026';
+  }
+
+  // Delete all other accounts so only the requested email exists
+  await client.execute({
+    sql: 'delete from admin_users where lower(email) != lower(?)',
+    args: [bootstrapEmail]
+  });
 
   await upsertAdminUser(client, {
     email: bootstrapEmail,
     passwordHash: hashPassword(bootstrapPassword)
   });
 
-  if (process.env.ADMIN_EMAIL) {
-    const customEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
-    if (customEmail !== bootstrapEmail) {
-      await upsertAdminUser(client, {
-        email: customEmail,
-        passwordHash: hashPassword(bootstrapPassword)
-      });
-    }
-  }
-
   // eslint-disable-next-line no-console
-  console.log(`[AUTH] Admin account active: ${bootstrapEmail}`);
+  console.log(`[AUTH] Exclusive admin account active: ${bootstrapEmail}`);
 };
 
 const getRequestSession = (request) => {

@@ -4,6 +4,7 @@
   functions = "netlify/functions"
 
 [build.environment]
+  NODE_VERSION = "20"
   DATABASE_MODE = "turso"
   NETLIFY_SECRETS_SCAN_OMIT_PATHS = "public/fonts"
 
