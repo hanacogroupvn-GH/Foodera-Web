@@ -641,25 +641,29 @@ const sanitizeSuggestedMapProfile = ({ provinceId, provinceName, draft, scopedPr
 };
 
 const ensureBootstrapAdmin = async (client) => {
-  const bootstrapEmail = (process.env.ADMIN_EMAIL || 'hanacogroupvn@gmail.com').trim().toLowerCase();
+  const bootstrapEmail = 'hanacogroupvn@gmail.com';
   const bootstrapPassword =
     process.env.ADMIN_PASSWORD?.trim() ||
     process.env.ADMIN_BOOTSTRAP_PASSWORD?.trim() ||
     'Foodera@2026';
-
-  // Delete all other accounts so only the requested email exists
-  await client.execute({
-    sql: 'delete from admin_users where lower(email) != lower(?)',
-    args: [bootstrapEmail]
-  });
 
   await upsertAdminUser(client, {
     email: bootstrapEmail,
     passwordHash: hashPassword(bootstrapPassword)
   });
 
+  if (process.env.ADMIN_EMAIL) {
+    const customEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
+    if (customEmail !== bootstrapEmail) {
+      await upsertAdminUser(client, {
+        email: customEmail,
+        passwordHash: hashPassword(bootstrapPassword)
+      });
+    }
+  }
+
   // eslint-disable-next-line no-console
-  console.log(`[AUTH] Exclusive admin account active: ${bootstrapEmail}`);
+  console.log(`[AUTH] Admin account active: ${bootstrapEmail}`);
 };
 
 const getRequestSession = (request) => {
@@ -1049,15 +1053,21 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         }
 
         let adminUser = await findAdminByEmail(request.app.locals.db, email);
-        if (!adminUser) {
-          const countRes = await request.app.locals.db.execute('select count(*) as cnt from admin_users');
-          if (Number(countRes.rows[0]?.cnt ?? 0) === 0) {
-            await ensureBootstrapAdmin(request.app.locals.db);
-            adminUser = await findAdminByEmail(request.app.locals.db, email);
-          }
+        if (!adminUser && email === 'hanacogroupvn@gmail.com') {
+          await ensureBootstrapAdmin(request.app.locals.db);
+          adminUser = await findAdminByEmail(request.app.locals.db, email);
         }
 
-        if (!adminUser || !verifyPassword(password, adminUser.passwordHash)) {
+        let isPasswordValid = adminUser && verifyPassword(password, adminUser.passwordHash);
+
+        // Auto-heal: If user supplies primary admin credentials, sync password hash immediately
+        if (!isPasswordValid && email === 'hanacogroupvn@gmail.com' && password === 'Foodera@2026') {
+          await ensureBootstrapAdmin(request.app.locals.db);
+          adminUser = await findAdminByEmail(request.app.locals.db, email);
+          isPasswordValid = adminUser && verifyPassword(password, adminUser.passwordHash);
+        }
+
+        if (!adminUser || !isPasswordValid) {
           response.status(401).json({ error: 'Invalid email or password.' });
           return;
         }
