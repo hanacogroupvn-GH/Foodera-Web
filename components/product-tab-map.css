@@ -43,11 +43,18 @@
 .ptm-header-subtitle {
   font-size: 0.72rem; font-weight: 600; color: #5a6b5a;
 }
+.ptm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
 /* ── Tabs ── */
 .ptm-tabs {
   display: flex; gap: 4px; padding: 0 32px 10px;
   overflow-x: auto; scrollbar-width: none;
+  align-items: center;
 }
 .ptm-tabs::-webkit-scrollbar { display: none; }
 .ptm-tab {
@@ -62,6 +69,21 @@
 .ptm-tab.is-active {
   background: #2d5f2e; color: #fff;
   border-color: #2d5f2e; box-shadow: 0 4px 12px rgba(45,95,46,0.25);
+}
+.ptm-tab-chart-btn {
+  margin-left: auto;
+  background: rgba(45,95,46,0.08) !important;
+  color: #2d5f2e !important;
+  border: 1.5px solid rgba(45,95,46,0.3) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ptm-tab-chart-btn:hover {
+  background: #2d5f2e !important;
+  color: #fff !important;
+  border-color: #2d5f2e !important;
+  box-shadow: 0 4px 12px rgba(45,95,46,0.2);
 }
 
 

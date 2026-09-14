@@ -1,11 +1,22 @@
 import {
+  CareerItem,
+  NewsItem,
+  ExportStatItem,
+  PersonalizedRecommendations,
+  PersonalizationTrackPayload,
+  Product,
+  ProductCategory,
   ProvinceMapProfile,
-  ProvinceMapSuggestionResult
+  ProvinceMapSuggestionResult,
+  RfqAttachment,
+  RfqRequestPayload
 } from '../types';
 
 export type AdminSessionUser = {
   email: string;
 };
+
+export type BackendMode = 'turso' | 'local' | 'fallback';
 
 export class ApiError extends Error {
   status: number;
@@ -95,6 +106,32 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
 };
 
 export const api = {
+  getContent: () =>
+    apiRequest<{ backend: BackendMode; products: Product[]; news: NewsItem[]; categories?: ProductCategory[]; careers?: CareerItem[] }>('/api/content'),
+  getPersonalizedRecommendations: (options?: { productLimit?: number; newsLimit?: number }) => {
+    const searchParams = new URLSearchParams();
+
+    if (options?.productLimit) {
+      searchParams.set('productLimit', String(options.productLimit));
+    }
+
+    if (options?.newsLimit) {
+      searchParams.set('newsLimit', String(options.newsLimit));
+    }
+
+    const query = searchParams.toString();
+    return apiRequest<PersonalizedRecommendations>(
+      `/api/personalization/recommendations${query ? `?${query}` : ''}`
+    );
+  },
+  trackPersonalizationEvent: (payload: PersonalizationTrackPayload) =>
+    apiRequest<{ ok: true } & PersonalizedRecommendations>('/api/personalization/events', {
+      method: 'POST',
+      body: payload,
+      keepalive: true
+    }),
+  getProvinceMapProfiles: () =>
+    apiRequest<{ profiles: ProvinceMapProfile[] }>('/api/map-profiles'),
   getSession: () =>
     apiRequest<{
       isAuthenticated: boolean;
@@ -123,8 +160,43 @@ export const api = {
       method: 'POST',
       body: payload
     }),
-  getProvinceMapProfiles: () =>
-    apiRequest<{ profiles: ProvinceMapProfile[] }>('/api/map-profiles'),
+  uploadRfqAttachment: (payload: {
+    dataUrl: string;
+    contentType: string;
+    fileName: string;
+  }) =>
+    apiRequest<{ ok: true; attachment: RfqAttachment }>('/api/rfq/uploads', {
+      method: 'POST',
+      body: payload
+    }),
+  submitQuotationRequest: (payload: RfqRequestPayload) =>
+    apiRequest<{ ok: true }>('/api/quotation-requests', {
+      method: 'POST',
+      body: payload
+    }),
+  importContent: (payload: { products: Product[]; news: NewsItem[] }) =>
+    apiRequest<{ ok: true; products: Product[]; news: NewsItem[] }>('/api/admin/import', {
+      method: 'POST',
+      body: payload
+    }),
+  upsertProduct: (product: Product, oldId?: string) =>
+    apiRequest<{ ok: true; product: Product }>('/api/admin/products/upsert', {
+      method: 'POST',
+      body: { product, oldId }
+    }),
+  deleteProduct: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/products/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  upsertNews: (item: NewsItem) =>
+    apiRequest<{ ok: true; item: NewsItem }>('/api/admin/news/upsert', {
+      method: 'POST',
+      body: { item }
+    }),
+  deleteNews: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/news/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
   upsertProvinceMapProfile: (profile: ProvinceMapProfile) =>
     apiRequest<{ ok: true; profile: ProvinceMapProfile }>('/api/admin/map-profiles/upsert', {
       method: 'POST',
@@ -144,5 +216,61 @@ export const api = {
     apiRequest<{ ok: true } & ProvinceMapSuggestionResult>('/api/admin/map-profiles/ai-suggest', {
       method: 'POST',
       body: payload
+    }),
+  uploadCmsImage: (payload: {
+    dataUrl: string;
+    contentType: string;
+    fileName: string;
+    folderSegments: string[];
+  }) =>
+    apiRequest<{ ok: true; publicUrl: string }>('/api/admin/uploads/images', {
+      method: 'POST',
+      body: payload
+    }),
+  translateCmsPrompt: (prompt: string) =>
+    apiRequest<{ translation: unknown }>('/api/admin/translate', {
+      method: 'POST',
+      body: { prompt }
+    }),
+  // Product Categories
+  upsertCategory: (category: ProductCategory) =>
+    apiRequest<{ ok: true; category: ProductCategory }>('/api/admin/categories/upsert', {
+      method: 'POST',
+      body: { category }
+    }),
+  deleteCategory: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/categories/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  // Careers
+  upsertCareer: (item: CareerItem) =>
+    apiRequest<{ ok: true; item: CareerItem }>('/api/admin/careers/upsert', {
+      method: 'POST',
+      body: { item }
+    }),
+  deleteCareer: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/careers/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  uploadCareerJd: (payload: {
+    dataUrl: string;
+    contentType: string;
+    fileName: string;
+  }) =>
+    apiRequest<{ ok: true; publicUrl: string; fileName: string }>('/api/admin/careers/upload-jd', {
+      method: 'POST',
+      body: payload
+    }),
+  // Export Statistics
+  getExportStats: () =>
+    apiRequest<{ stats: ExportStatItem[] }>('/api/export-stats'),
+  upsertExportStat: (stat: ExportStatItem) =>
+    apiRequest<{ ok: true; stat: ExportStatItem }>('/api/admin/export-stats/upsert', {
+      method: 'POST',
+      body: { stat }
+    }),
+  deleteExportStat: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/export-stats/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     })
 };

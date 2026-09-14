@@ -11,3 +11,7 @@ const isNewsPublished = (item: NewsItem) => {
 export const getActiveProducts = (products: Product[]) => products.filter(isContentActive);
 
 export const getActiveNews = (news: NewsItem[]) => news.filter((item) => isContentActive(item) && isNewsPublished(item));
+
+export const getActiveCareers = <T extends { isActive?: boolean }>(careers: T[]) =>
+  careers.filter((item) => item.isActive !== false);
+

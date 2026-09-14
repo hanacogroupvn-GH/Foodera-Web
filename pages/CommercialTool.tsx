@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 
 import '../components/interactive-map.css';
 import '../components/product-tab-map.css';
 import InteractiveMapExplorer from '../components/InteractiveMapExplorer';
+import AgriExportLineChart from '../components/AgriExportLineChart';
 import { useLocale } from '../context/LocaleContext';
+import { MapPin, LineChart, ArrowLeft } from 'lucide-react';
 
 const MAP_COPYRIGHT = '\u00A9 2026 VIET NAM FOOD ERA COMPANY LIMITED All Rights Reserved.';
 
 const CommercialTool: React.FC = () => {
   const { locale } = useLocale();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialMode = searchParams.get('view') === 'chart' ? 'chart' : 'map';
+  const [viewMode, setViewModeState] = useState<'map' | 'chart'>(initialMode);
+
+  const setViewMode = (mode: 'map' | 'chart') => {
+    setViewModeState(mode);
+    setSearchParams(mode === 'chart' ? { view: 'chart' } : {}, { replace: true });
+  };
 
   const copy =
     locale === 'zh'
@@ -50,15 +61,63 @@ const CommercialTool: React.FC = () => {
           panelKicker: '省域详情',
           panelOverviewTitle: '特性',
           panelSpecsTitle: '映射规格',
-          panelCoordinatesLabel: 'GPS å��æ ‡ï¼ˆçº¬åº¦/ç»�åº¦ï¼‰',
-          panelCultivatedAreaLabel: 'ç§æ¤�é�¢ç§¯ï¼ˆå…¬é¡·ï¼‰',
-          panelAverageOutputLabel: 'å¹³å�‡äº§é‡�ï¼ˆMT/å¹´ï¼‰',
-          panelSowingPeriodLabel: 'æ’­ç§�æ—¶é—´',
+          panelCoordinatesLabel: 'GPS 坐标（纬度/经度）',
+          panelCultivatedAreaLabel: '种植面积（公顷）',
+          panelAverageOutputLabel: '平均产量（MT/年）',
+          panelSowingPeriodLabel: '播种时间',
           panelHarvestPeriodLabel: '收获时间',
-          panelCropsPerYearLabel: 'æ¯�å¹´ä½œç‰©èŒ¬æ•°',
-          panelVarietiesLabel: 'å“�ç§�',
+          panelCropsPerYearLabel: '每年作物茬数',
+          panelVarietiesLabel: '品种',
           panelNoData: '暂未映射',
           panelCloseAria: '关闭省域详情'
+        }
+      : locale === 'vi'
+      ? {
+          brandEyebrow: 'FoodEra Origin Desk',
+          brandAlt: 'FoodEra',
+          copyrightLabel: MAP_COPYRIGHT,
+          brandTitle: 'Vùng trồng Nông sản Việt Nam',
+          backLabel: 'Quay lại',
+          backAria: 'Quay lại trang trước',
+          filterTitle: 'Bộ lọc Nông sản',
+          filterSubtitle: 'Làm nổi bật các tỉnh theo danh mục nông sản',
+          filterClear: 'Xóa lọc',
+          filterEmpty: 'Chưa có danh mục nào được liên kết.',
+          filterProvinceSingular: 'tỉnh',
+          filterProvincePlural: 'tỉnh thành',
+          filterTabProducts: 'Sản phẩm',
+          filterTabRegions: 'Vùng miền',
+          categoryRice: 'Lúa gạo',
+          categoryAgriculture: 'Trái cây & Nông sản',
+          categoryCoffee: 'Cà phê',
+          categoryCashew: 'Hạt điều',
+          legendTitle: 'Chú thích Vùng miền',
+          legendSubtitle: 'Hệ thống màu sắc phân bổ 6 vùng sinh thái nông nghiệp',
+          legendEmpty: 'Không có dữ liệu vùng.',
+          legendButton: 'Chú thích',
+          toggleLegendAria: 'Bật/tắt bảng chú thích',
+          closeLegendAria: 'Đóng bảng chú thích',
+          reopenLegendAria: 'Mở lại bảng chú thích',
+          resetAria: 'Đặt lại bản đồ Việt Nam',
+          editorAria: 'Mở trình chỉnh sửa nội dung',
+          regionAria: 'Mã màu 6 vùng sinh thái',
+          summaryTitle: 'Di chuột hoặc chọn tỉnh bất kỳ',
+          summaryText: 'Xem thông số diện tích, năng suất, mùa vụ được quản lý từ CMS.',
+          resetLabel: 'Toàn quốc',
+          loading: 'Đang tải bản đồ vùng trồng...',
+          loadError: 'Không thể tải dữ liệu bản đồ.',
+          panelKicker: 'Chi tiết tỉnh thành',
+          panelOverviewTitle: 'Đặc tính',
+          panelSpecsTitle: 'Thông số kỹ thuật',
+          panelCoordinatesLabel: 'Tọa độ GPS',
+          panelCultivatedAreaLabel: 'Diện tích gieo trồng (ha)',
+          panelAverageOutputLabel: 'Sản lượng bình quân (MT/năm)',
+          panelSowingPeriodLabel: 'Thời vụ xuống giống',
+          panelHarvestPeriodLabel: 'Thời vụ thu hoạch',
+          panelCropsPerYearLabel: 'Số vụ canh tác/năm',
+          panelVarietiesLabel: 'Giống cây trồng',
+          panelNoData: 'Đang cập nhật',
+          panelCloseAria: 'Đóng chi tiết'
         }
       : {
           brandEyebrow: 'FoodEra Origin Desk',
@@ -108,7 +167,89 @@ const CommercialTool: React.FC = () => {
           panelCloseAria: 'Close province details'
         };
 
-  return <InteractiveMapExplorer copy={copy} locale={locale} />;
+  const ViewSwitcher = () => (
+    <div className="inline-flex items-center p-1 bg-white/95 backdrop-blur-sm border border-foodera-forest/20 rounded-2xl shadow-sm">
+      <button
+        type="button"
+        onClick={() => setViewMode('map')}
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
+          viewMode === 'map'
+            ? 'bg-foodera-forest text-white shadow-sm'
+            : 'text-foodera-stone-600 hover:text-foodera-forest hover:bg-foodera-forest/5'
+        }`}
+      >
+        <MapPin size={14} />
+        <span>{locale === 'zh' ? '种植区地图' : locale === 'vi' ? 'Bản đồ vùng trồng' : 'Growing Map'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setViewMode('chart')}
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
+          viewMode === 'chart'
+            ? 'bg-foodera-forest text-white shadow-sm'
+            : 'text-foodera-stone-600 hover:text-foodera-forest hover:bg-foodera-forest/5'
+        }`}
+      >
+        <LineChart size={14} />
+        <span>{locale === 'zh' ? '出口产量统计' : locale === 'vi' ? 'Biểu đồ xuất khẩu' : 'Export Line Chart'}</span>
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="relative min-h-screen">
+      {viewMode === 'map' ? (
+        <InteractiveMapExplorer
+          copy={copy}
+          locale={locale}
+          headerAction={<ViewSwitcher />}
+          onSwitchToChart={() => setViewMode('chart')}
+        />
+      ) : (
+        <div className="ptm-page min-h-screen">
+          <header className="ptm-header">
+            <div className="ptm-header-top">
+              <div className="ptm-header-brand">
+                <button
+                  type="button"
+                  className="ptm-back-btn"
+                  onClick={() => setViewMode('map')}
+                  aria-label={copy.backAria}
+                  title={locale === 'vi' ? 'Quay lại bản đồ' : locale === 'zh' ? '返回地图' : 'Back to map'}
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <img src="/logo-era.png" alt="FoodEra" className="ptm-logo" style={{ height: '51px', width: 'auto' }} />
+                <div className="ptm-header-title-group">
+                  <h1 className="ptm-header-title">
+                    {locale === 'zh'
+                      ? '越南主要农产品出口统计与产量'
+                      : locale === 'vi'
+                      ? 'Biểu đồ Thống kê Xuất khẩu Nông sản Việt Nam'
+                      : 'Vietnam Agricultural Export Statistics'}
+                  </h1>
+                  <span className="ptm-header-subtitle">
+                    {locale === 'zh'
+                      ? '越南海关总署官方数据报告 (2026年7月与累计)'
+                      : locale === 'vi'
+                      ? 'Số liệu chính thức Tổng cục Hải quan (T7/2026 & Lũy kế)'
+                      : 'Official Customs Report (July 2026 & Cumulative)'}
+                  </span>
+                </div>
+              </div>
+              <div className="ptm-header-actions">
+                <ViewSwitcher />
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <AgriExportLineChart showHeader={false} />
+          </main>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default CommercialTool;

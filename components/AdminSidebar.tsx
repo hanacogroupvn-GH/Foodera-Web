@@ -1,49 +1,121 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MapPinned, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Package,
+  FileText,
+  MapPinned,
+  Briefcase,
+  LogOut,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  List,
+  LineChart,
+} from 'lucide-react';
 import { appRoutes } from '../lib/routes';
 import { useLocale } from '../context/LocaleContext';
 
 interface AdminSidebarProps {
   onLogout: () => void;
+  /** Called when "Tạo bài viết" is clicked under Product */
+  onOpenInventoryForm?: () => void;
+  /** Called when "Quản lí bài đăng" is clicked under Product (closes form) */
+  onCloseInventoryForm?: () => void;
+  /** Called when "Tạo bài viết" is clicked under SEO */
+  onOpenNewsForm?: () => void;
+  /** Called when "Quản lí bài đăng" is clicked under SEO (closes form) */
+  onCloseNewsForm?: () => void;
+  /** True when the Inventory create/edit form is currently open */
+  isInventoryFormOpen?: boolean;
+  /** True when the News create/edit form is currently open */
+  isNewsFormOpen?: boolean;
 }
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({
+  onLogout,
+  onOpenInventoryForm,
+  onCloseInventoryForm,
+  onOpenNewsForm,
+  onCloseNewsForm,
+  isInventoryFormOpen = false,
+  isNewsFormOpen = false,
+}) => {
   const { locale } = useLocale();
   const location = useLocation();
 
   const copy = {
     vi: {
+      dashboard: 'Tổng quan',
+      product: 'Sản phẩm',
+      managePosts: 'Quản lý bài đăng',
+      createPost: 'Tạo bài viết',
+      seo: 'SEO',
       mapContent: 'Nội dung bản đồ',
+      exportStats: 'Biểu đồ sản lượng',
+      careers: 'Tuyển dụng',
       staffPortal: 'Trang nhân viên',
       operationsPortal: 'Cổng vận hành',
       exitHome: 'Quay lại Trang chủ',
     },
     en: {
+      dashboard: 'Dashboard',
+      product: 'Product',
+      managePosts: 'Manage posts',
+      createPost: 'Create post',
+      seo: 'SEO',
       mapContent: 'Map Content',
+      exportStats: 'Export Volume',
+      careers: 'Careers',
       staffPortal: 'Staff Portal',
       operationsPortal: 'Operations Portal',
       exitHome: 'Exit to Home',
     },
     zh: {
+      dashboard: '总览',
+      product: '产品',
+      managePosts: '管理文章',
+      createPost: '创建文章',
+      seo: 'SEO',
       mapContent: '地图内容',
+      exportStats: '出口产量统计',
+      careers: '招聘',
       staffPortal: '员工后台',
       operationsPortal: '运营后台',
       exitHome: '返回首页',
     }
   }[locale] || {
+    dashboard: 'Tổng quan',
+    product: 'Sản phẩm',
+    managePosts: 'Quản lý bài đăng',
+    createPost: 'Tạo bài viết',
+    seo: 'SEO',
     mapContent: 'Nội dung bản đồ',
+    exportStats: 'Biểu đồ sản lượng',
+    careers: 'Tuyển dụng',
     staffPortal: 'Trang nhân viên',
     operationsPortal: 'Cổng vận hành',
     exitHome: 'Quay lại Trang chủ',
   };
 
+  const [productOpen, setProductOpen] = useState(
+    location.pathname.startsWith(appRoutes.adminInventory)
+  );
+  const [seoOpen, setSeoOpen] = useState(
+    location.pathname.startsWith(appRoutes.adminNews)
+  );
+
+  const isActive = (path: string) => location.pathname === path;
   const isSection = (path: string) => location.pathname.startsWith(path);
 
   const linkBase =
     'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors';
   const linkActive = 'bg-white/15 text-white';
   const linkInactive = 'text-white/60 hover:text-white hover:bg-white/8';
+  const subLinkBase =
+    'flex items-center gap-2.5 pl-11 pr-4 py-2 rounded-xl text-xs font-semibold transition-colors';
+  const subLinkActive = 'text-white bg-white/10';
+  const subLinkInactive = 'text-white/40 hover:text-white hover:bg-white/5';
 
   return (
     <aside className="w-60 bg-foodera-forest text-white flex flex-col sticky top-0 h-screen shadow-2xl z-20 flex-shrink-0">
@@ -64,6 +136,164 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
 
       {/* Nav */}
       <nav className="flex-grow px-4 py-5 space-y-1 overflow-y-auto">
+        {/* Dashboard */}
+        <Link
+          to={appRoutes.admin}
+          className={`${linkBase} ${isActive(appRoutes.admin) ? linkActive : linkInactive}`}
+        >
+          <LayoutDashboard size={17} />
+          {copy.dashboard}
+        </Link>
+
+        {/* Product */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setProductOpen((v) => !v)}
+            className={`w-full ${linkBase} justify-between ${
+              isSection(appRoutes.adminInventory) ? linkActive : linkInactive
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Package size={17} />
+              {copy.product}
+            </span>
+            {productOpen ? (
+              <ChevronDown size={13} className="opacity-60" />
+            ) : (
+              <ChevronRight size={13} className="opacity-60" />
+            )}
+          </button>
+          {productOpen && (
+            <div className="mt-1 space-y-0.5">
+              {/* Quản lí bài đăng */}
+              {isSection(appRoutes.adminInventory) ? (
+                // Same page: only close form if it's open; otherwise just show active style
+                isInventoryFormOpen && onCloseInventoryForm ? (
+                  <button
+                    type="button"
+                    onClick={onCloseInventoryForm}
+                    className={`w-full ${subLinkBase} ${subLinkInactive}`}
+                  >
+                    <List size={13} />
+                    {copy.managePosts}
+                  </button>
+                ) : (
+                  <span className={`${subLinkBase} ${subLinkActive} cursor-default`}>
+                    <List size={13} />
+                    {copy.managePosts}
+                  </span>
+                )
+              ) : (
+                <Link
+                  to={appRoutes.adminInventory}
+                  className={`${subLinkBase} ${subLinkInactive}`}
+                >
+                  <List size={13} />
+                  {copy.managePosts}
+                </Link>
+              )}
+
+              {/* Tạo bài viết */}
+              {isSection(appRoutes.adminInventory) && onOpenInventoryForm ? (
+                <button
+                  type="button"
+                  onClick={onOpenInventoryForm}
+                  className={`w-full ${subLinkBase} ${
+                    isInventoryFormOpen ? subLinkActive : subLinkInactive
+                  }`}
+                >
+                  <Plus size={13} />
+                  {copy.createPost}
+                </button>
+              ) : (
+                <Link
+                  to={`${appRoutes.adminInventory}#create`}
+                  className={`${subLinkBase} ${subLinkInactive}`}
+                >
+                  <Plus size={13} />
+                  {copy.createPost}
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* SEO (News/Insights) */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setSeoOpen((v) => !v)}
+            className={`w-full ${linkBase} justify-between ${
+              isSection(appRoutes.adminNews) ? linkActive : linkInactive
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <FileText size={17} />
+              {copy.seo}
+            </span>
+            {seoOpen ? (
+              <ChevronDown size={13} className="opacity-60" />
+            ) : (
+              <ChevronRight size={13} className="opacity-60" />
+            )}
+          </button>
+          {seoOpen && (
+            <div className="mt-1 space-y-0.5">
+              {/* Quản lí bài đăng */}
+              {isSection(appRoutes.adminNews) ? (
+                // Same page: only close form if it's open; otherwise just show active style
+                isNewsFormOpen && onCloseNewsForm ? (
+                  <button
+                    type="button"
+                    onClick={onCloseNewsForm}
+                    className={`w-full ${subLinkBase} ${subLinkInactive}`}
+                  >
+                    <List size={13} />
+                    {copy.managePosts}
+                  </button>
+                ) : (
+                  <span className={`${subLinkBase} ${subLinkActive} cursor-default`}>
+                    <List size={13} />
+                    {copy.managePosts}
+                  </span>
+                )
+              ) : (
+                <Link
+                  to={appRoutes.adminNews}
+                  className={`${subLinkBase} ${subLinkInactive}`}
+                >
+                  <List size={13} />
+                  {copy.managePosts}
+                </Link>
+              )}
+
+              {/* Tạo bài viết */}
+              {isSection(appRoutes.adminNews) && onOpenNewsForm ? (
+                <button
+                  type="button"
+                  onClick={onOpenNewsForm}
+                  className={`w-full ${subLinkBase} ${
+                    isNewsFormOpen ? subLinkActive : subLinkInactive
+                  }`}
+                >
+                  <Plus size={13} />
+                  {copy.createPost}
+                </button>
+              ) : (
+                <Link
+                  to={`${appRoutes.adminNews}#create`}
+                  className={`${subLinkBase} ${subLinkInactive}`}
+                >
+                  <Plus size={13} />
+                  {copy.createPost}
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Map Content */}
         <Link
           to={appRoutes.adminMapContent}
           className={`${linkBase} ${
@@ -72,6 +302,28 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
         >
           <MapPinned size={17} />
           {copy.mapContent}
+        </Link>
+
+        {/* Export Statistics */}
+        <Link
+          to={appRoutes.adminExportStats}
+          className={`${linkBase} ${
+            isSection(appRoutes.adminExportStats) ? linkActive : linkInactive
+          }`}
+        >
+          <LineChart size={17} />
+          {copy.exportStats}
+        </Link>
+
+        {/* Careers (Tuyển dụng) */}
+        <Link
+          to={appRoutes.adminCareers}
+          className={`${linkBase} ${
+            isSection(appRoutes.adminCareers) ? linkActive : linkInactive
+          }`}
+        >
+          <Briefcase size={17} />
+          {copy.careers}
         </Link>
       </nav>
 

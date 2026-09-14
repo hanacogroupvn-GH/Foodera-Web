@@ -13,6 +13,7 @@ import HeroSlider from "../components/HeroSlider";
 import ExportReachMap from "../components/ExportReachMap";
 import SectionHeading from "../components/SectionHeading";
 import ProductCard from "../components/ProductCard";
+import AgriExportLineChart from "../components/AgriExportLineChart";
 import Counter from "../components/Counter";
 import AppShellLoader from "../components/AppShellLoader";
 import { useData } from "../context/DataContext";
@@ -388,6 +389,13 @@ const Home: React.FC = () => {
       </section>
 
       <ExportReachMap />
+
+      {/* Vietnam Agri-Export Trade Intelligence Chart */}
+      <section className="relative overflow-hidden bg-white py-16 md:py-24 border-b border-gray-100">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <AgriExportLineChart />
+        </div>
+      </section>
 
       <section className="relative overflow-hidden bg-gray-50 py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

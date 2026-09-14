@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import FloatingContact from './components/FloatingContact';
 import AppShellLoader from './components/AppShellLoader';
 import AppErrorBoundary from './components/AppErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 import { appRoutes } from './lib/routes';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -22,6 +23,11 @@ const NewsDetail = lazy(() => import('./pages/NewsDetail'));
 const Gallery = lazy(() => import('./pages/Gallery'));
 const CommercialTool = lazy(() => import('./pages/CommercialTool'));
 const Login = lazy(() => import('./pages/Login'));
+const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
+const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
+const AdminNews = lazy(() => import('./pages/Admin/News'));
+const AdminCareers = lazy(() => import('./pages/Admin/Careers'));
+const AdminExportStats = lazy(() => import('./pages/Admin/ExportStats'));
 const AdminInteractiveMapContent = lazy(() => import('./pages/Admin/InteractiveMapContent'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -131,7 +137,63 @@ const AppRoutes: React.FC = () => {
                 />
                 <Route
                   path={appRoutes.admin}
-                  element={<Navigate to={appRoutes.adminMapContent} replace />}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载控制面板...' : 'Loading dashboard...'} compact />}>
+                        <AdminDashboard />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminDashboard}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载控制面板...' : 'Loading dashboard...'} compact />}>
+                        <AdminDashboard />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminInventory}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载产品管理...' : 'Loading inventory...'} compact />}>
+                        <AdminInventory />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminNews}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载新闻管理...' : 'Loading news CMS...'} compact />}>
+                        <AdminNews />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminCareers}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载招聘管理...' : 'Loading careers CMS...'} compact />}>
+                        <AdminCareers />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminExportStats}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载出口统计...' : 'Loading export statistics...'} compact />}>
+                        <AdminExportStats />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path={appRoutes.adminMapContent}
@@ -166,6 +228,7 @@ const AppRoutes: React.FC = () => {
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
+              <Toaster position="top-right" />
             </div>
           </Router>
         </DataProvider>

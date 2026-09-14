@@ -20,28 +20,46 @@ const Login: React.FC = () => {
   const rawCopy =
     locale === 'zh'
       ? {
-          title: `ç®¡ç†å'˜ç™»å½•`,
-          subtitle: `ä½¿ç"¨æ‚¨çš„ FoodEra ç®¡ç†å'˜è´¦æˆ·ç™»å½•`,
-          email: `é‚®ç®±`,
-          password: `å¯†ç `,
-          emailPlaceholder: 'admin@company.com',
-          passwordPlaceholder: `è¯·è¾"å…¥å¯†ç `,
-          signingIn: `ç™»å½•ä¸­...`,
-          signIn: `ç™»å½•`,
-          loginFailed: `ç™»å½•å¤±è´¥`
+          title: '管理员登录',
+          subtitle: '使用您的 FoodEra 管理员账户登录',
+          email: '邮箱',
+          password: '密码',
+          emailPlaceholder: 'hanacogroupvn@gmail.com',
+          passwordPlaceholder: '请输入密码',
+          signingIn: '登录中...',
+          signIn: '登录',
+          loginFailed: '邮箱或密码不正确',
+          sampleAccount: '管理员账号',
+          fillSample: '一键填入'
+        }
+      : locale === 'vi'
+      ? {
+          title: 'Đăng nhập Quản trị (CMS)',
+          subtitle: 'Đăng nhập vào tài khoản quản trị hệ thống FoodEra',
+          email: 'Email',
+          password: 'Mật khẩu',
+          emailPlaceholder: 'hanacogroupvn@gmail.com',
+          passwordPlaceholder: 'Nhập mật khẩu',
+          signingIn: 'Đang đăng nhập...',
+          signIn: 'Đăng nhập',
+          loginFailed: 'Email hoặc mật khẩu không chính xác',
+          sampleAccount: 'Tài khoản quản trị',
+          fillSample: 'Điền nhanh'
         }
       : {
           title: 'Admin Login',
           subtitle: 'Sign in with your FoodEra admin account',
           email: 'Email',
           password: 'Password',
-          emailPlaceholder: 'admin@company.com',
-          passwordPlaceholder: 'Password',
+          emailPlaceholder: 'hanacogroupvn@gmail.com',
+          passwordPlaceholder: 'Enter password',
           signingIn: 'Signing in...',
           signIn: 'Sign in',
-          loginFailed: 'Login failed'
+          loginFailed: 'Invalid email or password',
+          sampleAccount: 'Admin account',
+          fillSample: 'Auto-fill'
         };
-  const copy = locale === 'zh' ? repairMojibakeDeep(rawCopy) : rawCopy;
+  const copy = rawCopy;
   const redirectParam = new URLSearchParams(location.search).get('redirect');
   const redirectTarget = redirectParam && redirectParam.startsWith('/') ? redirectParam : appRoutes.admin;
 
@@ -78,6 +96,16 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleFillSample = () => {
+    if (emailRef.current) {
+      emailRef.current.value = 'hanacogroupvn@gmail.com';
+    }
+    if (passwordRef.current) {
+      passwordRef.current.value = 'Foodera@2026';
+    }
+    setErrorMsg(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
@@ -89,6 +117,26 @@ const Login: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">{copy.title}</h1>
             <p className="text-gray-600 text-sm">{copy.subtitle}</p>
           </div>
+        </div>
+
+        {/* Quick Sample Account Helper */}
+        <div className="mb-5 rounded-2xl bg-emerald-50/80 border border-emerald-200 p-3.5 text-xs text-emerald-900 flex items-center justify-between shadow-xs">
+          <div className="space-y-0.5">
+            <p className="font-bold text-emerald-950 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              {copy.sampleAccount}:
+            </p>
+            <p className="font-mono text-[11px] text-emerald-800">
+              hanacogroupvn@gmail.com &bull; Foodera@2026
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleFillSample}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+          >
+            {copy.fillSample}
+          </button>
         </div>
 
         {(errorMsg || adminCheckError) && (

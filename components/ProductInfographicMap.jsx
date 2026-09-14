@@ -146,7 +146,7 @@ function PracticesRow({ data, locale }) {
 }
 
 /* ── MAIN ── */
-export default function ProductInfographicMap({ copy, locale = "en" }) {
+export default function ProductInfographicMap({ copy, locale = "en", headerAction, onSwitchToChart }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Rice");
   const [hoveredRegion, setHoveredRegion] = useState(null);
@@ -184,6 +184,11 @@ export default function ProductInfographicMap({ copy, locale = "en" }) {
               <span className="ptm-header-subtitle">{t(data.heroSubtitle, locale)}</span>
             </div>
           </div>
+          {headerAction && (
+            <div className="ptm-header-actions">
+              {headerAction}
+            </div>
+          )}
         </div>
         <nav className="ptm-tabs" role="tablist">
           {CATEGORY_TABS.map((tab) => (
@@ -197,6 +202,17 @@ export default function ProductInfographicMap({ copy, locale = "en" }) {
               {tabLabels[locale]?.[tab] ?? tab}
             </button>
           ))}
+          {onSwitchToChart && (
+            <button
+              type="button"
+              className="ptm-tab ptm-tab-chart-btn"
+              onClick={onSwitchToChart}
+              title={locale === 'zh' ? '查看农产品出口量折线图' : locale === 'vi' ? 'Xem biểu đồ đường sản lượng xuất khẩu' : 'View Export Volume Line Chart'}
+            >
+              <TrendingUp size={14} />
+              <span>{locale === 'zh' ? '出口产量折线图' : locale === 'vi' ? 'Biểu đồ xuất khẩu' : 'Export Line Chart'}</span>
+            </button>
+          )}
         </nav>
       </header>
 

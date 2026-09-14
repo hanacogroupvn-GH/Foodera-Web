@@ -164,3 +164,117 @@ export interface ProvinceMapSuggestionResult {
   provider: 'gemini' | 'ollama';
   sources: ProvinceMapSuggestionSource[];
 }
+
+export type BackendMode = 'turso' | 'local' | 'fallback';
+
+export interface CareerItem {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  description: string;
+  requirements: string[];
+  isActive: boolean;
+  jdFileUrl?: string;
+  jdFileName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RfqAttachment {
+  publicUrl: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export interface RfqRequestItemInput {
+  productId: string;
+  productName?: string;
+  targetSpecs?: string;
+}
+
+export interface RfqRequestPayload {
+  fullName: string;
+  email: string;
+  companyName?: string;
+  phoneWhatsapp?: string;
+  destinationPort: string;
+  incoterm: string;
+  monthlyVolume: string;
+  packaging?: string;
+  paymentTerms?: string;
+  certificationNeeded?: string;
+  timeline?: string;
+  message: string;
+  locale?: SupportedLocale;
+  items?: RfqRequestItemInput[];
+  attachment?: RfqAttachment;
+}
+
+export type PersonalizationEntityType = 'page' | 'category' | 'product' | 'news' | 'quote_request';
+export type PersonalizationAction = 'view' | 'click' | 'submit';
+
+export interface PersonalizationTrackPayload {
+  entityType: PersonalizationEntityType;
+  action: PersonalizationAction;
+  itemId?: string;
+  route?: string;
+  category?: CategoryType;
+  subCategory?: string;
+  newsCategory?: NewsCategory;
+  locale?: SupportedLocale;
+  metadata?: Record<string, string | number | boolean | null | undefined>;
+  weight?: number;
+}
+
+export interface PersonalizationScoreEntry {
+  key: string;
+  score: number;
+}
+
+export interface PersonalizationProfile {
+  visitorId: string;
+  model: string;
+  isPersonalized: boolean;
+  signalCount: number;
+  segment: string;
+  summary: string;
+  topCategories: PersonalizationScoreEntry[];
+  topSubCategories: PersonalizationScoreEntry[];
+  topNewsCategories: PersonalizationScoreEntry[];
+  topProducts: PersonalizationScoreEntry[];
+  topNews: PersonalizationScoreEntry[];
+  topRoutes: PersonalizationScoreEntry[];
+  lastActiveAt?: string;
+}
+
+export interface PersonalizedRecommendations {
+  visitorId: string;
+  profile: PersonalizationProfile;
+  products: Product[];
+  news: NewsItem[];
+}
+
+export interface ExportStatItem {
+  id: string;
+  commodityCode: string;
+  commodityNameEn: string;
+  commodityNameVi: string;
+  commodityNameZh?: string;
+  category: string;
+  unit: 'Ton' | 'USD';
+  reportingPeriod: string; // e.g. "07/2026"
+  monthVolume?: number;    // Ton
+  monthValueUsd: number;   // USD
+  yearVolume?: number;     // Ton
+  yearValueUsd: number;    // USD
+  momGrowthPercent?: number; // % so với tháng trước
+  yoyGrowthPercent?: number; // % so với cùng kỳ năm trước
+  sortOrder: number;
+  isActive: boolean;
+  notes?: string;
+  updatedAt?: string;
+}
+
