@@ -204,7 +204,21 @@ const SCHEMA_STATEMENTS = [
       created_at text not null default CURRENT_TIMESTAMP,
       updated_at text not null default CURRENT_TIMESTAMP
     )
+  `,
   `
+    create table if not exists gallery_photos (
+      id text primary key,
+      src text not null,
+      alt text not null default '',
+      caption text,
+      category text not null default 'activities',
+      sort_order integer not null default 0,
+      is_active integer not null default 1,
+      created_at text not null default CURRENT_TIMESTAMP,
+      updated_at text not null default CURRENT_TIMESTAMP
+    )
+  `,
+  'create index if not exists idx_gallery_photos_category on gallery_photos(category, sort_order asc)'
 ];
 
 const DEFAULT_PASSWORD_BYTES = 64;
@@ -839,6 +853,71 @@ export const deleteExportStatById = async (client, id) => {
   });
 };
 
+const mapGalleryPhotoRow = (row) => ({
+  id: String(row.id ?? ''),
+  src: String(row.src ?? ''),
+  alt: String(row.alt ?? ''),
+  caption: row.caption ? String(row.caption) : undefined,
+  category: String(row.category ?? 'activities'),
+  sortOrder: Number(row.sort_order ?? 0),
+  isActive: Number(row.is_active ?? 1) !== 0,
+  createdAt: row.created_at ? String(row.created_at) : undefined,
+  updatedAt: row.updated_at ? String(row.updated_at) : undefined
+});
+
+export const listGalleryPhotos = async (client) => {
+  const result = await client.execute('select * from gallery_photos order by sort_order asc, created_at desc');
+  return result.rows.map(mapGalleryPhotoRow);
+};
+
+export const listPublicGalleryPhotos = async (client) => {
+  const result = await client.execute('select * from gallery_photos where is_active = 1 order by sort_order asc, created_at desc');
+  return result.rows.map(mapGalleryPhotoRow);
+};
+
+export const upsertGalleryPhoto = async (client, photo) => {
+  const id = String(photo.id || `gallery-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
+  const src = String(photo.src ?? '').trim();
+  const alt = String(photo.alt ?? '').trim();
+  const caption = photo.caption ? String(photo.caption).trim() : null;
+  const category = ['activities', 'trade-fairs', 'farm-visits'].includes(photo.category)
+    ? photo.category
+    : 'activities';
+  const sortOrder = Number.isFinite(Number(photo.sortOrder)) ? Number(photo.sortOrder) : 0;
+  const isActive = photo.isActive !== false ? 1 : 0;
+
+  await client.execute({
+    sql: `
+      insert into gallery_photos (
+        id, src, alt, caption, category, sort_order, is_active, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      on conflict(id) do update set
+        src = excluded.src,
+        alt = excluded.alt,
+        caption = excluded.caption,
+        category = excluded.category,
+        sort_order = excluded.sort_order,
+        is_active = excluded.is_active,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+    args: [id, src, alt, caption, category, sortOrder, isActive]
+  });
+
+  const res = await client.execute({
+    sql: 'select * from gallery_photos where id = ? limit 1',
+    args: [id]
+  });
+  return mapGalleryPhotoRow(res.rows[0]);
+};
+
+export const deleteGalleryPhotoById = async (client, id) => {
+  await client.execute({
+    sql: 'delete from gallery_photos where id = ?',
+    args: [String(id)]
+  });
+};
+
+
 export const getContentSnapshot = async (client) => {
   const [products, news, categories, careers] = await Promise.all([listProducts(client), listNews(client), listCategories(client), listCareers(client)]);
   return { products, news, categories, careers };
@@ -1255,15 +1334,33 @@ export const seedStaticJsonData = async (client, projectRoot = path.resolve(__di
   } catch (err) {
     console.warn('[DB] Export statistics seed warning:', err.message);
   }
+
+  // 5. Gallery Photos
+  try {
+    const existingPhotos = await client.execute('select count(*) as cnt from gallery_photos');
+    if (Number(existingPhotos.rows[0]?.cnt ?? 0) === 0) {
+      const galleryFile = path.join(projectRoot, 'data', 'gallery.json');
+      if (existsSync(galleryFile)) {
+        const photosList = JSON.parse(await fs.readFile(galleryFile, 'utf8'));
+        for (const item of photosList) {
+          await upsertGalleryPhoto(client, item);
+        }
+        console.log(`[DB] Seeded ${photosList.length} gallery photos from data/gallery.json`);
+      }
+    }
+  } catch (err) {
+    console.warn('[DB] Gallery seed warning:', err.message);
+  }
 };
 
 export const syncDatabaseToStaticJson = async (client, projectRoot = path.resolve(__dirname, '..')) => {
   try {
-    const [products, news, categories, exportStats] = await Promise.all([
+    const [products, news, categories, exportStats, gallery] = await Promise.all([
       listProducts(client),
       listNews(client),
       listCategories(client),
-      listExportStats(client)
+      listExportStats(client),
+      listGalleryPhotos(client)
     ]);
     const dataDir = path.join(projectRoot, 'data');
     if (existsSync(dataDir)) {
@@ -1271,7 +1368,8 @@ export const syncDatabaseToStaticJson = async (client, projectRoot = path.resolv
         fs.writeFile(path.join(dataDir, 'products.json'), JSON.stringify(products, null, 2), 'utf8'),
         fs.writeFile(path.join(dataDir, 'news.json'), JSON.stringify(news, null, 2), 'utf8'),
         fs.writeFile(path.join(dataDir, 'categories.json'), JSON.stringify(categories, null, 2), 'utf8'),
-        fs.writeFile(path.join(dataDir, 'export-stats.json'), JSON.stringify(exportStats, null, 2), 'utf8')
+        fs.writeFile(path.join(dataDir, 'export-stats.json'), JSON.stringify(exportStats, null, 2), 'utf8'),
+        fs.writeFile(path.join(dataDir, 'gallery.json'), JSON.stringify(gallery, null, 2), 'utf8')
       ]);
       console.log('[Sync] Synchronized database changes to data/*.json');
     }

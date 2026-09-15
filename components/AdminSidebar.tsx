@@ -12,6 +12,7 @@ import {
   Plus,
   List,
   LineChart,
+  Images,
 } from 'lucide-react';
 import { appRoutes } from '../lib/routes';
 import { useLocale } from '../context/LocaleContext';
@@ -54,6 +55,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       mapContent: 'Nội dung bản đồ',
       exportStats: 'Biểu đồ sản lượng',
       careers: 'Tuyển dụng',
+      gallery: 'Thư viện ảnh',
       staffPortal: 'Trang nhân viên',
       operationsPortal: 'Cổng vận hành',
       exitHome: 'Quay lại Trang chủ',
@@ -67,6 +69,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       mapContent: 'Map Content',
       exportStats: 'Export Volume',
       careers: 'Careers',
+      gallery: 'Gallery',
       staffPortal: 'Staff Portal',
       operationsPortal: 'Operations Portal',
       exitHome: 'Exit to Home',
@@ -80,6 +83,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       mapContent: '地图内容',
       exportStats: '出口产量统计',
       careers: '招聘',
+      gallery: '活动相册',
       staffPortal: '员工后台',
       operationsPortal: '运营后台',
       exitHome: '返回首页',
@@ -93,6 +97,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     mapContent: 'Nội dung bản đồ',
     exportStats: 'Biểu đồ sản lượng',
     careers: 'Tuyển dụng',
+    gallery: 'Thư viện ảnh',
     staffPortal: 'Trang nhân viên',
     operationsPortal: 'Cổng vận hành',
     exitHome: 'Quay lại Trang chủ',
@@ -324,6 +329,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         >
           <Briefcase size={17} />
           {copy.careers}
+        </Link>
+
+        {/* Gallery (Thư viện ảnh) */}
+        <Link
+          to={appRoutes.adminGallery}
+          className={`${linkBase} ${
+            isSection(appRoutes.adminGallery) ? linkActive : linkInactive
+          }`}
+        >
+          <Images size={17} />
+          {copy.gallery}
         </Link>
       </nav>
 

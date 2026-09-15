@@ -278,3 +278,17 @@ export interface ExportStatItem {
   updatedAt?: string;
 }
 
+export type GalleryCategory = 'activities' | 'trade-fairs' | 'farm-visits';
+
+export interface GalleryPhotoItem {
+  id: string;
+  src: string;
+  alt: string;
+  caption?: string;
+  category: GalleryCategory;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

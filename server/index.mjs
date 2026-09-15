@@ -38,7 +38,10 @@ import {
   syncDatabaseToStaticJson,
   listExportStats,
   upsertExportStat,
-  deleteExportStatById
+  deleteExportStatById,
+  listGalleryPhotos,
+  upsertGalleryPhoto,
+  deleteGalleryPhotoById
 } from './db.mjs';
 import { loadProjectEnv } from './loadEnv.mjs';
 import {
@@ -957,6 +960,15 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
       }
     });
 
+    app.get('/api/gallery', async (request, response) => {
+      try {
+        const photos = await listGalleryPhotos(request.app.locals.db);
+        response.json({ photos });
+      } catch (error) {
+        response.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load gallery photos.' });
+      }
+    });
+
     app.get('/api/personalization/recommendations', async (request, response) => {
       try {
         const productLimit = Math.max(1, Math.min(8, Number(request.query?.productLimit) || 4));
@@ -1316,6 +1328,34 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         response.json({ ok: true });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete export statistic.' });
+      }
+    });
+
+    // ── Gallery Photos ──────────────────────────────────────────
+
+    app.post('/api/admin/gallery/upsert', requireAdmin, async (request, response) => {
+      try {
+        const photo = request.body?.photo;
+        if (!photo || typeof photo !== 'object' || !photo.src) {
+          response.status(400).json({ error: 'Photo data with valid image src is required.' });
+          return;
+        }
+
+        const savedPhoto = await upsertGalleryPhoto(request.app.locals.db, photo);
+        void syncDatabaseToStaticJson(request.app.locals.db, projectRoot);
+        response.json({ ok: true, photo: savedPhoto });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save gallery photo.' });
+      }
+    });
+
+    app.delete('/api/admin/gallery/:id', requireAdmin, async (request, response) => {
+      try {
+        await deleteGalleryPhotoById(request.app.locals.db, request.params.id);
+        void syncDatabaseToStaticJson(request.app.locals.db, projectRoot);
+        response.json({ ok: true });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to delete gallery photo.' });
       }
     });
 

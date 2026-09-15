@@ -2,6 +2,7 @@ import {
   CareerItem,
   NewsItem,
   ExportStatItem,
+  GalleryPhotoItem,
   PersonalizedRecommendations,
   PersonalizationTrackPayload,
   Product,
@@ -272,5 +273,18 @@ export const api = {
   deleteExportStat: (id: string) =>
     apiRequest<{ ok: true }>(`/api/admin/export-stats/${encodeURIComponent(id)}`, {
       method: 'DELETE'
+    }),
+  // Gallery
+  getGallery: () =>
+    apiRequest<{ photos: GalleryPhotoItem[] }>('/api/gallery'),
+  upsertGalleryPhoto: (photo: Partial<GalleryPhotoItem>) =>
+    apiRequest<{ ok: true; photo: GalleryPhotoItem }>('/api/admin/gallery/upsert', {
+      method: 'POST',
+      body: { photo }
+    }),
+  deleteGalleryPhoto: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/admin/gallery/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     })
 };
+

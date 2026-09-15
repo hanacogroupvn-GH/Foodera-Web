@@ -28,6 +28,7 @@ const AdminInventory = lazy(() => import('./pages/Admin/Inventory'));
 const AdminNews = lazy(() => import('./pages/Admin/News'));
 const AdminCareers = lazy(() => import('./pages/Admin/Careers'));
 const AdminExportStats = lazy(() => import('./pages/Admin/ExportStats'));
+const AdminGallery = lazy(() => import('./pages/Admin/Gallery'));
 const AdminInteractiveMapContent = lazy(() => import('./pages/Admin/InteractiveMapContent'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -189,8 +190,18 @@ const AppRoutes: React.FC = () => {
                   path={appRoutes.adminExportStats}
                   element={
                     <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载出口统计...' : 'Loading export statistics...'} compact />}>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载出口统计...' : locale === 'vi' ? 'Đang tải thống kê xuất khẩu...' : 'Loading export statistics...'} compact />}>
                         <AdminExportStats />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path={appRoutes.adminGallery}
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载相册管理...' : locale === 'vi' ? 'Đang tải quản lý thư viện ảnh...' : 'Loading gallery CMS...'} compact />}>
+                        <AdminGallery />
                       </Suspense>
                     </ProtectedRoute>
                   }

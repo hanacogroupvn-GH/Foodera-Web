@@ -18,6 +18,7 @@ export const appRoutes = {
   adminNews: '/admin/news',
   adminCareers: '/admin/careers',
   adminExportStats: '/admin/export-stats',
+  adminGallery: '/admin/gallery',
   adminMapContent: '/admin/interactive-map',
   productById: (id: string) => `/product/item/${encodeURIComponent(id)}`,
   productBySlug: (slugOrId: string) => `/product/item/${encodeURIComponent(slugOrId)}`,

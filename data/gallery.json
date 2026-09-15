@@ -1,0 +1,164 @@
+[
+  {
+    "id": "gallery-01",
+    "src": "/media/gallery/gallery-team-group-photo.webp",
+    "alt": "The FoodEra team",
+    "caption": "The FoodEra team",
+    "category": "activities",
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "id": "gallery-02",
+    "src": "/media/gallery/gallery-meeting-product-portfolio.webp",
+    "alt": "Team reviewing the FoodEra product portfolio",
+    "caption": "Reviewing our product portfolio",
+    "category": "activities",
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "id": "gallery-03",
+    "src": "/media/gallery/gallery-dashboard-presentation.webp",
+    "alt": "Team meeting reviewing sales and export performance",
+    "caption": "Sales & export performance review",
+    "category": "activities",
+    "sortOrder": 3,
+    "isActive": true
+  },
+  {
+    "id": "gallery-04",
+    "src": "/media/gallery/gallery-product-bags-lineup.webp",
+    "alt": "Cashew, rice, and black pepper sample bags",
+    "caption": "Product samples ready for review",
+    "category": "activities",
+    "sortOrder": 4,
+    "isActive": true
+  },
+  {
+    "id": "gallery-05",
+    "src": "/media/gallery/gallery-cashew-ww320-sample.webp",
+    "alt": "Quality check of Cashew Nut WW320 sample",
+    "caption": "Quality check — Cashew Nut WW320",
+    "category": "activities",
+    "sortOrder": 5,
+    "isActive": true
+  },
+  {
+    "id": "gallery-06",
+    "src": "/media/gallery/gallery-arabica-coffee-sample.webp",
+    "alt": "Arabica Coffee S13 full washed sample",
+    "caption": "Arabica Coffee S13 — Full Washed",
+    "category": "activities",
+    "sortOrder": 6,
+    "isActive": true
+  },
+  {
+    "id": "gallery-07",
+    "src": "/media/gallery/gallery-japonica-rice-sample-1.webp",
+    "alt": "Vietnam Japonica Rice sample inspection",
+    "caption": "Vietnam Japonica Rice — 5% Broken",
+    "category": "activities",
+    "sortOrder": 7,
+    "isActive": true
+  },
+  {
+    "id": "gallery-08",
+    "src": "/media/gallery/gallery-japonica-rice-sample-2.webp",
+    "alt": "Vietnam Japonica Rice sample inspection",
+    "caption": "Vietnam Japonica Rice — 5% Broken",
+    "category": "activities",
+    "sortOrder": 8,
+    "isActive": true
+  },
+  {
+    "id": "gallery-09",
+    "src": "/media/gallery/gallery-sourcing-vietnam-forum-entrance.webp",
+    "alt": "FoodEra representatives at the Sourcing Vietnam – Export Forum 2026 entrance",
+    "caption": "Sourcing Vietnam – Export Forum 2026",
+    "category": "trade-fairs",
+    "sortOrder": 9,
+    "isActive": true
+  },
+  {
+    "id": "gallery-10",
+    "src": "/media/gallery/gallery-sourcing-vietnam-rice-booth.webp",
+    "alt": "Visitors exploring rice varieties at the Sourcing Vietnam exhibition floor",
+    "caption": "Exploring rice varieties on the show floor",
+    "category": "trade-fairs",
+    "sortOrder": 10,
+    "isActive": true
+  },
+  {
+    "id": "gallery-11",
+    "src": "/media/gallery/gallery-sourcing-vietnam-rice-sample-check.webp",
+    "alt": "Inspecting rice samples at a Sourcing Vietnam exhibitor booth",
+    "caption": "Inspecting rice samples",
+    "category": "trade-fairs",
+    "sortOrder": 11,
+    "isActive": true
+  },
+  {
+    "id": "gallery-12",
+    "src": "/media/gallery/gallery-sourcing-vietnam-dak-lak-pavilion.webp",
+    "alt": "FoodEra team member at the Đắk Lắk Pavilion, Sourcing Vietnam 2026",
+    "caption": "Đắk Lắk Pavilion — Connecting and Reaching Further",
+    "category": "trade-fairs",
+    "sortOrder": 12,
+    "isActive": true
+  },
+  {
+    "id": "gallery-13",
+    "src": "/media/gallery/gallery-sourcing-vietnam-hcmc-pavilion.webp",
+    "alt": "FoodEra team at the Ho Chi Minh City Pavilion, Sourcing Vietnam 2026",
+    "caption": "Ho Chi Minh City Pavilion",
+    "category": "trade-fairs",
+    "sortOrder": 13,
+    "isActive": true
+  },
+  {
+    "id": "gallery-14",
+    "src": "/media/gallery/gallery-sourcing-vietnam-minh-han-booth.webp",
+    "alt": "FoodEra team meeting spice supplier Minh Hân at Sourcing Vietnam 2026",
+    "caption": "Meeting spice supplier Minh Hân",
+    "category": "trade-fairs",
+    "sortOrder": 14,
+    "isActive": true
+  },
+  {
+    "id": "gallery-15",
+    "src": "/media/gallery/gallery-sourcing-vietnam-business-networking.webp",
+    "alt": "Business Networking zone at Sourcing Vietnam – Export Forum 2026",
+    "caption": "Business Networking zone",
+    "category": "trade-fairs",
+    "sortOrder": 15,
+    "isActive": true
+  },
+  {
+    "id": "gallery-16",
+    "src": "/media/gallery/gallery-sourcing-vietnam-b2b-meeting-1.webp",
+    "alt": "FoodEra team in a B2B meeting with international buyers at Sourcing Vietnam 2026",
+    "caption": "B2B meeting with international buyers",
+    "category": "trade-fairs",
+    "sortOrder": 16,
+    "isActive": true
+  },
+  {
+    "id": "gallery-17",
+    "src": "/media/gallery/gallery-sourcing-vietnam-b2b-meeting-2.webp",
+    "alt": "FoodEra team discussing partnership opportunities at Sourcing Vietnam 2026",
+    "caption": "Discussing partnership opportunities",
+    "category": "trade-fairs",
+    "sortOrder": 17,
+    "isActive": true
+  },
+  {
+    "id": "gallery-18",
+    "src": "/media/news/slovakia-delegation-dak-lak-coffee-farm.webp",
+    "alt": "FoodEra team hosting Slovak coffee import partners at a Robusta farm in Đắk Lắk, Vietnam",
+    "caption": "Slovak partners visiting our Robusta farms in Đắk Lắk",
+    "category": "farm-visits",
+    "sortOrder": 18,
+    "isActive": true
+  }
+]
