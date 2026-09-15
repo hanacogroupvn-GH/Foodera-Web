@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ExportStatItem } from '../types';
 import { useLocale } from '../context/LocaleContext';
+import { api } from '../lib/apiClient';
 import defaultStatsData from '../data/export-stats.json';
-import { Layers, DollarSign, Scale, Calendar, Info, TrendingUp, BarChart2 } from 'lucide-react';
+import { Layers, DollarSign, Scale, Calendar, Info, TrendingUp, BarChart2, ChevronDown } from 'lucide-react';
 
 export interface AgriExportLineChartProps {
   data?: ExportStatItem[];
@@ -12,6 +13,34 @@ export interface AgriExportLineChartProps {
   showHeader?: boolean;
   className?: string;
 }
+
+interface PeriodDetails {
+  month: number;
+  year: number;
+  raw: string;
+}
+
+const parsePeriodDetails = (periodStr?: string): PeriodDetails => {
+  if (!periodStr) return { month: 7, year: 2026, raw: '07/2026' };
+  const parts = String(periodStr).trim().split('/');
+  if (parts.length === 2) {
+    const m = parseInt(parts[0], 10);
+    const y = parseInt(parts[1], 10);
+    if (!isNaN(m) && !isNaN(y)) {
+      return { month: m, year: y, raw: periodStr };
+    }
+  }
+  return { month: 7, year: 2026, raw: periodStr };
+};
+
+const formatPeriodDisplay = (periodStr: string, locale: string): string => {
+  const { month, year, raw } = parsePeriodDetails(periodStr);
+  if (!raw.includes('/')) return raw;
+  if (locale === 'vi') return `Tháng ${month < 10 ? `0${month}` : month}/${year}`;
+  if (locale === 'zh') return `${year}年${month}月`;
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${monthNames[month - 1] || month} ${year}`;
+};
 
 type MetricType = 'volume' | 'value';
 type SeriesSelection = 'both' | 'month' | 'year';
@@ -118,10 +147,59 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
   className = ''
 }) => {
   const { locale } = useLocale();
-  const rawData: ExportStatItem[] = useMemo(() => {
-    const list = propData && propData.length > 0 ? propData : (defaultStatsData as unknown as ExportStatItem[]);
-    return list.filter((item) => item.isActive !== false).sort((a, b) => a.sortOrder - b.sortOrder);
+  const [fetchedData, setFetchedData] = useState<ExportStatItem[] | null>(null);
+
+  useEffect(() => {
+    if (propData && propData.length > 0) return;
+    let isMounted = true;
+    api.getExportStats()
+      .then((res) => {
+        if (isMounted && res.stats && res.stats.length > 0) {
+          setFetchedData(res.stats);
+        }
+      })
+      .catch(() => {
+        // Keep static fallback
+      });
+    return () => {
+      isMounted = false;
+    };
   }, [propData]);
+
+  const rawData: ExportStatItem[] = useMemo(() => {
+    const list = propData && propData.length > 0
+      ? propData
+      : fetchedData && fetchedData.length > 0
+      ? fetchedData
+      : (defaultStatsData as unknown as ExportStatItem[]);
+    return list.filter((item) => item.isActive !== false).sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [propData, fetchedData]);
+
+  // Extract all available periods, sorted newest to oldest
+  const availablePeriods = useMemo(() => {
+    const periods = Array.from(new Set(rawData.map((d) => d.reportingPeriod).filter(Boolean)));
+    return periods.sort((a, b) => {
+      const pA = parsePeriodDetails(a);
+      const pB = parsePeriodDetails(b);
+      if (pA.year !== pB.year) return pB.year - pA.year;
+      return pB.month - pA.month;
+    });
+  }, [rawData]);
+
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('');
+
+  useEffect(() => {
+    if (availablePeriods.length > 0 && (!selectedPeriod || !availablePeriods.includes(selectedPeriod))) {
+      setSelectedPeriod(availablePeriods[0]);
+    }
+  }, [availablePeriods, selectedPeriod]);
+
+  // Filter items by the chosen period
+  const periodFilteredData = useMemo(() => {
+    if (!selectedPeriod) return rawData;
+    const filtered = rawData.filter((d) => d.reportingPeriod === selectedPeriod);
+    return filtered.length > 0 ? filtered : rawData;
+  }, [rawData, selectedPeriod]);
 
   const [metric, setMetric] = useState<MetricType>('volume');
   const [series, setSeries] = useState<SeriesSelection>('both');
@@ -132,26 +210,33 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
   // Filter items for chart (if in volume mode, filter commodities that have volume)
   const chartItems = useMemo(() => {
     if (metric === 'volume') {
-      return rawData.filter((d) => d.monthVolume != null && d.yearVolume != null);
+      return periodFilteredData.filter((d) => d.monthVolume != null && d.yearVolume != null);
     }
-    return rawData;
-  }, [rawData, metric]);
+    return periodFilteredData;
+  }, [periodFilteredData, metric]);
 
-  // Labels and copy
+  const periodInfo = useMemo(() => parsePeriodDetails(selectedPeriod), [selectedPeriod]);
+  const monthNum = periodInfo.month;
+  const yearNum = periodInfo.year;
+  const monthPadded = monthNum < 10 ? `0${monthNum}` : `${monthNum}`;
+  const monthNamesEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNameEn = monthNamesEn[monthNum - 1] || `${monthNum}`;
+
+  // Labels and copy dynamically adapted to the selected reporting period
   const copy = useMemo(() => {
     if (locale === 'zh') {
       return {
         defaultTitle: '越南主要农产品出口统计与产量',
-        defaultSubtitle: '越南海关总署官方数据报告 (2026年7月与累计)',
+        defaultSubtitle: `越南海关总署官方数据报告 (${yearNum}年${monthNum}月与累计)`,
         metricVolume: '出口产量 (吨 - Ton)',
         metricValue: '出口金额 (百万美元 - Million USD)',
         seriesBoth: '对比月度与年度',
-        seriesMonth: '当月 (7/2026)',
-        seriesYear: '累计 (7个月)',
-        monthLegend: '月度 (7/2026)',
-        yearLegend: '年度累计 (7个月)',
-        totalVolume: '7个月累计总产量',
-        totalValue: '7个月累计总金额',
+        seriesMonth: `当月 (${monthNum}/${yearNum})`,
+        seriesYear: `累计 (${monthNum}个月)`,
+        monthLegend: `月度 (${monthNum}/${yearNum})`,
+        yearLegend: `年度累计 (${monthNum}个月)`,
+        totalVolume: `${monthNum}个月累计总产量`,
+        totalValue: `${monthNum}个月累计总金额`,
         topCommodity: '最大出口类目',
         sourceNote: '来源：越南海关总署 (Customs Table 14B/TCHQ)',
         momLabel: '环比 (MoM)',
@@ -159,22 +244,23 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
         tons: '吨',
         millionUsd: '百万美元',
         chartLine: '折线图',
-        chartBar: '柱状图'
+        chartBar: '柱状图',
+        periodLabel: '统计周期'
       };
     }
     if (locale === 'vi') {
       return {
         defaultTitle: 'Biểu đồ Sản lượng & Kim ngạch Xuất khẩu Nông sản',
-        defaultSubtitle: 'Số liệu chính thức từ Tổng cục Hải quan Việt Nam (Tháng 7/2026 & Lũy kế)',
+        defaultSubtitle: `Số liệu chính thức từ Tổng cục Hải quan Việt Nam (Tháng ${monthPadded}/${yearNum} & Lũy kế)`,
         metricVolume: 'Sản lượng (Tấn)',
         metricValue: 'Kim ngạch (Triệu USD)',
         seriesBoth: 'Cả tháng & năm',
-        seriesMonth: 'Tháng 7/2026',
-        seriesYear: 'Lũy kế 7T',
-        monthLegend: 'Tháng 7/2026',
-        yearLegend: 'Lũy kế 7 tháng 2026',
-        totalVolume: 'Tổng sản lượng 7T',
-        totalValue: 'Tổng kim ngạch 7T',
+        seriesMonth: `Tháng ${monthPadded}/${yearNum}`,
+        seriesYear: `Lũy kế ${monthNum}T`,
+        monthLegend: `Tháng ${monthPadded}/${yearNum}`,
+        yearLegend: `Lũy kế ${monthNum} tháng ${yearNum}`,
+        totalVolume: `Tổng sản lượng ${monthNum}T`,
+        totalValue: `Tổng kim ngạch ${monthNum}T`,
         topCommodity: 'Mặt hàng dẫn đầu',
         sourceNote: 'Nguồn: Tổng cục Hải quan (Biểu số 14B/TCHQ)',
         momLabel: 'So với tháng trước',
@@ -182,21 +268,22 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
         tons: 'Tấn',
         millionUsd: 'Triệu USD',
         chartLine: 'Đường',
-        chartBar: 'Cột'
+        chartBar: 'Cột',
+        periodLabel: 'Kỳ báo cáo'
       };
     }
     return {
       defaultTitle: 'Vietnam Agricultural Export Volume & Value',
-      defaultSubtitle: 'Official Statistics by Vietnam General Department of Customs (July 2026 & YTD)',
+      defaultSubtitle: `Official Statistics by Vietnam General Department of Customs (${monthNameEn} ${yearNum} & YTD)`,
       metricVolume: 'Volume (Metric Tons)',
       metricValue: 'Export Turnover (Million USD)',
       seriesBoth: 'Month & Year',
-      seriesMonth: 'Jul 2026',
-      seriesYear: '7M YTD',
-      monthLegend: 'Month (Jul 2026)',
-      yearLegend: 'Year-to-Date (7 Months)',
-      totalVolume: 'Total 7-Month Volume',
-      totalValue: 'Total 7-Month Turnover',
+      seriesMonth: `${monthNameEn} ${yearNum}`,
+      seriesYear: `${monthNum}M YTD`,
+      monthLegend: `Month (${monthNameEn} ${yearNum})`,
+      yearLegend: `Year-to-Date (${monthNum} Months)`,
+      totalVolume: `Total ${monthNum}-Month Volume`,
+      totalValue: `Total ${monthNum}-Month Turnover`,
       topCommodity: 'Top Export Line',
       sourceNote: 'Source: Vietnam General Department of Customs (Table 14B/TCHQ)',
       momLabel: 'MoM Change',
@@ -204,9 +291,10 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
       tons: 'Tons',
       millionUsd: 'M USD',
       chartLine: 'Line',
-      chartBar: 'Bar'
+      chartBar: 'Bar',
+      periodLabel: 'Period'
     };
-  }, [locale]);
+  }, [locale, monthNum, yearNum, monthPadded, monthNameEn]);
 
   const getItemName = (item: ExportStatItem) => {
     if (locale === 'vi') return item.commodityNameVi || item.commodityNameEn;
@@ -367,19 +455,19 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
 
   // Overall calculations for summary statistics cards
   const totalTurnoverYear = useMemo(
-    () => rawData.reduce((acc, curr) => acc + (curr.yearValueUsd || 0), 0) / 1_000_000_000,
-    [rawData]
+    () => periodFilteredData.reduce((acc, curr) => acc + (curr.yearValueUsd || 0), 0) / 1_000_000_000,
+    [periodFilteredData]
   );
 
   const totalVolumeYear = useMemo(
-    () => rawData.reduce((acc, curr) => acc + (curr.yearVolume || 0), 0) / 1_000_000,
-    [rawData]
+    () => periodFilteredData.reduce((acc, curr) => acc + (curr.yearVolume || 0), 0) / 1_000_000,
+    [periodFilteredData]
   );
 
   const topTurnoverCommodity = useMemo(() => {
-    if (rawData.length === 0) return null;
-    return [...rawData].sort((a, b) => b.yearValueUsd - a.yearValueUsd)[0];
-  }, [rawData]);
+    if (periodFilteredData.length === 0) return null;
+    return [...periodFilteredData].sort((a, b) => b.yearValueUsd - a.yearValueUsd)[0];
+  }, [periodFilteredData]);
 
   const hoveredItem = hoveredIndex !== null ? chartItems[hoveredIndex] : null;
 
@@ -403,6 +491,32 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
               {subtitle || copy.defaultSubtitle}
             </p>
           </div>
+
+          {/* Period Selector (Kỳ báo cáo) */}
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/80 px-4 py-2 rounded-2xl shadow-sm self-start lg:self-center">
+            <Calendar size={15} className="text-emerald-700 flex-shrink-0" />
+            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">{copy.periodLabel}:</span>
+            {availablePeriods.length > 1 ? (
+              <div className="relative">
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  className="appearance-none bg-white text-xs font-black text-emerald-950 pl-3 pr-8 py-1.5 rounded-xl border border-emerald-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                >
+                  {availablePeriods.map((p) => (
+                    <option key={p} value={p} className="text-gray-900 font-semibold">
+                      {formatPeriodDisplay(p, locale)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
+              </div>
+            ) : (
+              <span className="text-xs font-black text-emerald-950">
+                {formatPeriodDisplay(selectedPeriod, locale)}
+              </span>
+            )}
+          </div>
         </div>
       )}
 
@@ -410,6 +524,34 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
       {showControls && (
         <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-gray-100 mb-6">
           <div className="flex flex-wrap items-center gap-3">
+            {/* Period Selector (when showHeader is false) */}
+            {!showHeader && (
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-2xl shadow-sm">
+                <Calendar size={13} className="text-emerald-700 flex-shrink-0" />
+                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">{copy.periodLabel}:</span>
+                {availablePeriods.length > 1 ? (
+                  <div className="relative">
+                    <select
+                      value={selectedPeriod}
+                      onChange={(e) => setSelectedPeriod(e.target.value)}
+                      className="appearance-none bg-white text-xs font-black text-emerald-950 pl-2.5 pr-7 py-1 rounded-xl border border-emerald-200 shadow-sm focus:outline-none cursor-pointer"
+                    >
+                      {availablePeriods.map((p) => (
+                        <option key={p} value={p} className="text-gray-900 font-semibold">
+                          {formatPeriodDisplay(p, locale)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
+                  </div>
+                ) : (
+                  <span className="text-xs font-black text-emerald-950">
+                    {formatPeriodDisplay(selectedPeriod, locale)}
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Metric Switcher: Volume vs Value */}
             <div className="inline-flex bg-gray-100/90 p-1 rounded-2xl border border-gray-200 shadow-inner">
               <button
@@ -924,7 +1066,7 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
                 {getItemName(hoveredItem)}
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 font-bold uppercase tracking-wider text-white/80">
-                {hoveredItem.reportingPeriod}
+                {formatPeriodDisplay(hoveredItem.reportingPeriod, locale)}
               </span>
             </div>
 

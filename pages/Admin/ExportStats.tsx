@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ExportStatItem } from '../../types';
 import { api } from '../../lib/apiClient';
 import { AdminSidebar } from '../../components/AdminSidebar';
@@ -25,6 +25,7 @@ const ExportStats: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ExportStatItem | null>(null);
+  const [selectedPeriodFilter, setSelectedPeriodFilter] = useState<string>('all');
 
   // Form state
   const [formData, setFormData] = useState<Partial<ExportStatItem>>({
@@ -46,6 +47,21 @@ const ExportStats: React.FC = () => {
     notes: ''
   });
 
+  const availablePeriods = useMemo(() => {
+    const periods = Array.from(new Set(stats.map((s) => s.reportingPeriod).filter(Boolean)));
+    return periods.sort((a, b) => {
+      const [mA, yA] = a.split('/').map(Number);
+      const [mB, yB] = b.split('/').map(Number);
+      if (yA !== yB) return (yB || 0) - (yA || 0);
+      return (mB || 0) - (mA || 0);
+    });
+  }, [stats]);
+
+  const filteredStats = useMemo(() => {
+    if (selectedPeriodFilter === 'all') return stats;
+    return stats.filter((s) => s.reportingPeriod === selectedPeriodFilter);
+  }, [stats, selectedPeriodFilter]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -66,6 +82,9 @@ const ExportStats: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingItem(null);
+    const defaultPeriod = selectedPeriodFilter !== 'all'
+      ? selectedPeriodFilter
+      : availablePeriods[0] || '07/2026';
     setFormData({
       id: `stat-${Date.now()}`,
       commodityCode: '',
@@ -74,14 +93,14 @@ const ExportStats: React.FC = () => {
       commodityNameZh: '',
       category: 'Agriculture',
       unit: 'Ton',
-      reportingPeriod: '07/2026',
+      reportingPeriod: defaultPeriod,
       monthVolume: undefined,
       monthValueUsd: 0,
       yearVolume: undefined,
       yearValueUsd: 0,
       momGrowthPercent: undefined,
       yoyGrowthPercent: undefined,
-      sortOrder: stats.length + 1,
+      sortOrder: filteredStats.length + 1,
       isActive: true,
       notes: ''
     });
@@ -201,13 +220,54 @@ const ExportStats: React.FC = () => {
 
         {/* Data Management Table */}
         <div className="bg-white rounded-3xl border border-foodera-stone-200/80 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-foodera-stone-100 flex items-center justify-between">
-            <h3 className="text-lg font-black text-foodera-forest">
-              Danh sách Số liệu Nông sản ({stats.length} mặt hàng)
-            </h3>
-            <span className="text-xs font-semibold px-3 py-1 bg-foodera-lime/20 text-foodera-forest rounded-full">
-              Kỳ báo cáo: 07/2026
-            </span>
+          <div className="p-6 border-b border-foodera-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-black text-foodera-forest">
+                Danh sách Số liệu Nông sản ({filteredStats.length} mặt hàng)
+              </h3>
+              <p className="text-xs text-foodera-stone-500 mt-0.5">
+                Quản lý số liệu xuất khẩu theo từng kỳ tháng/năm
+              </p>
+            </div>
+
+            {/* Filter by Period Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-foodera-stone-100/80 p-1.5 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setSelectedPeriodFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  selectedPeriodFilter === 'all'
+                    ? 'bg-foodera-forest text-white shadow-sm'
+                    : 'text-foodera-stone-600 hover:text-foodera-forest'
+                }`}
+              >
+                Tất cả ({stats.length})
+              </button>
+              {availablePeriods.map((p) => {
+                const count = stats.filter((s) => s.reportingPeriod === p).length;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setSelectedPeriodFilter(p)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      selectedPeriodFilter === p
+                        ? 'bg-foodera-forest text-white shadow-sm'
+                        : 'text-foodera-stone-600 hover:text-foodera-forest'
+                    }`}
+                  >
+                    <span>Kỳ {p}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-md ${
+                        selectedPeriodFilter === p ? 'bg-white/20 text-white' : 'bg-white text-foodera-stone-500'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -216,6 +276,7 @@ const ExportStats: React.FC = () => {
                 <tr>
                   <th className="py-3.5 px-4">#</th>
                   <th className="py-3.5 px-4">Tên Nông sản</th>
+                  <th className="py-3.5 px-4">Kỳ</th>
                   <th className="py-3.5 px-4">Đơn vị</th>
                   <th className="py-3.5 px-4">Sản lượng Tháng</th>
                   <th className="py-3.5 px-4">Kim ngạch Tháng</th>
@@ -226,7 +287,7 @@ const ExportStats: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-foodera-stone-100">
-                {stats.map((item, index) => (
+                {filteredStats.map((item, index) => (
                   <tr key={item.id} className="hover:bg-foodera-stone-50/60 transition-colors">
                     <td className="py-4 px-4 font-bold text-foodera-stone-400">
                       {item.sortOrder || index + 1}
@@ -238,6 +299,11 @@ const ExportStats: React.FC = () => {
                       <div className="text-[11px] text-foodera-stone-500 font-medium">
                         {item.commodityNameEn} {item.commodityNameZh ? `• ${item.commodityNameZh}` : ''}
                       </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60">
+                        {item.reportingPeriod || '07/2026'}
+                      </span>
                     </td>
                     <td className="py-4 px-4">
                       <span className="px-2 py-0.5 rounded-md bg-foodera-stone-100 font-bold text-foodera-stone-700">
@@ -382,15 +448,24 @@ const ExportStats: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-foodera-stone-700 mb-1">
-                      Kỳ báo cáo
+                      Kỳ báo cáo <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
+                      list="existing-periods-list"
                       value={formData.reportingPeriod || '07/2026'}
                       onChange={(e) => setFormData({ ...formData, reportingPeriod: e.target.value })}
-                      placeholder="07/2026"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-foodera-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-foodera-forest/20"
+                      placeholder="VD: 08/2026 hoặc 07/2026"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-foodera-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-foodera-forest/20 font-bold text-foodera-forest"
                     />
+                    <datalist id="existing-periods-list">
+                      {availablePeriods.map((p) => (
+                        <option key={p} value={p} />
+                      ))}
+                    </datalist>
+                    <span className="text-[10px] text-foodera-stone-400 mt-1 block">
+                      Định dạng MM/YYYY (VD: 08/2026)
+                    </span>
                   </div>
                 </div>
 
