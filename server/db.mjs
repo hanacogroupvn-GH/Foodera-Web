@@ -917,6 +917,17 @@ export const deleteGalleryPhotoById = async (client, id) => {
   });
 };
 
+export const upsertGalleryPhotosBatch = async (client, photos) => {
+  const results = [];
+  for (const photo of photos) {
+    if (photo && photo.src) {
+      const saved = await upsertGalleryPhoto(client, photo);
+      results.push(saved);
+    }
+  }
+  return results;
+};
+
 
 export const getContentSnapshot = async (client) => {
   const [products, news, categories, careers] = await Promise.all([listProducts(client), listNews(client), listCategories(client), listCareers(client)]);

@@ -41,6 +41,7 @@ import {
   deleteExportStatById,
   listGalleryPhotos,
   upsertGalleryPhoto,
+  upsertGalleryPhotosBatch,
   deleteGalleryPhotoById
 } from './db.mjs';
 import { loadProjectEnv } from './loadEnv.mjs';
@@ -1346,6 +1347,22 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         response.json({ ok: true, photo: savedPhoto });
       } catch (error) {
         response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to save gallery photo.' });
+      }
+    });
+
+    app.post('/api/admin/gallery/batch-upsert', requireAdmin, async (request, response) => {
+      try {
+        const photos = request.body?.photos;
+        if (!Array.isArray(photos) || photos.length === 0) {
+          response.status(400).json({ error: 'Photos array is required.' });
+          return;
+        }
+
+        const savedPhotos = await upsertGalleryPhotosBatch(request.app.locals.db, photos);
+        void syncDatabaseToStaticJson(request.app.locals.db, projectRoot);
+        response.json({ ok: true, photos: savedPhotos });
+      } catch (error) {
+        response.status(400).json({ error: error instanceof Error ? error.message : 'Failed to batch save gallery photos.' });
       }
     });
 

@@ -19,8 +19,24 @@ import {
   Loader2,
   ArrowUpDown,
   Tag,
-  Link2
+  Link2,
+  Layers,
+  UploadCloud,
+  RotateCcw,
+  Sparkles,
+  Check
 } from 'lucide-react';
+
+interface BatchItem {
+  id: string;
+  file?: File;
+  previewUrl: string;
+  uploadedUrl?: string;
+  caption: string;
+  alt: string;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  errorMessage?: string;
+}
 
 const CATEGORY_MAP: Record<GalleryCategory, { labelVi: string; labelEn: string; color: string }> = {
   activities: {
@@ -51,7 +67,21 @@ const AdminGallery: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Batch Upload State
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+  const [batchCategory, setBatchCategory] = useState<GalleryCategory>('activities');
+  const [batchCommonCaption, setBatchCommonCaption] = useState('');
+  const [batchStartOrder, setBatchStartOrder] = useState<number>(1);
+  const [batchIsActive, setBatchIsActive] = useState<boolean>(true);
+  const [isBatchSaving, setIsBatchSaving] = useState<boolean>(false);
+  const [isBatchUploading, setIsBatchUploading] = useState<boolean>(false);
+  const [batchInputMode, setBatchInputMode] = useState<'files' | 'urls'>('files');
+  const [pastedUrlsText, setPastedUrlsText] = useState('');
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const batchFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formData, setFormData] = useState<Partial<GalleryPhotoItem>>({
@@ -178,10 +208,202 @@ const AdminGallery: React.FC = () => {
     }
   };
 
+  // ── Batch Upload Handlers ────────────────────────────────────
+  const handleOpenBatchModal = () => {
+    setBatchItems([]);
+    setBatchCategory(activeCategoryTab !== 'all' ? activeCategoryTab : 'activities');
+    setBatchCommonCaption('');
+    setBatchStartOrder(photos.length + 1);
+    setBatchIsActive(true);
+    setPastedUrlsText('');
+    setBatchInputMode('files');
+    setIsBatchModalOpen(true);
+  };
+
+  const processBatchUpload = async (itemsToUpload: BatchItem[]) => {
+    setIsBatchUploading(true);
+    const CONCURRENCY = 3;
+    let nextIndex = 0;
+
+    const runWorker = async () => {
+      while (nextIndex < itemsToUpload.length) {
+        const current = itemsToUpload[nextIndex++];
+        if (!current || current.status === 'success' || !current.file) continue;
+
+        setBatchItems((prev) =>
+          prev.map((it) => (it.id === current.id ? { ...it, status: 'uploading' } : it))
+        );
+
+        try {
+          const uploadedUrl = await uploadCmsImage(current.file, ['gallery']);
+          setBatchItems((prev) =>
+            prev.map((it) =>
+              it.id === current.id
+                ? { ...it, uploadedUrl, status: 'success', errorMessage: undefined }
+                : it
+            )
+          );
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : 'Lỗi khi tải ảnh';
+          setBatchItems((prev) =>
+            prev.map((it) =>
+              it.id === current.id ? { ...it, status: 'error', errorMessage: errMsg } : it
+            )
+          );
+        }
+      }
+    };
+
+    const workerCount = Math.min(CONCURRENCY, itemsToUpload.length);
+    const workers = Array.from({ length: workerCount }, () => runWorker());
+    await Promise.all(workers);
+    setIsBatchUploading(false);
+  };
+
+  const addFilesToBatch = (selectedFiles: FileList | File[]) => {
+    const validFiles = Array.from(selectedFiles).filter((file) => file.type.startsWith('image/'));
+    if (validFiles.length === 0) {
+      toast.error('Vui lòng chọn các file định dạng hình ảnh (PNG, JPG, WebP...).');
+      return;
+    }
+
+    const currentCount = batchItems.length;
+    const newItems: BatchItem[] = validFiles.map((file, idx) => {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      const totalIdx = currentCount + idx + 1;
+      const initialCaption = batchCommonCaption.trim()
+        ? `${batchCommonCaption.trim()} - Ảnh ${totalIdx}`
+        : cleanName;
+      return {
+        id: `batch-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        caption: initialCaption,
+        alt: cleanName,
+        status: 'pending'
+      };
+    });
+
+    setBatchItems((prev) => [...prev, ...newItems]);
+    if (batchFileInputRef.current) {
+      batchFileInputRef.current.value = '';
+    }
+
+    void processBatchUpload(newItems);
+  };
+
+  const handleRetryItem = (item: BatchItem) => {
+    if (!item.file) return;
+    setBatchItems((prev) =>
+      prev.map((it) => (it.id === item.id ? { ...it, status: 'pending', errorMessage: undefined } : it))
+    );
+    void processBatchUpload([item]);
+  };
+
+  const handleRemoveBatchItem = (id: string) => {
+    setBatchItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  const handleApplyCommonCaption = () => {
+    if (!batchCommonCaption.trim()) {
+      toast.error('Vui lòng nhập chú thích chung trước.');
+      return;
+    }
+    const prefix = batchCommonCaption.trim();
+    setBatchItems((prev) =>
+      prev.map((item, idx) => ({
+        ...item,
+        caption: prev.length > 1 ? `${prefix} - Ảnh ${idx + 1}` : prefix,
+        alt: item.alt || prefix
+      }))
+    );
+    toast.success('Đã áp dụng chú thích cho tất cả ảnh!');
+  };
+
+  const handleAddPastedUrls = () => {
+    const urls = pastedUrlsText
+      .split('\n')
+      .map((u) => u.trim())
+      .filter((u) => u.startsWith('http://') || u.startsWith('https://'));
+
+    if (urls.length === 0) {
+      toast.error('Không tìm thấy link ảnh hợp lệ. Mỗi link phải bắt đầu bằng http:// hoặc https://.');
+      return;
+    }
+
+    const currentCount = batchItems.length;
+    const newItems: BatchItem[] = urls.map((url, idx) => {
+      const totalIdx = currentCount + idx + 1;
+      const initialCaption = batchCommonCaption.trim()
+        ? `${batchCommonCaption.trim()} - Ảnh ${totalIdx}`
+        : `Ảnh thư viện ${totalIdx}`;
+      return {
+        id: `batch-url-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        previewUrl: url,
+        uploadedUrl: url,
+        caption: initialCaption,
+        alt: initialCaption,
+        status: 'success'
+      };
+    });
+
+    setBatchItems((prev) => [...prev, ...newItems]);
+    setPastedUrlsText('');
+    setBatchInputMode('files');
+    toast.success(`Đã thêm ${newItems.length} link ảnh!`);
+  };
+
+  const handleSaveBatch = async () => {
+    const validItems = batchItems.filter((it) => it.status === 'success' && it.uploadedUrl);
+    if (validItems.length === 0) {
+      toast.error('Chưa có ảnh nào tải lên thành công để lưu.');
+      return;
+    }
+
+    const pendingCount = batchItems.filter((it) => it.status === 'uploading' || it.status === 'pending').length;
+    if (pendingCount > 0) {
+      toast.error(`Còn ${pendingCount} ảnh đang xử lý tải lên. Vui lòng đợi hoàn tất.`);
+      return;
+    }
+
+    setIsBatchSaving(true);
+    const toastId = toast.loading(`Đang lưu ${validItems.length} ảnh vào thư viện...`);
+    try {
+      const startOrder = Number(batchStartOrder) || 1;
+      const photosToSave: Partial<GalleryPhotoItem>[] = validItems.map((item, idx) => ({
+        id: `gallery-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+        src: item.uploadedUrl!,
+        caption: item.caption.trim() || undefined,
+        alt: item.alt.trim() || item.caption.trim() || 'FoodEra Gallery',
+        category: batchCategory,
+        sortOrder: startOrder + idx,
+        isActive: batchIsActive
+      }));
+
+      const res = await api.upsertGalleryPhotosBatch(photosToSave);
+      if (res.ok) {
+        toast.success(`Đã thêm thành công ${photosToSave.length} ảnh vào thư viện!`, { id: toastId });
+        setIsBatchModalOpen(false);
+        setBatchItems([]);
+        await loadData();
+      } else {
+        throw new Error('Lỗi từ hệ thống khi lưu danh sách ảnh.');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể lưu bộ ảnh.', { id: toastId });
+    } finally {
+      setIsBatchSaving(false);
+    }
+  };
+
   const filteredPhotos = photos.filter((photo) => {
     if (activeCategoryTab === 'all') return true;
     return photo.category === activeCategoryTab;
   });
+
+  const successBatchCount = batchItems.filter((it) => it.status === 'success').length;
+  const uploadingBatchCount = batchItems.filter((it) => it.status === 'uploading' || it.status === 'pending').length;
+  const errorBatchCount = batchItems.filter((it) => it.status === 'error').length;
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">
@@ -204,7 +426,7 @@ const AdminGallery: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => void loadData()}
@@ -216,11 +438,19 @@ const AdminGallery: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={handleOpenBatchModal}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all hover:shadow-md"
+            >
+              <Layers size={18} />
+              Thêm bộ nhiều ảnh
+            </button>
+            <button
+              type="button"
               onClick={handleOpenCreate}
-              className="flex items-center gap-2 px-5 py-2.5 bg-foodera-forest hover:bg-foodera-forest/90 text-white text-sm font-bold rounded-xl shadow-sm transition-all hover:shadow-md"
+              className="flex items-center gap-2 px-4 py-2.5 bg-foodera-forest hover:bg-foodera-forest/90 text-white text-sm font-bold rounded-xl shadow-sm transition-all hover:shadow-md"
             >
               <Plus size={18} />
-              Thêm ảnh mới
+              Thêm 1 ảnh
             </button>
           </div>
         </div>
@@ -278,16 +508,26 @@ const AdminGallery: React.FC = () => {
             </div>
             <h3 className="text-lg font-bold text-gray-800 mb-1">Chưa có ảnh nào trong mục này</h3>
             <p className="text-sm text-gray-500 max-w-md mb-6">
-              Bạn có thể nhấn vào nút bên dưới để tải ảnh trực tiếp từ thiết bị hoặc dán URL ảnh.
+              Bạn có thể tải lên toàn bộ một album ảnh cùng lúc hoặc thêm từng ảnh đơn lẻ.
             </p>
-            <button
-              type="button"
-              onClick={handleOpenCreate}
-              className="flex items-center gap-2 px-5 py-2.5 bg-foodera-forest text-white text-sm font-bold rounded-xl shadow-sm hover:bg-foodera-forest/90 transition-all"
-            >
-              <Plus size={16} />
-              Thêm ảnh vào mục này
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleOpenBatchModal}
+                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-emerald-700 transition-all"
+              >
+                <Layers size={16} />
+                Thêm bộ nhiều ảnh
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                className="flex items-center gap-2 px-5 py-2.5 bg-foodera-forest text-white text-sm font-bold rounded-xl shadow-sm hover:bg-foodera-forest/90 transition-all"
+              >
+                <Plus size={16} />
+                Thêm 1 ảnh
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -380,6 +620,401 @@ const AdminGallery: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── BATCH UPLOAD MODAL ──────────────────────────────────── */}
+        {isBatchModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Modal Header */}
+              <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
+                <div className="flex items-center gap-3">
+                  <span className="p-2.5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100">
+                    <Layers size={20} />
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-black text-gray-900">
+                      Thêm bộ nhiều ảnh vào Thư viện
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Chọn nhiều ảnh cùng lúc, ảnh sẽ tự động nén WebP và tải lên Cloudinary.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsBatchModalOpen(false)}
+                  className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                {/* 1. Batch Settings */}
+                <div className="p-4 bg-gray-50/80 rounded-2xl border border-gray-100 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Category */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Danh mục <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={batchCategory}
+                        onChange={(e) => setBatchCategory(e.target.value as GalleryCategory)}
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white font-medium focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest"
+                      >
+                        <option value="activities">Hoạt động nội bộ</option>
+                        <option value="trade-fairs">Hội chợ & Triển lãm</option>
+                        <option value="farm-visits">Khảo sát nông trại</option>
+                      </select>
+                    </div>
+
+                    {/* Starting Sort Order */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Thứ tự bắt đầu
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={batchStartOrder}
+                        onChange={(e) => setBatchStartOrder(Number(e.target.value) || 1)}
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest"
+                      />
+                    </div>
+
+                    {/* Active toggle */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Trạng thái hiển thị
+                      </label>
+                      <label className="flex items-center gap-2.5 h-[38px] px-3 bg-white border border-gray-200 rounded-xl cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={batchIsActive}
+                          onChange={(e) => setBatchIsActive(e.target.checked)}
+                          className="w-4 h-4 text-foodera-forest rounded focus:ring-foodera-forest"
+                        />
+                        <span className="text-xs font-bold text-gray-700">Hiển thị trên website ngay</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Common Caption Generator */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                      Chú thích chung cho bộ ảnh (Tùy chọn)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="VD: Hội chợ Gulfood Dubai 2026..."
+                        value={batchCommonCaption}
+                        onChange={(e) => setBatchCommonCaption(e.target.value)}
+                        className="flex-1 px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCommonCaption}
+                        disabled={batchItems.length === 0}
+                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-800 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 flex-shrink-0"
+                      >
+                        <Sparkles size={14} className="text-amber-600" />
+                        Áp dụng cho tất cả ({batchItems.length})
+                      </button>
+                    </div>
+                    <span className="text-[11px] text-gray-400 mt-1 block">
+                      Khi bấm áp dụng, hệ thống sẽ tự động đặt tên theo mẫu: "[Chú thích] - Ảnh 1, 2, 3..."
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. Source Selection Tabs */}
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setBatchInputMode('files')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      batchInputMode === 'files'
+                        ? 'bg-foodera-forest text-white shadow-sm'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    <UploadCloud size={14} />
+                    Tải nhiều ảnh từ máy tính
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBatchInputMode('urls')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      batchInputMode === 'urls'
+                        ? 'bg-foodera-forest text-white shadow-sm'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Link2 size={14} />
+                    Dán danh sách link URL
+                  </button>
+                </div>
+
+                {/* File Dropzone */}
+                {batchInputMode === 'files' && (
+                  <div>
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDraggingOver(true);
+                      }}
+                      onDragLeave={() => setIsDraggingOver(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDraggingOver(false);
+                        if (e.dataTransfer.files) {
+                          addFilesToBatch(e.dataTransfer.files);
+                        }
+                      }}
+                      onClick={() => batchFileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
+                        isDraggingOver
+                          ? 'border-emerald-500 bg-emerald-50/60 scale-[1.01]'
+                          : 'border-gray-200 hover:border-emerald-500 bg-gray-50/40 hover:bg-emerald-50/20'
+                      }`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+                        <UploadCloud size={24} />
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800 mb-1">
+                        Kéo thả nhiều ảnh vào đây hoặc nhấn để duyệt file
+                      </h4>
+                      <p className="text-xs text-gray-400">
+                        Chọn cùng lúc nhiều file ảnh (JPG, PNG, WebP, AVIF). Hệ thống nén tự động sang WebP tối ưu.
+                      </p>
+                    </div>
+
+                    <input
+                      ref={batchFileInputRef}
+                      type="file"
+                      multiple
+                      accept={CMS_IMAGE_INPUT_ACCEPT}
+                      onChange={(e) => {
+                        if (e.target.files) addFilesToBatch(e.target.files);
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+
+                {/* URL Paste Mode */}
+                {batchInputMode === 'urls' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Dán danh sách link ảnh (Mỗi link một dòng)
+                      </label>
+                      <textarea
+                        rows={4}
+                        placeholder="https://res.cloudinary.com/.../photo1.jpg&#10;https://res.cloudinary.com/.../photo2.jpg"
+                        value={pastedUrlsText}
+                        onChange={(e) => setPastedUrlsText(e.target.value)}
+                        className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-gray-200 focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddPastedUrls}
+                      className="px-4 py-2 bg-foodera-forest text-white text-xs font-bold rounded-xl hover:bg-foodera-forest/90 transition-colors flex items-center gap-1.5"
+                    >
+                      <Plus size={14} />
+                      Thêm vào danh sách bộ ảnh
+                    </button>
+                  </div>
+                )}
+
+                {/* 3. Items Queue Summary & Grid */}
+                {batchItems.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-3 text-xs font-bold">
+                        <span className="text-gray-700">Tổng cộng: {batchItems.length} ảnh</span>
+                        <span className="text-emerald-600 flex items-center gap-1">
+                          <Check size={13} /> {successBatchCount} đã xong
+                        </span>
+                        {uploadingBatchCount > 0 && (
+                          <span className="text-blue-600 flex items-center gap-1">
+                            <Loader2 size={13} className="animate-spin" /> {uploadingBatchCount} đang nén & tải...
+                          </span>
+                        )}
+                        {errorBatchCount > 0 && (
+                          <span className="text-red-600 flex items-center gap-1">
+                            <AlertCircle size={13} /> {errorBatchCount} lỗi
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => batchFileInputRef.current?.click()}
+                          className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                        >
+                          <Plus size={13} /> Thêm ảnh khác
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBatchItems([])}
+                          className="px-3 py-1.5 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg transition-colors"
+                        >
+                          Xóa danh sách
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Batch Items Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[360px] overflow-y-auto p-1">
+                      {batchItems.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className="p-3 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-2 relative group"
+                        >
+                          {/* Image preview with status badges */}
+                          <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-100">
+                            <img
+                              src={item.previewUrl}
+                              alt={item.caption || 'Preview'}
+                              className="w-full h-full object-cover"
+                            />
+
+                            {/* Status Overlay */}
+                            <div className="absolute top-1.5 left-1.5">
+                              {item.status === 'uploading' && (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-bold backdrop-blur-sm shadow-sm animate-pulse">
+                                  <Loader2 size={11} className="animate-spin" /> Đang tải...
+                                </span>
+                              )}
+                              {item.status === 'pending' && (
+                                <span className="px-2 py-0.5 rounded-full bg-gray-800/80 text-white text-[10px] font-bold backdrop-blur-sm shadow-sm">
+                                  Chờ tải
+                                </span>
+                              )}
+                              {item.status === 'success' && (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600/90 text-white text-[10px] font-bold backdrop-blur-sm shadow-sm">
+                                  <Check size={11} /> Sẵn sàng
+                                </span>
+                              )}
+                              {item.status === 'error' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRetryItem(item)}
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold shadow-sm hover:bg-red-700"
+                                >
+                                  <RotateCcw size={11} /> Thử lại
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Remove button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBatchItem(item.id)}
+                              className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors shadow-sm"
+                              title="Xóa ảnh này khỏi bộ"
+                            >
+                              <X size={12} />
+                            </button>
+
+                            {/* Index */}
+                            <div className="absolute bottom-1.5 right-1.5">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-white">
+                                #{idx + 1}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Editable caption & alt text */}
+                          <div className="space-y-1.5">
+                            <input
+                              type="text"
+                              placeholder="Chú thích ảnh..."
+                              value={item.caption}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setBatchItems((prev) =>
+                                  prev.map((it) => (it.id === item.id ? { ...it, caption: val } : it))
+                                );
+                              }}
+                              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-foodera-forest font-medium"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Alt text SEO..."
+                              value={item.alt}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setBatchItems((prev) =>
+                                  prev.map((it) => (it.id === item.id ? { ...it, alt: val } : it))
+                                );
+                              }}
+                              className="w-full px-2.5 py-1 text-[11px] text-gray-500 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-foodera-forest"
+                            />
+                          </div>
+
+                          {item.errorMessage && (
+                            <p className="text-[10px] text-red-600 truncate" title={item.errorMessage}>
+                              {item.errorMessage}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <div className="text-xs text-gray-500">
+                  {successBatchCount > 0 ? (
+                    <span>
+                      Sẽ lưu <strong className="text-emerald-700">{successBatchCount}</strong> ảnh vào danh mục{' '}
+                      <strong>{CATEGORY_MAP[batchCategory]?.labelVi}</strong>.
+                    </span>
+                  ) : (
+                    <span>Hãy chọn ảnh để bắt đầu tải lên.</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsBatchModalOpen(false)}
+                    className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-100 transition-colors"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveBatch}
+                    disabled={successBatchCount === 0 || isBatchSaving || isBatchUploading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-foodera-forest text-white text-xs font-bold hover:bg-foodera-forest/90 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isBatchSaving ? (
+                      <>
+                        <Loader2 className="animate-spin" size={15} />
+                        Đang lưu dữ liệu...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={15} />
+                        Lưu {successBatchCount > 0 ? `${successBatchCount} ảnh` : 'bộ ảnh'} vào thư viện
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

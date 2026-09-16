@@ -282,6 +282,11 @@ export const api = {
       method: 'POST',
       body: { photo }
     }),
+  upsertGalleryPhotosBatch: (photos: Partial<GalleryPhotoItem>[]) =>
+    apiRequest<{ ok: true; photos: GalleryPhotoItem[] }>('/api/admin/gallery/batch-upsert', {
+      method: 'POST',
+      body: { photos }
+    }),
   deleteGalleryPhoto: (id: string) =>
     apiRequest<{ ok: true }>(`/api/admin/gallery/${encodeURIComponent(id)}`, {
       method: 'DELETE'
