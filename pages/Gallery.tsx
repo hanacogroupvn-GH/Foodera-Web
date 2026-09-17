@@ -10,6 +10,7 @@ interface FarmAlbumMeta {
   key: string;
   title: Record<SupportedLocale, string>;
   shortLabel: Record<SupportedLocale, string>;
+  badge: Record<SupportedLocale, string>;
   desc: Record<SupportedLocale, string>;
   icon: string;
   badgeClass: string;
@@ -24,6 +25,11 @@ const FARM_ALBUMS: Record<string, FarmAlbumMeta> = {
       zh: '榴莲种植园实地考察'
     },
     shortLabel: {
+      vi: 'Vườn Sầu Riêng',
+      en: 'Durian Plantation',
+      zh: '榴莲果园'
+    },
+    badge: {
       vi: 'Vườn Sầu Riêng',
       en: 'Durian Plantation',
       zh: '榴莲果园'
@@ -48,6 +54,11 @@ const FARM_ALBUMS: Record<string, FarmAlbumMeta> = {
       en: 'Coffee Plantation',
       zh: '咖啡庄园'
     },
+    badge: {
+      vi: 'Nông Trường Cà Phê',
+      en: 'Coffee Plantation',
+      zh: '咖啡庄园'
+    },
     desc: {
       vi: 'Khảo sát thực địa vùng nguyên liệu cà phê Robusta trọng điểm tại Đắk Lắk, đánh giá tỷ lệ đậu quả, độ đồng đều hạt và quy trình canh tác bền vững cùng nông dân liên kết.',
       en: 'Field survey of key Robusta coffee plantations in Đắk Lắk province, evaluating cherry set density, bean uniformity, and sustainable farming practices with partner growers.',
@@ -64,6 +75,11 @@ const FARM_ALBUMS: Record<string, FarmAlbumMeta> = {
       zh: '斯洛伐克采购代表团产地走访'
     },
     shortLabel: {
+      vi: 'Đối Tác Quốc Tế',
+      en: 'Intl Delegation',
+      zh: '国际代表团'
+    },
+    badge: {
       vi: 'Đối Tác Quốc Tế',
       en: 'Intl Delegation',
       zh: '国际代表团'
@@ -268,7 +284,7 @@ const Gallery: React.FC = () => {
                   }`}
                 >
                   <span>🍈</span>
-                  <span>{FARM_ALBUMS['durian-farm-visit'].shortLabel[locale]}</span>
+                  <span>{FARM_ALBUMS['durian-farm-visit']?.shortLabel?.[locale] || 'Vườn Sầu Riêng'}</span>
                   <span className="text-[10px] opacity-80">({durianCount})</span>
                 </button>
               )}
@@ -284,7 +300,7 @@ const Gallery: React.FC = () => {
                   }`}
                 >
                   <span>☕</span>
-                  <span>{FARM_ALBUMS['coffee-farm-visit'].shortLabel[locale]}</span>
+                  <span>{FARM_ALBUMS['coffee-farm-visit']?.shortLabel?.[locale] || 'Nông Trường Cà Phê'}</span>
                   <span className="text-[10px] opacity-80">({coffeeCount})</span>
                 </button>
               )}
@@ -300,7 +316,7 @@ const Gallery: React.FC = () => {
                   }`}
                 >
                   <span>🤝</span>
-                  <span>{FARM_ALBUMS['slovakia-partner-visit'].shortLabel[locale]}</span>
+                  <span>{FARM_ALBUMS['slovakia-partner-visit']?.shortLabel?.[locale] || 'Đối Tác Quốc Tế'}</span>
                   <span className="text-[10px] opacity-80">({slovakiaCount})</span>
                 </button>
               )}
@@ -314,6 +330,7 @@ const Gallery: React.FC = () => {
                 const albumPhotos = farmPhotos.filter((p) => p.album === albumKey);
                 if (albumPhotos.length === 0) return null;
                 const albumMeta = FARM_ALBUMS[albumKey];
+                if (!albumMeta) return null;
 
                 return (
                   <section key={albumKey} className="border border-gray-100 rounded-3xl p-6 md:p-8 bg-gradient-to-b from-gray-50/50 to-white shadow-sm">
@@ -322,14 +339,14 @@ const Gallery: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                           <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border shadow-xs ${albumMeta.badgeClass}`}>
-                            {albumMeta.icon} {albumMeta.badge[locale]}
+                            {albumMeta.icon} {albumMeta.badge?.[locale] || albumMeta.shortLabel?.[locale] || ''}
                           </span>
                           <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                            {albumMeta.title[locale]}
+                            {albumMeta.title?.[locale] || albumMeta.title?.vi || ''}
                           </h2>
                         </div>
                         <p className="text-xs md:text-sm text-gray-500 max-w-3xl leading-relaxed">
-                          {albumMeta.desc[locale]}
+                          {albumMeta.desc?.[locale] || albumMeta.desc?.vi || ''}
                         </p>
                       </div>
 
@@ -382,16 +399,16 @@ const Gallery: React.FC = () => {
               {/* If a single farm visit album is selected, display its custom album header */}
               {activeCategory === 'farm-visits' && activeFarmAlbum !== 'all' && FARM_ALBUMS[activeFarmAlbum] && (
                 <div className="mb-6 p-6 bg-emerald-50/40 rounded-2xl border border-emerald-100">
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border ${FARM_ALBUMS[activeFarmAlbum].badgeClass}`}>
-                      {FARM_ALBUMS[activeFarmAlbum].icon} {FARM_ALBUMS[activeFarmAlbum].badge[locale]}
+                      {FARM_ALBUMS[activeFarmAlbum].icon} {FARM_ALBUMS[activeFarmAlbum].badge?.[locale] || FARM_ALBUMS[activeFarmAlbum].shortLabel?.[locale] || ''}
                     </span>
                     <h2 className="text-xl md:text-2xl font-black text-gray-900">
-                      {FARM_ALBUMS[activeFarmAlbum].title[locale]}
+                      {FARM_ALBUMS[activeFarmAlbum].title?.[locale] || FARM_ALBUMS[activeFarmAlbum].title?.vi || ''}
                     </h2>
                   </div>
                   <p className="text-sm text-gray-600 max-w-3xl">
-                    {FARM_ALBUMS[activeFarmAlbum].desc[locale]}
+                    {FARM_ALBUMS[activeFarmAlbum].desc?.[locale] || FARM_ALBUMS[activeFarmAlbum].desc?.vi || ''}
                   </p>
                 </div>
               )}
@@ -411,9 +428,9 @@ const Gallery: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {/* Badge if part of an album */}
-                    {photo.album && FARM_ALBUMS[photo.album] && (
-                      <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xs">
-                        {FARM_ALBUMS[photo.album].shortLabel[locale]}
+                    {photo.album && (
+                      <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xs truncate max-w-[140px]">
+                        {FARM_ALBUMS[photo.album]?.shortLabel?.[locale] || photo.albumTitle || photo.album}
                       </span>
                     )}
                     {photo.caption && (
@@ -484,9 +501,9 @@ const Gallery: React.FC = () => {
             )}
             
             <div className="relative text-center mt-4 space-y-1.5 px-4">
-              {activePhoto.album && FARM_ALBUMS[activePhoto.album] && (
-                <span className={`inline-block px-3 py-0.5 rounded-full text-xs font-bold border shadow-xs ${FARM_ALBUMS[activePhoto.album].badgeClass}`}>
-                  {FARM_ALBUMS[activePhoto.album].icon} {FARM_ALBUMS[activePhoto.album].title[locale]}
+              {(activePhoto.album || activePhoto.albumTitle) && (
+                <span className={`inline-block px-3 py-0.5 rounded-full text-xs font-bold border shadow-xs ${FARM_ALBUMS[activePhoto.album || '']?.badgeClass || 'bg-white/20 text-white border-white/30'}`}>
+                  {FARM_ALBUMS[activePhoto.album || '']?.icon || '📁'} {FARM_ALBUMS[activePhoto.album || '']?.title?.[locale] || activePhoto.albumTitle || activePhoto.album}
                 </span>
               )}
               {activePhoto.caption && (
