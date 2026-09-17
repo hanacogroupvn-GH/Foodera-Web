@@ -4,9 +4,18 @@ import fs from 'node:fs/promises';
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+let defaultGalleryData = [];
+try {
+  defaultGalleryData = require('../data/gallery.json');
+} catch {
+  defaultGalleryData = [];
+}
 
 
 const SCHEMA_STATEMENTS = [
@@ -884,12 +893,29 @@ const mapGalleryPhotoRow = (row) => ({
 
 export const listGalleryPhotos = async (client) => {
   const result = await client.execute('select * from gallery_photos order by sort_order asc, created_at desc');
-  return result.rows.map(mapGalleryPhotoRow);
+  const photos = result.rows.map(mapGalleryPhotoRow);
+
+  // Self-healing: if default static photos are missing from DB, insert and include them
+  if (Array.isArray(defaultGalleryData) && defaultGalleryData.length > 0) {
+    const existingIds = new Set(photos.map((p) => p.id));
+    const missing = defaultGalleryData.filter((p) => !existingIds.has(p.id));
+    if (missing.length > 0) {
+      for (const m of missing) {
+        try {
+          const saved = await upsertGalleryPhoto(client, m);
+          photos.push(saved);
+        } catch {}
+      }
+      photos.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+  }
+
+  return photos;
 };
 
 export const listPublicGalleryPhotos = async (client) => {
-  const result = await client.execute('select * from gallery_photos where is_active = 1 order by sort_order asc, created_at desc');
-  return result.rows.map(mapGalleryPhotoRow);
+  const all = await listGalleryPhotos(client);
+  return all.filter((p) => p.isActive);
 };
 
 export const upsertGalleryPhoto = async (client, photo) => {
@@ -1369,9 +1395,18 @@ export const seedStaticJsonData = async (client, projectRoot = path.resolve(__di
 
   // 5. Gallery Photos
   try {
-    const galleryFile = path.join(projectRoot, 'data', 'gallery.json');
-    if (existsSync(galleryFile)) {
-      const photosList = JSON.parse(await fs.readFile(galleryFile, 'utf8'));
+    let photosList = Array.isArray(defaultGalleryData) && defaultGalleryData.length > 0
+      ? defaultGalleryData
+      : null;
+
+    if (!photosList) {
+      const galleryFile = path.join(projectRoot, 'data', 'gallery.json');
+      if (existsSync(galleryFile)) {
+        photosList = JSON.parse(await fs.readFile(galleryFile, 'utf8'));
+      }
+    }
+
+    if (Array.isArray(photosList) && photosList.length > 0) {
       const existingRes = await client.execute('select id from gallery_photos');
       const existingDbIds = new Set(existingRes.rows.map(r => String(r.id)));
       for (const item of photosList) {
@@ -1385,6 +1420,7 @@ export const seedStaticJsonData = async (client, projectRoot = path.resolve(__di
           });
         }
       }
+      console.log(`[DB] Gallery checked: ${photosList.length} items verified.`);
     }
   } catch (err) {
     console.warn('[DB] Gallery seed warning:', err.message);
