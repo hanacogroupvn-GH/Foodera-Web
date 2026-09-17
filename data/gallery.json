@@ -159,6 +159,118 @@
     "caption": "Slovak partners visiting our Robusta farms in Đắk Lắk",
     "category": "farm-visits",
     "sortOrder": 18,
+    "isActive": true,
+    "album": "slovakia-partner-visit",
+    "albumTitle": "Hợp tác Quốc tế: Đoàn Đối tác Slovakia Khảo sát Nông trại"
+  },
+  {
+    "id": "gallery-farm-durian-01",
+    "src": "/media/gallery/durian-farm-visit-01-ancient-tree.webp",
+    "alt": "Vườn sầu riêng đại thụ trĩu quả khảo sát nông trại FoodEra",
+    "caption": "Cây sầu riêng đại thụ trĩu quả với hệ thống gia cố cành chuyên nghiệp tại vườn liên kết FoodEra",
+    "category": "farm-visits",
+    "album": "durian-farm-visit",
+    "albumTitle": "Khảo sát Vùng trồng Sầu riêng Xuất khẩu",
+    "sortOrder": 19,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-durian-02",
+    "src": "/media/gallery/durian-farm-visit-02-fruit-clusters.webp",
+    "alt": "Chùm sầu riêng trĩu quả trên cành khảo sát chất lượng nông trại FoodEra",
+    "caption": "Chùm sầu riêng Ri6 & Monthong đạt độ chín sinh lý tối ưu trên cành trước kỳ thu hoạch",
+    "category": "farm-visits",
+    "album": "durian-farm-visit",
+    "albumTitle": "Khảo sát Vùng trồng Sầu riêng Xuất khẩu",
+    "sortOrder": 20,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-durian-03",
+    "src": "/media/gallery/durian-farm-visit-03-field-inspection.webp",
+    "alt": "Chuyên viên FoodEra kiểm tra chất lượng sầu riêng tại vườn trồng",
+    "caption": "Đội ngũ chuyên gia FoodEra kiểm tra chất lượng và kích thước sầu riêng trực tiếp tại vườn",
+    "category": "farm-visits",
+    "album": "durian-farm-visit",
+    "albumTitle": "Khảo sát Vùng trồng Sầu riêng Xuất khẩu",
+    "sortOrder": 21,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-durian-04",
+    "src": "/media/gallery/durian-farm-visit-04-harvest-path.webp",
+    "alt": "Thu hoạch sầu riêng tập kết dọc đường vườn khảo sát FoodEra",
+    "caption": "Thu hoạch và phân loại sơ bộ sầu riêng tươi ngay tại lối đi nội bộ của nông trường",
+    "category": "farm-visits",
+    "album": "durian-farm-visit",
+    "albumTitle": "Khảo sát Vùng trồng Sầu riêng Xuất khẩu",
+    "sortOrder": 22,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-durian-05",
+    "src": "/media/gallery/durian-farm-visit-05-grade-a-pile.webp",
+    "alt": "Điểm tập kết sầu riêng loại 1 xuất khẩu nông trại liên kết FoodEra",
+    "caption": "Điểm tập kết sầu riêng tuyển chọn loại 1 chuẩn xuất khẩu cùng bảng nhận diện thương hiệu FoodEra",
+    "category": "farm-visits",
+    "album": "durian-farm-visit",
+    "albumTitle": "Khảo sát Vùng trồng Sầu riêng Xuất khẩu",
+    "sortOrder": 23,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-coffee-01",
+    "src": "/media/gallery/coffee-farm-visit-01-robusta-tree.webp",
+    "alt": "Cây cà phê Robusta sinh trưởng tốt sai trĩu quả tại nông trường FoodEra",
+    "caption": "Toàn cảnh cây cà phê Robusta sinh trưởng vượt trội với tỷ lệ đậu quả dày đặc tại vùng nguyên liệu FoodEra",
+    "category": "farm-visits",
+    "album": "coffee-farm-visit",
+    "albumTitle": "Khảo sát Vùng nguyên liệu Cà phê Robusta",
+    "sortOrder": 24,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-coffee-02",
+    "src": "/media/gallery/coffee-farm-visit-02-cluster-density.webp",
+    "alt": "Đánh giá độ đồng đều chùm quả cà phê tại vùng trồng FoodEra",
+    "caption": "Đánh giá mật độ chùm quả và độ đồng đều của nhân cà phê trước thời điểm thu hoạch rộ",
+    "category": "farm-visits",
+    "album": "coffee-farm-visit",
+    "albumTitle": "Khảo sát Vùng nguyên liệu Cà phê Robusta",
+    "sortOrder": 25,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-coffee-03",
+    "src": "/media/gallery/coffee-farm-visit-03-cherry-nodes.webp",
+    "alt": "Kiểm tra đốt trái cà phê Robusta chất lượng cao",
+    "caption": "Kiểm tra cận cảnh các chuỗi đốt trái cà phê Robusta đạt chuẩn kích cỡ và hàm lượng chất lượng cao",
+    "category": "farm-visits",
+    "album": "coffee-farm-visit",
+    "albumTitle": "Khảo sát Vùng nguyên liệu Cà phê Robusta",
+    "sortOrder": 26,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-coffee-04",
+    "src": "/media/gallery/coffee-farm-visit-04-early-ripening.webp",
+    "alt": "Đại diện FoodEra khảo sát vườn cà phê vùng nguyên liệu",
+    "caption": "Đại diện FoodEra tại vườn cà phê liên kết, ghi nhận những chùm quả đầu mùa bắt đầu chuyển sắc chín",
+    "category": "farm-visits",
+    "album": "coffee-farm-visit",
+    "albumTitle": "Khảo sát Vùng nguyên liệu Cà phê Robusta",
+    "sortOrder": 27,
+    "isActive": true
+  },
+  {
+    "id": "gallery-farm-coffee-05",
+    "src": "/media/gallery/coffee-farm-visit-05-field-team.webp",
+    "alt": "Đội ngũ FoodEra khảo sát thực địa nông trường cà phê Tây Nguyên",
+    "caption": "Đội ngũ FoodEra kết nối thực địa cùng nhà nông tại vùng nguyên liệu cà phê trọng điểm Tây Nguyên",
+    "category": "farm-visits",
+    "album": "coffee-farm-visit",
+    "albumTitle": "Khảo sát Vùng nguyên liệu Cà phê Robusta",
+    "sortOrder": 28,
     "isActive": true
   }
 ]

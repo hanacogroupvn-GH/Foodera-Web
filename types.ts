@@ -286,6 +286,8 @@ export interface GalleryPhotoItem {
   alt: string;
   caption?: string;
   category: GalleryCategory;
+  album?: string;
+  albumTitle?: string;
   sortOrder: number;
   isActive: boolean;
   createdAt?: string;

@@ -56,6 +56,12 @@ const CATEGORY_MAP: Record<GalleryCategory, { labelVi: string; labelEn: string; 
   }
 };
 
+const PRESET_ALBUMS = [
+  { id: '', title: '-- Không phân bộ ảnh (Độc lập) --' },
+  { id: 'durian-farm-visit', title: 'Khảo sát Vùng trồng Sầu riêng Xuất khẩu' },
+  { id: 'coffee-farm-visit', title: 'Khảo sát Vùng nguyên liệu Cà phê Robusta' }
+];
+
 const AdminGallery: React.FC = () => {
   const [photos, setPhotos] = useState<GalleryPhotoItem[]>(() => defaultGalleryData as unknown as GalleryPhotoItem[]);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +77,8 @@ const AdminGallery: React.FC = () => {
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchCategory, setBatchCategory] = useState<GalleryCategory>('activities');
+  const [batchAlbum, setBatchAlbum] = useState<string>('');
+  const [batchAlbumTitle, setBatchAlbumTitle] = useState<string>('');
   const [batchCommonCaption, setBatchCommonCaption] = useState('');
   const [batchStartOrder, setBatchStartOrder] = useState<number>(1);
   const [batchIsActive, setBatchIsActive] = useState<boolean>(true);
@@ -89,6 +97,8 @@ const AdminGallery: React.FC = () => {
     alt: '',
     caption: '',
     category: 'activities',
+    album: '',
+    albumTitle: '',
     sortOrder: 1,
     isActive: true
   });
@@ -119,6 +129,8 @@ const AdminGallery: React.FC = () => {
       alt: '',
       caption: '',
       category: activeCategoryTab !== 'all' ? activeCategoryTab : 'activities',
+      album: '',
+      albumTitle: '',
       sortOrder: photos.length + 1,
       isActive: true
     });
@@ -171,6 +183,8 @@ const AdminGallery: React.FC = () => {
         alt: (formData.alt || formData.caption || 'FoodEra Gallery').trim(),
         caption: formData.caption?.trim() || undefined,
         category: formData.category || 'activities',
+        album: formData.album?.trim() || undefined,
+        albumTitle: formData.albumTitle?.trim() || undefined,
         sortOrder: Number(formData.sortOrder) || 0,
         isActive: formData.isActive !== false
       };
@@ -212,6 +226,8 @@ const AdminGallery: React.FC = () => {
   const handleOpenBatchModal = () => {
     setBatchItems([]);
     setBatchCategory(activeCategoryTab !== 'all' ? activeCategoryTab : 'activities');
+    setBatchAlbum('');
+    setBatchAlbumTitle('');
     setBatchCommonCaption('');
     setBatchStartOrder(photos.length + 1);
     setBatchIsActive(true);
@@ -376,6 +392,8 @@ const AdminGallery: React.FC = () => {
         caption: item.caption.trim() || undefined,
         alt: item.alt.trim() || item.caption.trim() || 'FoodEra Gallery',
         category: batchCategory,
+        album: batchAlbum.trim() || undefined,
+        albumTitle: batchAlbumTitle.trim() || undefined,
         sortOrder: startOrder + idx,
         isActive: batchIsActive
       }));
@@ -549,12 +567,20 @@ const AdminGallery: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {/* Status Badge */}
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                    <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1.5 max-w-[80%]">
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-sm ${catInfo.color}`}
                       >
                         {catInfo.labelVi}
                       </span>
+                      {photo.albumTitle && (
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm truncate max-w-[130px]"
+                          title={photo.albumTitle}
+                        >
+                          📁 {photo.albumTitle}
+                        </span>
+                      )}
                       {!photo.isActive && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 shadow-sm">
                           Ẩn
@@ -700,6 +726,53 @@ const AdminGallery: React.FC = () => {
                         />
                         <span className="text-xs font-bold text-gray-700">Hiển thị trên website ngay</span>
                       </label>
+                    </div>
+                  </div>
+
+                  {/* Album Selector */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-200/60">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Bộ ảnh / Album (Tùy chọn)
+                      </label>
+                      <select
+                        value={PRESET_ALBUMS.some((a) => a.id === batchAlbum) ? batchAlbum : (batchAlbum ? 'custom' : '')}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'custom') {
+                            setBatchAlbum('custom-album');
+                          } else {
+                            setBatchAlbum(val);
+                            const found = PRESET_ALBUMS.find((a) => a.id === val);
+                            if (found && val) {
+                              setBatchAlbumTitle(found.title);
+                            } else if (!val) {
+                              setBatchAlbumTitle('');
+                            }
+                          }
+                        }}
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white font-medium focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest"
+                      >
+                        {PRESET_ALBUMS.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.title}
+                          </option>
+                        ))}
+                        <option value="custom">Nhập mã bộ ảnh tùy chỉnh...</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Tên bộ ảnh hiển thị (Album Title)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="VD: Khảo sát Vùng nguyên liệu Cà phê..."
+                        value={batchAlbumTitle}
+                        onChange={(e) => setBatchAlbumTitle(e.target.value)}
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest"
+                      />
                     </div>
                   </div>
 
@@ -1192,6 +1265,55 @@ const AdminGallery: React.FC = () => {
                     />
                     <span className="text-[11px] text-gray-400 mt-1 block">
                       Số nhỏ hơn sẽ xếp trước.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Album (Set) Selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                      Bộ ảnh / Album (Tùy chọn)
+                    </label>
+                    <select
+                      value={PRESET_ALBUMS.some((a) => a.id === formData.album) ? formData.album : (formData.album ? 'custom' : '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setFormData((p) => ({ ...p, album: 'custom-album' }));
+                        } else {
+                          const found = PRESET_ALBUMS.find((a) => a.id === val);
+                          setFormData((p) => ({
+                            ...p,
+                            album: val,
+                            albumTitle: found && val ? found.title : (!val ? '' : p.albumTitle)
+                          }));
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest bg-white font-medium"
+                    >
+                      {PRESET_ALBUMS.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.title}
+                        </option>
+                      ))}
+                      <option value="custom">Nhập mã bộ ảnh tùy chỉnh...</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                      Tên bộ ảnh (Album Title)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="VD: Khảo sát Vùng trồng Sầu riêng..."
+                      value={formData.albumTitle || ''}
+                      onChange={(e) => setFormData((p) => ({ ...p, albumTitle: e.target.value }))}
+                      className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-foodera-forest/20 focus:border-foodera-forest bg-white"
+                    />
+                    <span className="text-[11px] text-gray-400 mt-1 block">
+                      Giúp nhóm các ảnh liên quan thành một bộ ảnh trên trang Gallery.
                     </span>
                   </div>
                 </div>

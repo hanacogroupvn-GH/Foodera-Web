@@ -565,6 +565,21 @@ export const ensureDatabaseSchema = async (client) => {
     await client.execute(`alter table careers add column ${columnName} ${columnDefinition}`);
   }
 
+  // Migrate gallery_photos table for albums
+  try {
+    const galleryColumns = await client.execute('pragma table_info(gallery_photos)');
+    const existingGalleryColumnNames = new Set(galleryColumns.rows.map((row) => String(row.name ?? '').trim()));
+
+    if (!existingGalleryColumnNames.has('album')) {
+      await client.execute('alter table gallery_photos add column album text');
+    }
+    if (!existingGalleryColumnNames.has('album_title')) {
+      await client.execute('alter table gallery_photos add column album_title text');
+    }
+  } catch (err) {
+    console.warn('[DB] Gallery column migration warning:', err.message);
+  }
+
   // Seed default product categories if table is empty
   await seedDefaultCategories(client);
 
@@ -859,6 +874,8 @@ const mapGalleryPhotoRow = (row) => ({
   alt: String(row.alt ?? ''),
   caption: row.caption ? String(row.caption) : undefined,
   category: String(row.category ?? 'activities'),
+  album: row.album ? String(row.album) : undefined,
+  albumTitle: row.album_title ? String(row.album_title) : undefined,
   sortOrder: Number(row.sort_order ?? 0),
   isActive: Number(row.is_active ?? 1) !== 0,
   createdAt: row.created_at ? String(row.created_at) : undefined,
@@ -883,24 +900,28 @@ export const upsertGalleryPhoto = async (client, photo) => {
   const category = ['activities', 'trade-fairs', 'farm-visits'].includes(photo.category)
     ? photo.category
     : 'activities';
+  const album = photo.album ? String(photo.album).trim() : null;
+  const albumTitle = photo.albumTitle ? String(photo.albumTitle).trim() : null;
   const sortOrder = Number.isFinite(Number(photo.sortOrder)) ? Number(photo.sortOrder) : 0;
   const isActive = photo.isActive !== false ? 1 : 0;
 
   await client.execute({
     sql: `
       insert into gallery_photos (
-        id, src, alt, caption, category, sort_order, is_active, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        id, src, alt, caption, category, album, album_title, sort_order, is_active, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       on conflict(id) do update set
         src = excluded.src,
         alt = excluded.alt,
         caption = excluded.caption,
         category = excluded.category,
+        album = excluded.album,
+        album_title = excluded.album_title,
         sort_order = excluded.sort_order,
         is_active = excluded.is_active,
         updated_at = CURRENT_TIMESTAMP
     `,
-    args: [id, src, alt, caption, category, sortOrder, isActive]
+    args: [id, src, alt, caption, category, album, albumTitle, sortOrder, isActive]
   });
 
   const res = await client.execute({
@@ -1348,15 +1369,21 @@ export const seedStaticJsonData = async (client, projectRoot = path.resolve(__di
 
   // 5. Gallery Photos
   try {
-    const existingPhotos = await client.execute('select count(*) as cnt from gallery_photos');
-    if (Number(existingPhotos.rows[0]?.cnt ?? 0) === 0) {
-      const galleryFile = path.join(projectRoot, 'data', 'gallery.json');
-      if (existsSync(galleryFile)) {
-        const photosList = JSON.parse(await fs.readFile(galleryFile, 'utf8'));
-        for (const item of photosList) {
+    const galleryFile = path.join(projectRoot, 'data', 'gallery.json');
+    if (existsSync(galleryFile)) {
+      const photosList = JSON.parse(await fs.readFile(galleryFile, 'utf8'));
+      const existingRes = await client.execute('select id from gallery_photos');
+      const existingDbIds = new Set(existingRes.rows.map(r => String(r.id)));
+      for (const item of photosList) {
+        if (!existingDbIds.has(item.id)) {
           await upsertGalleryPhoto(client, item);
+          console.log(`[DB] Seeded new gallery photo ${item.id} from data/gallery.json`);
+        } else if (item.album) {
+          await client.execute({
+            sql: 'update gallery_photos set album = ?, album_title = ? where id = ? and (album is null or album = "")',
+            args: [item.album, item.albumTitle || null, item.id]
+          });
         }
-        console.log(`[DB] Seeded ${photosList.length} gallery photos from data/gallery.json`);
       }
     }
   } catch (err) {
