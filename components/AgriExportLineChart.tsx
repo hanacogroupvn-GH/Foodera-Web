@@ -493,26 +493,49 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
           </div>
 
           {/* Period Selector (Kỳ báo cáo) */}
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/80 px-4 py-2 rounded-2xl shadow-sm self-start lg:self-center">
-            <Calendar size={15} className="text-emerald-700 flex-shrink-0" />
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">{copy.periodLabel}:</span>
+          <div className="flex flex-wrap items-center gap-1.5 bg-emerald-50/90 border border-emerald-200/80 p-1.5 rounded-2xl shadow-sm self-start lg:self-center">
+            <div className="flex items-center gap-1.5 pl-2.5 pr-1 text-xs font-black text-emerald-900 uppercase tracking-wider">
+              <Calendar size={14} className="text-emerald-700 flex-shrink-0" />
+              <span>{copy.periodLabel}:</span>
+            </div>
             {availablePeriods.length > 1 ? (
-              <div className="relative">
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="appearance-none bg-white text-xs font-black text-emerald-950 pl-3 pr-8 py-1.5 rounded-xl border border-emerald-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                >
-                  {availablePeriods.map((p) => (
-                    <option key={p} value={p} className="text-gray-900 font-semibold">
+              <div className="flex items-center gap-1 flex-wrap">
+                {availablePeriods.slice(0, 4).map((p) => {
+                  const isActive = selectedPeriod === p;
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setSelectedPeriod(p)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                        isActive
+                          ? 'bg-emerald-900 text-white shadow-sm ring-1 ring-emerald-950'
+                          : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
+                      }`}
+                    >
                       {formatPeriodDisplay(p, locale)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
+                    </button>
+                  );
+                })}
+                {availablePeriods.length > 4 && (
+                  <div className="relative">
+                    <select
+                      value={selectedPeriod}
+                      onChange={(e) => setSelectedPeriod(e.target.value)}
+                      className="appearance-none bg-white text-xs font-bold text-emerald-950 pl-2.5 pr-7 py-1.5 rounded-xl border border-emerald-200 shadow-sm focus:outline-none cursor-pointer"
+                    >
+                      {availablePeriods.map((p) => (
+                        <option key={p} value={p}>
+                          {formatPeriodDisplay(p, locale)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
+                  </div>
+                )}
               </div>
             ) : (
-              <span className="text-xs font-black text-emerald-950">
+              <span className="px-3 py-1.5 bg-white rounded-xl text-xs font-black text-emerald-950 border border-emerald-200 shadow-xs">
                 {formatPeriodDisplay(selectedPeriod, locale)}
               </span>
             )}
@@ -526,26 +549,49 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             {/* Period Selector (when showHeader is false) */}
             {!showHeader && (
-              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-2xl shadow-sm">
-                <Calendar size={13} className="text-emerald-700 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">{copy.periodLabel}:</span>
+              <div className="inline-flex flex-wrap items-center gap-1.5 bg-emerald-50 border border-emerald-200 p-1.5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-1 pl-2 pr-1 text-[11px] font-black text-emerald-900 uppercase tracking-wider">
+                  <Calendar size={13} className="text-emerald-700 flex-shrink-0" />
+                  <span>{copy.periodLabel}:</span>
+                </div>
                 {availablePeriods.length > 1 ? (
-                  <div className="relative">
-                    <select
-                      value={selectedPeriod}
-                      onChange={(e) => setSelectedPeriod(e.target.value)}
-                      className="appearance-none bg-white text-xs font-black text-emerald-950 pl-2.5 pr-7 py-1 rounded-xl border border-emerald-200 shadow-sm focus:outline-none cursor-pointer"
-                    >
-                      {availablePeriods.map((p) => (
-                        <option key={p} value={p} className="text-gray-900 font-semibold">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {availablePeriods.slice(0, 4).map((p) => {
+                      const isActive = selectedPeriod === p;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setSelectedPeriod(p)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                            isActive
+                              ? 'bg-emerald-900 text-white shadow-sm'
+                              : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
+                          }`}
+                        >
                           {formatPeriodDisplay(p, locale)}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
+                        </button>
+                      );
+                    })}
+                    {availablePeriods.length > 4 && (
+                      <div className="relative">
+                        <select
+                          value={selectedPeriod}
+                          onChange={(e) => setSelectedPeriod(e.target.value)}
+                          className="appearance-none bg-white text-xs font-bold text-emerald-950 pl-2.5 pr-7 py-1 rounded-xl border border-emerald-200 shadow-sm focus:outline-none cursor-pointer"
+                        >
+                          {availablePeriods.map((p) => (
+                            <option key={p} value={p}>
+                              {formatPeriodDisplay(p, locale)}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <span className="text-xs font-black text-emerald-950">
+                  <span className="px-2.5 py-1 bg-white rounded-xl text-xs font-black text-emerald-950 border border-emerald-200">
                     {formatPeriodDisplay(selectedPeriod, locale)}
                   </span>
                 )}

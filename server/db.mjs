@@ -1396,15 +1396,22 @@ export const seedStaticJsonData = async (client, projectRoot = path.resolve(__di
 
   // 4. Export Statistics
   try {
-    const existingStats = await client.execute('select count(*) as cnt from export_statistics');
-    if (Number(existingStats.rows[0]?.cnt ?? 0) === 0) {
-      const statsFile = path.join(projectRoot, 'data', 'export-stats.json');
-      if (existsSync(statsFile)) {
-        const statsList = JSON.parse(await fs.readFile(statsFile, 'utf8'));
-        for (const item of statsList) {
+    const statsFile = path.join(projectRoot, 'data', 'export-stats.json');
+    if (existsSync(statsFile)) {
+      const statsList = JSON.parse(await fs.readFile(statsFile, 'utf8'));
+      let insertedCount = 0;
+      for (const item of statsList) {
+        const check = await client.execute({
+          sql: 'select id from export_statistics where id = ? limit 1',
+          args: [item.id]
+        });
+        if (check.rows.length === 0) {
           await upsertExportStat(client, item);
+          insertedCount++;
         }
-        console.log(`[DB] Seeded ${statsList.length} export statistics from data/export-stats.json`);
+      }
+      if (insertedCount > 0) {
+        console.log(`[DB] Seeded ${insertedCount} new export statistics from data/export-stats.json`);
       }
     }
   } catch (err) {

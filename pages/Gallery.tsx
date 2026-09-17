@@ -338,162 +338,36 @@ const Gallery: React.FC = () => {
             </div>
           )}
 
-          {/* Farm Visits Grouped View (When Farm Visits is active and 'all' albums are shown) */}
-          {activeCategory === 'farm-visits' && activeFarmAlbum === 'all' ? (
-            <div className="space-y-12">
-              {(['durian-farm-visit', 'coffee-farm-visit', 'slovakia-partner-visit'] as const).map((albumKey) => {
-                const albumPhotos = farmPhotos.filter((p) => p.album === albumKey);
-                if (albumPhotos.length === 0) return null;
-                const albumMeta = FARM_ALBUMS[albumKey];
-                if (!albumMeta) return null;
-
-                return (
-                  <section key={albumKey} className="border border-gray-100 rounded-3xl p-6 md:p-8 bg-gradient-to-b from-gray-50/50 to-white shadow-sm">
-                    {/* Album Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-gray-200/60">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                          <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border shadow-xs ${albumMeta.badgeClass}`}>
-                            {albumMeta.icon} {albumMeta.badge?.[locale] || albumMeta.shortLabel?.[locale] || ''}
-                          </span>
-                          <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                            {albumMeta.title?.[locale] || albumMeta.title?.vi || ''}
-                          </h2>
-                        </div>
-                        <p className="text-xs md:text-sm text-gray-500 max-w-3xl leading-relaxed">
-                          {albumMeta.desc?.[locale] || albumMeta.desc?.vi || ''}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-gray-400 bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-xs flex-shrink-0">
-                          {albumPhotos.length} {copy.photosCount}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setActiveFarmAlbum(albumKey)}
-                          className="text-xs font-bold text-foodera-forest hover:underline flex-shrink-0"
-                        >
-                          {copy.viewAlbum} →
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Album Photos Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                      {albumPhotos.map((photo) => {
-                        const globalIndex = visiblePhotos.findIndex((p) => p.id === photo.id);
-                        return (
-                          <button
-                            key={photo.id}
-                            type="button"
-                            onClick={() => setActivePhotoIndex(globalIndex !== -1 ? globalIndex : 0)}
-                            className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-200/80 hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-foodera-forest/50"
-                          >
-                            <img
-                              src={photo.src}
-                              alt={photo.alt}
-                              loading="lazy"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                            {photo.caption && (
-                              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white text-[11px] font-semibold px-3 py-2.5 text-left line-clamp-2">
-                                {photo.caption}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                );
-              })}
-
-              {standaloneFarmPhotos.length > 0 && (
-                <section className="border border-gray-100 rounded-3xl p-6 md:p-8 bg-gradient-to-b from-gray-50/50 to-white shadow-sm">
-                  <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100">
-                    <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border bg-gray-100 text-gray-700 border-gray-200">
-                      📸 {locale === 'vi' ? 'Khảo sát thực tế' : locale === 'zh' ? '实地考察记录' : 'Field Survey'}
+          {visiblePhotos.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {visiblePhotos.map((photo, index) => (
+                <button
+                  key={photo.id || photo.src}
+                  type="button"
+                  onClick={() => setActivePhotoIndex(index)}
+                  className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100/90 shadow-xs hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-foodera-forest/40"
+                >
+                  <img
+                    src={photo.src}
+                    alt={photo.alt || photo.caption || ''}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  {/* Subtle album badge if part of an album */}
+                  {photo.album && (
+                    <span className="absolute top-2.5 left-2.5 text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/60 text-white backdrop-blur-md shadow-xs truncate max-w-[150px] pointer-events-none">
+                      {FARM_ALBUMS[photo.album]?.icon ? `${FARM_ALBUMS[photo.album].icon} ` : ''}
+                      {FARM_ALBUMS[photo.album]?.shortLabel?.[locale] || photo.albumTitle || photo.album}
                     </span>
-                    <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                      {locale === 'vi' ? 'Hình ảnh khảo sát thực tế' : locale === 'zh' ? '其他实地照片' : 'Other Field Photos'}
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {standaloneFarmPhotos.map((photo) => {
-                      const globalIndex = visiblePhotos.findIndex((p) => p.id === photo.id);
-                      return (
-                        <button
-                          key={photo.id}
-                          type="button"
-                          onClick={() => setActivePhotoIndex(globalIndex !== -1 ? globalIndex : 0)}
-                          className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-200/80 hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-foodera-forest/50"
-                        >
-                          <img
-                            src={photo.src}
-                            alt={photo.alt}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          {photo.caption && (
-                            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white text-[11px] font-semibold px-3 py-2.5 text-left line-clamp-2">
-                              {photo.caption}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-            </div>
-          ) : visiblePhotos.length > 0 ? (
-            <div>
-              {/* If a single farm visit album is selected, display its custom album header */}
-              {activeCategory === 'farm-visits' && activeFarmAlbum !== 'all' && FARM_ALBUMS[activeFarmAlbum] && (
-                <div className="mb-6 p-6 bg-emerald-50/40 rounded-2xl border border-emerald-100">
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border ${FARM_ALBUMS[activeFarmAlbum].badgeClass}`}>
-                      {FARM_ALBUMS[activeFarmAlbum].icon} {FARM_ALBUMS[activeFarmAlbum].badge?.[locale] || FARM_ALBUMS[activeFarmAlbum].shortLabel?.[locale] || ''}
+                  )}
+                  {/* Caption overlay at the bottom matching user screenshot */}
+                  {photo.caption && (
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent text-white text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2.5 sm:py-3 text-left line-clamp-2 drop-shadow-sm">
+                      {photo.caption}
                     </span>
-                    <h2 className="text-xl md:text-2xl font-black text-gray-900">
-                      {FARM_ALBUMS[activeFarmAlbum].title?.[locale] || FARM_ALBUMS[activeFarmAlbum].title?.vi || ''}
-                    </h2>
-                  </div>
-                  <p className="text-sm text-gray-600 max-w-3xl">
-                    {FARM_ALBUMS[activeFarmAlbum].desc?.[locale] || FARM_ALBUMS[activeFarmAlbum].desc?.vi || ''}
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {visiblePhotos.map((photo, index) => (
-                  <button
-                    key={photo.id || photo.src}
-                    type="button"
-                    onClick={() => setActivePhotoIndex(index)}
-                    className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-foodera-forest/50"
-                  >
-                    <img
-                      src={photo.src}
-                      alt={photo.alt}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {/* Badge if part of an album */}
-                    {photo.album && (
-                      <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xs truncate max-w-[140px]">
-                        {FARM_ALBUMS[photo.album]?.shortLabel?.[locale] || photo.albumTitle || photo.album}
-                      </span>
-                    )}
-                    {photo.caption && (
-                      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent text-white text-[11px] font-semibold px-3 py-2 text-left line-clamp-2">
-                        {photo.caption}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+                  )}
+                </button>
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center text-center rounded-[2rem] border border-dashed border-gray-200 bg-gray-50 px-8 py-20">

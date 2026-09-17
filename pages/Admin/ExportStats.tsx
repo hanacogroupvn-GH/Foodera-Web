@@ -17,7 +17,9 @@ import {
   X,
   FileSpreadsheet,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  CalendarPlus,
+  Copy
 } from 'lucide-react';
 
 const ExportStats: React.FC = () => {
@@ -80,6 +82,123 @@ const ExportStats: React.FC = () => {
     void loadData();
   }, []);
 
+  const defaultNextPeriod = useMemo(() => {
+    if (availablePeriods.length === 0) return '08/2026';
+    const latest = availablePeriods[0];
+    const [mStr, yStr] = latest.split('/');
+    const m = parseInt(mStr, 10);
+    const y = parseInt(yStr, 10);
+    if (!isNaN(m) && !isNaN(y)) {
+      if (m === 12) {
+        return `01/${y + 1}`;
+      }
+      const nextM = m + 1;
+      return `${nextM < 10 ? `0${nextM}` : nextM}/${y}`;
+    }
+    return '08/2026';
+  }, [availablePeriods]);
+
+  // Init New Month Modal State
+  const [isInitModalOpen, setIsInitModalOpen] = useState(false);
+  const [newPeriodInput, setNewPeriodInput] = useState('');
+  const [baselinePeriod, setBaselinePeriod] = useState('');
+  const [initMode, setInitMode] = useState<'template' | 'blank'>('template');
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  const handleOpenInitModal = () => {
+    setNewPeriodInput(defaultNextPeriod);
+    setBaselinePeriod(availablePeriods[0] || '07/2026');
+    setInitMode('template');
+    setIsInitModalOpen(true);
+  };
+
+  const handleInitNewMonth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const period = newPeriodInput.trim();
+    if (!/^\d{1,2}\/\d{4}$/.test(period)) {
+      toast.error('Kỳ báo cáo không đúng định dạng MM/YYYY (Ví dụ: 08/2026)');
+      return;
+    }
+
+    const [mPart, yPart] = period.split('/');
+    const mNum = parseInt(mPart, 10);
+    if (mNum < 1 || mNum > 12) {
+      toast.error('Tháng phải từ 01 đến 12');
+      return;
+    }
+    const formattedPeriod = `${mNum < 10 ? `0${mNum}` : mNum}/${yPart}`;
+
+    // Check if period already exists
+    const existingForPeriod = stats.filter((s) => s.reportingPeriod === formattedPeriod);
+    if (existingForPeriod.length > 0) {
+      if (!window.confirm(`Kỳ ${formattedPeriod} đã có ${existingForPeriod.length} mặt hàng. Bạn có muốn ghi đè/tạo lại không?`)) {
+        return;
+      }
+    }
+
+    setIsInitializing(true);
+    try {
+      let sourceItems = stats.filter((s) => s.reportingPeriod === baselinePeriod);
+      if (sourceItems.length === 0) {
+        sourceItems = stats.slice(0, 7);
+      }
+
+      const periodSafe = formattedPeriod.replace(/[^a-zA-Z0-9]/g, '-');
+
+      for (const item of sourceItems) {
+        const code = item.commodityCode || item.commodityNameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const newItem: ExportStatItem = {
+          id: `${code}-${periodSafe}`,
+          commodityCode: code,
+          commodityNameEn: item.commodityNameEn,
+          commodityNameVi: item.commodityNameVi,
+          commodityNameZh: item.commodityNameZh,
+          category: item.category,
+          unit: item.unit,
+          reportingPeriod: formattedPeriod,
+          monthVolume: initMode === 'template' ? item.monthVolume : (item.unit === 'USD' ? null : 0),
+          monthValueUsd: initMode === 'template' ? item.monthValueUsd : 0,
+          yearVolume: initMode === 'template' ? item.yearVolume : (item.unit === 'USD' ? null : 0),
+          yearValueUsd: initMode === 'template' ? item.yearValueUsd : 0,
+          momGrowthPercent: undefined,
+          yoyGrowthPercent: undefined,
+          sortOrder: item.sortOrder,
+          isActive: true,
+          notes: `Tổng cục Hải quan - Tháng ${formattedPeriod}`
+        };
+        await api.upsertExportStat(newItem);
+      }
+
+      toast.success(`Đã khởi tạo thành công kỳ ${formattedPeriod} với ${sourceItems.length} mặt hàng!`);
+      setIsInitModalOpen(false);
+      await loadData();
+      setSelectedPeriodFilter(formattedPeriod);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Lỗi khi khởi tạo kỳ mới');
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  const handleDeletePeriod = async (periodToDelete: string) => {
+    const itemsToDelete = stats.filter((s) => s.reportingPeriod === periodToDelete);
+    if (itemsToDelete.length === 0) return;
+    if (!window.confirm(`Bạn có chắc muốn xoá toàn bộ ${itemsToDelete.length} mặt hàng của kỳ "${periodToDelete}"?`)) {
+      return;
+    }
+
+    try {
+      for (const item of itemsToDelete) {
+        await api.deleteExportStat(item.id);
+      }
+      toast.success(`Đã xoá kỳ ${periodToDelete}`);
+      setSelectedPeriodFilter('all');
+      await loadData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Lỗi khi xoá kỳ');
+    }
+  };
+
   const handleOpenCreate = () => {
     setEditingItem(null);
     const defaultPeriod = selectedPeriodFilter !== 'all'
@@ -120,15 +239,21 @@ const ExportStats: React.FC = () => {
       return;
     }
 
+    const code = (formData.commodityCode || formData.commodityNameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/^-|-$/g, '');
+    const period = formData.reportingPeriod || '07/2026';
+    const periodSafe = period.replace(/[^a-zA-Z0-9]/g, '-');
+    const autoId = `${code}-${periodSafe}`;
+    const finalId = editingItem ? editingItem.id : (formData.id && !formData.id.startsWith('stat-') ? formData.id : autoId);
+
     const payload: ExportStatItem = {
-      id: editingItem ? editingItem.id : (formData.id || `stat-${Date.now()}`),
-      commodityCode: formData.commodityCode || formData.commodityNameEn.toLowerCase().replace(/\s+/g, '-'),
+      id: finalId,
+      commodityCode: code,
       commodityNameEn: formData.commodityNameEn,
       commodityNameVi: formData.commodityNameVi,
       commodityNameZh: formData.commodityNameZh || undefined,
       category: formData.category || 'Agriculture',
       unit: formData.unit === 'USD' ? 'USD' : 'Ton',
-      reportingPeriod: formData.reportingPeriod || '07/2026',
+      reportingPeriod: period,
       monthVolume: formData.monthVolume ? Number(formData.monthVolume) : undefined,
       monthValueUsd: Number(formData.monthValueUsd || 0),
       yearVolume: formData.yearVolume ? Number(formData.yearVolume) : undefined,
@@ -193,6 +318,14 @@ const ExportStats: React.FC = () => {
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
               Làm mới
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenInitModal}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-700 text-white text-xs font-black hover:bg-emerald-800 transition-all shadow-md shadow-emerald-900/15"
+            >
+              <CalendarPlus size={15} />
+              Khởi tạo Tháng Mới
             </button>
             <button
               type="button"
@@ -267,6 +400,17 @@ const ExportStats: React.FC = () => {
                   </button>
                 );
               })}
+              {selectedPeriodFilter !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => handleDeletePeriod(selectedPeriodFilter)}
+                  className="px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-xl transition-all border border-rose-200/60 ml-2 flex items-center gap-1"
+                  title="Xoá tất cả mặt hàng thuộc kỳ này"
+                >
+                  <Trash2 size={12} />
+                  Xoá kỳ {selectedPeriodFilter}
+                </button>
+              )}
             </div>
           </div>
 
@@ -615,6 +759,165 @@ const ExportStats: React.FC = () => {
                   >
                     <Save size={15} />
                     Lưu Số liệu
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Initialize New Month Modal */}
+        {isInitModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foodera-forest/60 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border border-foodera-stone-200">
+              <div className="flex items-center justify-between pb-4 border-b border-foodera-stone-100 mb-6">
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-black text-emerald-800 uppercase tracking-wider mb-1">
+                    <CalendarPlus size={15} />
+                    <span>Thiết lập dữ liệu định kỳ</span>
+                  </div>
+                  <h2 className="text-xl font-black text-foodera-forest">
+                    Khởi tạo Kỳ Báo Cáo Mới
+                  </h2>
+                  <p className="text-xs text-foodera-stone-500 mt-1">
+                    Tự động tạo 7 nhóm mặt hàng nông sản chính theo chuẩn Tổng cục Hải quan
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInitModalOpen(false)}
+                  className="p-2 rounded-xl text-foodera-stone-400 hover:text-foodera-stone-600 hover:bg-foodera-stone-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleInitNewMonth} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-foodera-stone-700 mb-1.5">
+                    Kỳ báo cáo mới (MM/YYYY) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newPeriodInput}
+                      onChange={(e) => setNewPeriodInput(e.target.value)}
+                      placeholder="Ví dụ: 08/2026 hoặc 09/2026"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-foodera-stone-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNewPeriodInput(defaultNextPeriod)}
+                      className="px-3 py-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-100/70"
+                    >
+                      Kỳ gợi ý ({defaultNextPeriod})
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foodera-stone-700 mb-1.5">
+                    Sao chép cấu trúc 7 mặt hàng từ kỳ:
+                  </label>
+                  <select
+                    value={baselinePeriod}
+                    onChange={(e) => setBaselinePeriod(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-foodera-stone-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  >
+                    {availablePeriods.map((p) => (
+                      <option key={p} value={p}>
+                        Kỳ {p} ({stats.filter((s) => s.reportingPeriod === p).length} mặt hàng)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foodera-stone-700 mb-1.5">
+                    Chế độ dữ liệu ban đầu:
+                  </label>
+                  <div className="space-y-2 bg-foodera-stone-50 p-3 rounded-2xl border border-foodera-stone-200/70">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="initMode"
+                        value="template"
+                        checked={initMode === 'template'}
+                        onChange={() => setInitMode('template')}
+                        className="mt-0.5 text-emerald-700 focus:ring-emerald-500"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-foodera-stone-800">
+                          Sao chép số liệu kỳ trước làm mẫu (Khuyên dùng)
+                        </div>
+                        <div className="text-[11px] text-foodera-stone-500 leading-tight">
+                          Giữ số liệu của kỳ gốc để bạn chỉ cần cập nhật phần tăng/giảm thay vì nhập từ đầu.
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="initMode"
+                        value="blank"
+                        checked={initMode === 'blank'}
+                        onChange={() => setInitMode('blank')}
+                        className="mt-0.5 text-emerald-700 focus:ring-emerald-500"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-foodera-stone-800">
+                          Khởi tạo số liệu trắng (Bằng 0)
+                        </div>
+                        <div className="text-[11px] text-foodera-stone-500 leading-tight">
+                          Đặt sản lượng và kim ngạch ban đầu về 0, bạn sẽ nhập số liệu mới hoàn toàn.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Preview 7 standard commodities */}
+                <div className="p-3.5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                  <div className="text-[11px] font-bold text-emerald-900 mb-1.5 flex items-center gap-1.5">
+                    <Copy size={13} />
+                    7 mặt hàng tiêu chuẩn sẽ được khởi tạo:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Gạo', 'Cà phê', 'Hạt điều', 'Hồ tiêu', 'Quế & hoa quế', 'Sắn & sản phẩm sắn', 'Rau quả xuất khẩu'].map((name) => (
+                      <span key={name} className="px-2 py-0.5 rounded-lg bg-white text-[11px] font-bold text-emerald-950 border border-emerald-200/60 shadow-2xs">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-foodera-stone-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsInitModalOpen(false)}
+                    disabled={isInitializing}
+                    className="px-5 py-2.5 rounded-xl border border-foodera-stone-200 text-xs font-bold text-foodera-stone-600 hover:bg-foodera-stone-50"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isInitializing}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-black hover:bg-emerald-800 shadow-md shadow-emerald-900/15 disabled:opacity-50"
+                  >
+                    {isInitializing ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Đang khởi tạo...
+                      </>
+                    ) : (
+                      <>
+                        <CalendarPlus size={15} />
+                        Khởi tạo Kỳ Báo Cáo
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
