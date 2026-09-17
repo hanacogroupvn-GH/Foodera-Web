@@ -136,15 +136,27 @@ const Gallery: React.FC = () => {
     ogUrl: `${BASE_URL}/gallery`,
   });
 
+  // Normalize photos so any legacy photos like gallery-18 are properly associated with an album
+  const normalizedPhotos = photos.map((p) => {
+    if (p.id === 'gallery-18' && !p.album) {
+      return {
+        ...p,
+        album: 'slovakia-partner-visit',
+        albumTitle: 'Đoàn Đối tác Slovakia Khảo sát Nông trại'
+      };
+    }
+    return p;
+  });
+
   const availableCategories = (['activities', 'trade-fairs', 'farm-visits'] as GalleryCategory[]).filter(
-    (cat) => photos.some((photo) => photo.category === cat)
+    (cat) => normalizedPhotos.some((photo) => photo.category === cat)
   );
 
   // Filtered photos based on category and album
   const visiblePhotos = (
     activeCategory === 'all'
-      ? photos
-      : photos.filter((photo) => {
+      ? normalizedPhotos
+      : normalizedPhotos.filter((photo) => {
           if (photo.category !== activeCategory) return false;
           if (activeCategory === 'farm-visits' && activeFarmAlbum !== 'all') {
             return photo.album === activeFarmAlbum;
@@ -218,10 +230,13 @@ const Gallery: React.FC = () => {
         photosCount: 'photos'
       };
 
-  const farmPhotos = photos.filter((p) => p.category === 'farm-visits');
+  const farmPhotos = normalizedPhotos.filter((p) => p.category === 'farm-visits');
   const durianCount = farmPhotos.filter((p) => p.album === 'durian-farm-visit').length;
   const coffeeCount = farmPhotos.filter((p) => p.album === 'coffee-farm-visit').length;
   const slovakiaCount = farmPhotos.filter((p) => p.album === 'slovakia-partner-visit').length;
+  const standaloneFarmPhotos = farmPhotos.filter(
+    (p) => !p.album || !['durian-farm-visit', 'coffee-farm-visit', 'slovakia-partner-visit'].includes(p.album)
+  );
 
   return (
     <div className="bg-white min-h-screen">
@@ -393,6 +408,44 @@ const Gallery: React.FC = () => {
                   </section>
                 );
               })}
+
+              {standaloneFarmPhotos.length > 0 && (
+                <section className="border border-gray-100 rounded-3xl p-6 md:p-8 bg-gradient-to-b from-gray-50/50 to-white shadow-sm">
+                  <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100">
+                    <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border bg-gray-100 text-gray-700 border-gray-200">
+                      📸 {locale === 'vi' ? 'Khảo sát thực tế' : locale === 'zh' ? '实地考察记录' : 'Field Survey'}
+                    </span>
+                    <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
+                      {locale === 'vi' ? 'Hình ảnh khảo sát thực tế' : locale === 'zh' ? '其他实地照片' : 'Other Field Photos'}
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {standaloneFarmPhotos.map((photo) => {
+                      const globalIndex = visiblePhotos.findIndex((p) => p.id === photo.id);
+                      return (
+                        <button
+                          key={photo.id}
+                          type="button"
+                          onClick={() => setActivePhotoIndex(globalIndex !== -1 ? globalIndex : 0)}
+                          className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-200/80 hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-foodera-forest/50"
+                        >
+                          <img
+                            src={photo.src}
+                            alt={photo.alt}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {photo.caption && (
+                            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white text-[11px] font-semibold px-3 py-2.5 text-left line-clamp-2">
+                              {photo.caption}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
             </div>
           ) : visiblePhotos.length > 0 ? (
             <div>

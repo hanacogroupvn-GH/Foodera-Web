@@ -906,8 +906,26 @@ export const listGalleryPhotos = async (client) => {
           photos.push(saved);
         } catch {}
       }
-      photos.sort((a, b) => a.sortOrder - b.sortOrder);
     }
+
+    // Also sync album and albumTitle from static JSON for existing rows if currently missing
+    for (const p of photos) {
+      if (!p.album) {
+        const def = defaultGalleryData.find((d) => d.id === p.id);
+        if (def && def.album) {
+          p.album = def.album;
+          p.albumTitle = def.albumTitle;
+          try {
+            await client.execute({
+              sql: 'update gallery_photos set album = ?, album_title = ? where id = ?',
+              args: [def.album, def.albumTitle || null, p.id]
+            });
+          } catch {}
+        }
+      }
+    }
+
+    photos.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   }
 
   return photos;
