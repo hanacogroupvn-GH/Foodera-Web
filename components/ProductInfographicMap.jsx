@@ -146,7 +146,7 @@ function PracticesRow({ data, locale }) {
 }
 
 /* ── MAIN ── */
-export default function ProductInfographicMap({ copy, locale = "en", headerAction, onSwitchToChart }) {
+export default function ProductInfographicMap({ copy, locale = "en", headerAction, onSwitchToChart, embedded = false }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Rice");
   const [hoveredRegion, setHoveredRegion] = useState(null);
@@ -167,26 +167,39 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
   const tabLabels = {
     en: { Rice: "Rice", Coffee: "Coffee", Cashew: "Cashew", Pepper: "Pepper", Durian: "Durian", Watermelon: "Watermelon" },
     zh: { Rice: "大米", Coffee: "咖啡", Cashew: "腰果", Pepper: "胡椒", Durian: "榴莲", Watermelon: "西瓜" },
+    vi: { Rice: "Lúa gạo", Coffee: "Cà phê", Cashew: "Hạt điều", Pepper: "Hồ tiêu", Durian: "Sầu riêng", Watermelon: "Dưa hấu" },
   };
 
   return (
-    <div className="ptm-page">
+    <div className={`ptm-page ${embedded ? "ptm-embedded" : ""}`}>
       {/* Header */}
       <header className="ptm-header">
         <div className="ptm-header-top">
           <div className="ptm-header-brand">
-            <button type="button" className="ptm-back-btn" onClick={handleBack} aria-label={copy?.backAria ?? "Back"}>
-              <ArrowLeft size={18} />
-            </button>
+            {!embedded && (
+              <button type="button" className="ptm-back-btn" onClick={handleBack} aria-label={copy?.backAria ?? "Back"}>
+                <ArrowLeft size={18} />
+              </button>
+            )}
             <img src={Logo} alt="FoodEra" className="ptm-logo" style={{ height: '51px', width: 'auto' }} loading="eager" />
             <div className="ptm-header-title-group">
               <h1 className="ptm-header-title">{t(data.heroTitle, locale)}</h1>
               <span className="ptm-header-subtitle">{t(data.heroSubtitle, locale)}</span>
             </div>
           </div>
-          {headerAction && (
+          {(headerAction || embedded) && (
             <div className="ptm-header-actions">
-              {headerAction}
+              {headerAction || (
+                <button
+                  type="button"
+                  onClick={() => navigate(appRoutes.commercialTool)}
+                  className="ptm-fullscreen-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-foodera-forest text-white hover:bg-foodera-forest/90 transition-all shadow-sm"
+                  title={locale === 'zh' ? '全屏地图' : locale === 'vi' ? 'Xem toàn màn hình' : 'View Full Screen'}
+                >
+                  <MapPin size={13} />
+                  <span>{locale === 'zh' ? '全屏地图' : locale === 'vi' ? 'Xem toàn màn hình' : 'Full Screen'}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -248,10 +261,12 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
       <PracticesRow data={data} locale={locale} />
 
       {/* Footer */}
-      <footer className="ptm-footer">
-        <span className="ptm-footer-source">{copy?.footerSource ?? "Source: General Dept. of Customs, MARD, 2024"}</span>
-        <span className="ptm-footer-copyright">{copy?.copyrightLabel ?? "© 2026 FoodEra"}</span>
-      </footer>
+      {!embedded && (
+        <footer className="ptm-footer">
+          <span className="ptm-footer-source">{copy?.footerSource ?? "Source: General Dept. of Customs, MARD, 2024"}</span>
+          <span className="ptm-footer-copyright">{copy?.copyrightLabel ?? "© 2026 FoodEra"}</span>
+        </footer>
+      )}
     </div>
   );
 }

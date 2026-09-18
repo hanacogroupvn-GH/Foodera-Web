@@ -7,6 +7,7 @@ import AppShellLoader from '../components/AppShellLoader';
 import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, localizeNewsItem } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
+import InteractiveMapSection from '../components/InteractiveMapSection';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -879,6 +880,9 @@ const NewsDetail: React.FC = () => {
           </section>
         </div>
       </article>
+
+      {/* ── Interactive Growing Areas Map Section ── */}
+      <InteractiveMapSection />
 
       <section className="bg-gray-50 py-20 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

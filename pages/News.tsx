@@ -10,6 +10,7 @@ import AppShellLoader from '../components/AppShellLoader';
 import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, localizeNewsItem } from '../lib/contentLocalization';
 import { useDocumentMeta, BASE_URL } from '../lib/useDocumentMeta';
+import InteractiveMapSection from '../components/InteractiveMapSection';
 
 /* ── component ────────────────────────────────────────────── */
 const News: React.FC = () => {
@@ -214,6 +215,11 @@ const News: React.FC = () => {
           </div>
         </section>
       )}
+
+      {/* ═══════════════════════════════════════════════════════
+          Interactive Growing Areas Map (Bên dưới các bài news)
+      ═══════════════════════════════════════════════════════ */}
+      <InteractiveMapSection />
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 5: Pillar Summary / Internal Linking
