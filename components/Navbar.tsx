@@ -32,10 +32,6 @@ const buildSectionSubtitle = (items: Product[], locale: SupportedLocale) => {
   if (locale === 'zh') {
     return `${items.length} 个在售出口 SKU`;
   }
-  if (locale === 'vi') {
-    return `${items.length} SKU đang hoạt động`;
-  }
-
   return `${items.length} active SKU${items.length === 1 ? '' : 's'}`;
 };
 

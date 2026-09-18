@@ -1554,16 +1554,12 @@ const AdminInventory: React.FC = () => {
             <div className="flex w-full flex-wrap items-center gap-2 md:flex-nowrap xl:w-auto xl:flex-nowrap">
               <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
-                <button type="button" onClick={() => setLocale('vi')} className={locale === 'vi' ? 'text-foodera-forest' : ''}>
-                  VIE
-                </button>
-                <span>/</span>
-                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest font-black' : 'hover:text-foodera-forest'}>
                   EN
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
-                  CN
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest font-black' : 'hover:text-foodera-forest'}>
+                  中文
                 </button>
               </div>
               <button

@@ -126,10 +126,8 @@ const Gallery: React.FC = () => {
   }, [activeCategory]);
 
   useDocumentMeta({
-    title: locale === 'vi' ? 'Thư Viện Ảnh | FoodEra' : locale === 'zh' ? '活动相册 | FoodEra' : 'Gallery | FoodEra',
-    description: locale === 'vi'
-      ? 'Khám phá hình ảnh hoạt động công ty, sự kiện xúc tiến thương mại và các chuyến khảo sát vùng trồng nông sản của FoodEra.'
-      : locale === 'zh'
+    title: locale === 'zh' ? '活动相册 | FoodEra' : 'Gallery | FoodEra',
+    description: locale === 'zh'
       ? '浏览 FoodEra 的公司活动、展会与产地拜访实景照片。'
       : "A look at FoodEra's company activities, trade fairs, and farm visits.",
     canonicalUrl: `${BASE_URL}/gallery`,
@@ -142,7 +140,7 @@ const Gallery: React.FC = () => {
       return {
         ...p,
         album: 'slovakia-partner-visit',
-        albumTitle: 'Đoàn Đối tác Slovakia Khảo sát Nông trại'
+        albumTitle: 'Slovak Delegation Farm Inspection'
       };
     }
     return p;
@@ -182,23 +180,7 @@ const Gallery: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activePhoto, visiblePhotos.length]);
 
-  const copy = locale === 'vi'
-    ? {
-        heroTitle: 'Thư Viện Ảnh',
-        heroDesc: 'Ghi lại những khoảnh khắc hoạt động doanh nghiệp, hội chợ quốc tế và các chuyến khảo sát vùng trồng nông sản của FoodEra.',
-        emptyTitle: 'Thư viện ảnh sắp ra mắt',
-        emptyDesc: 'Hình ảnh hoạt động, hội chợ triển lãm và nông trường sẽ sớm được cập nhật tại đây.',
-        categoryLabels: {
-          all: 'Tất cả',
-          activities: 'Hoạt động công ty',
-          'trade-fairs': 'Hội chợ & Triển lãm',
-          'farm-visits': 'Khảo sát nông trại',
-        } as Record<GalleryCategory | 'all', string>,
-        allAlbums: 'Tất cả các chuyến khảo sát',
-        viewAlbum: 'Xem bộ ảnh',
-        photosCount: 'ảnh'
-      }
-    : locale === 'zh'
+  const copy = locale === 'zh'
     ? {
         heroTitle: '活动相册',
         heroDesc: '记录 FoodEra 的公司活动、展会与产地拜访瞬间。',
@@ -299,7 +281,7 @@ const Gallery: React.FC = () => {
                   }`}
                 >
                   <span>🍈</span>
-                  <span>{FARM_ALBUMS['durian-farm-visit']?.shortLabel?.[locale] || 'Vườn Sầu Riêng'}</span>
+                  <span>{FARM_ALBUMS['durian-farm-visit']?.shortLabel?.[locale] || FARM_ALBUMS['durian-farm-visit']?.shortLabel?.en || 'Durian Plantation'}</span>
                   <span className="text-[10px] opacity-80">({durianCount})</span>
                 </button>
               )}
@@ -315,7 +297,7 @@ const Gallery: React.FC = () => {
                   }`}
                 >
                   <span>☕</span>
-                  <span>{FARM_ALBUMS['coffee-farm-visit']?.shortLabel?.[locale] || 'Nông Trường Cà Phê'}</span>
+                  <span>{FARM_ALBUMS['coffee-farm-visit']?.shortLabel?.[locale] || FARM_ALBUMS['coffee-farm-visit']?.shortLabel?.en || 'Coffee Plantation'}</span>
                   <span className="text-[10px] opacity-80">({coffeeCount})</span>
                 </button>
               )}
@@ -331,7 +313,7 @@ const Gallery: React.FC = () => {
                   }`}
                 >
                   <span>🤝</span>
-                  <span>{FARM_ALBUMS['slovakia-partner-visit']?.shortLabel?.[locale] || 'Đối Tác Quốc Tế'}</span>
+                  <span>{FARM_ALBUMS['slovakia-partner-visit']?.shortLabel?.[locale] || FARM_ALBUMS['slovakia-partner-visit']?.shortLabel?.en || 'Partner Delegation'}</span>
                   <span className="text-[10px] opacity-80">({slovakiaCount})</span>
                 </button>
               )}
@@ -357,7 +339,7 @@ const Gallery: React.FC = () => {
                   {photo.album && (
                     <span className="absolute top-2.5 left-2.5 text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/60 text-white backdrop-blur-md shadow-xs truncate max-w-[150px] pointer-events-none">
                       {FARM_ALBUMS[photo.album]?.icon ? `${FARM_ALBUMS[photo.album].icon} ` : ''}
-                      {FARM_ALBUMS[photo.album]?.shortLabel?.[locale] || photo.albumTitle || photo.album}
+                      {FARM_ALBUMS[photo.album]?.shortLabel?.[locale] || FARM_ALBUMS[photo.album]?.shortLabel?.en || photo.albumTitle || photo.album}
                     </span>
                   )}
                   {/* Caption overlay at the bottom matching user screenshot */}
@@ -430,7 +412,7 @@ const Gallery: React.FC = () => {
             <div className="relative text-center mt-4 space-y-1.5 px-4">
               {(activePhoto.album || activePhoto.albumTitle) && (
                 <span className={`inline-block px-3 py-0.5 rounded-full text-xs font-bold border shadow-xs ${FARM_ALBUMS[activePhoto.album || '']?.badgeClass || 'bg-white/20 text-white border-white/30'}`}>
-                  {FARM_ALBUMS[activePhoto.album || '']?.icon || '📁'} {FARM_ALBUMS[activePhoto.album || '']?.title?.[locale] || activePhoto.albumTitle || activePhoto.album}
+                  {FARM_ALBUMS[activePhoto.album || '']?.icon || '📁'} {FARM_ALBUMS[activePhoto.album || '']?.title?.[locale] || FARM_ALBUMS[activePhoto.album || '']?.title?.en || activePhoto.albumTitle || activePhoto.album}
                 </span>
               )}
               {activePhoto.caption && (

@@ -194,10 +194,10 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
                   type="button"
                   onClick={() => navigate(appRoutes.commercialTool)}
                   className="ptm-fullscreen-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-foodera-forest text-white hover:bg-foodera-forest/90 transition-all shadow-sm"
-                  title={locale === 'zh' ? '全屏地图' : locale === 'vi' ? 'Xem toàn màn hình' : 'View Full Screen'}
+                  title={locale === 'zh' ? '全屏地图' : 'View Full Screen'}
                 >
                   <MapPin size={13} />
-                  <span>{locale === 'zh' ? '全屏地图' : locale === 'vi' ? 'Xem toàn màn hình' : 'Full Screen'}</span>
+                  <span>{locale === 'zh' ? '全屏地图' : 'Full Screen'}</span>
                 </button>
               )}
             </div>
@@ -220,10 +220,10 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
               type="button"
               className="ptm-tab ptm-tab-chart-btn"
               onClick={onSwitchToChart}
-              title={locale === 'zh' ? '查看农产品出口量折线图' : locale === 'vi' ? 'Xem biểu đồ đường sản lượng xuất khẩu' : 'View Export Volume Line Chart'}
+              title={locale === 'zh' ? '查看农产品出口量折线图' : 'View Export Volume Line Chart'}
             >
               <TrendingUp size={14} />
-              <span>{locale === 'zh' ? '出口产量折线图' : locale === 'vi' ? 'Biểu đồ xuất khẩu' : 'Export Line Chart'}</span>
+              <span>{locale === 'zh' ? '出口产量折线图' : 'Export Line Chart'}</span>
             </button>
           )}
         </nav>

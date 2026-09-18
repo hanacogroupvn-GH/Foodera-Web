@@ -88,20 +88,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       operationsPortal: '运营后台',
       exitHome: '返回首页',
     }
-  }[locale] || {
-    dashboard: 'Tổng quan',
-    product: 'Sản phẩm',
-    managePosts: 'Quản lý bài đăng',
-    createPost: 'Tạo bài viết',
-    seo: 'SEO',
-    mapContent: 'Nội dung bản đồ',
-    exportStats: 'Biểu đồ sản lượng',
-    careers: 'Tuyển dụng',
-    gallery: 'Thư viện ảnh',
-    staffPortal: 'Trang nhân viên',
-    operationsPortal: 'Cổng vận hành',
-    exitHome: 'Quay lại Trang chủ',
-  };
+  }[locale === 'zh' ? 'zh' : 'en'];
 
   const [productOpen, setProductOpen] = useState(
     location.pathname.startsWith(appRoutes.adminInventory)

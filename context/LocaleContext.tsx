@@ -6,24 +6,37 @@ interface LocaleContextType {
   setLocale: (locale: SupportedLocale) => void;
 }
 
-const LOCALE_STORAGE_KEY = 'foodmax_locale_v1';
+const LOCALE_STORAGE_KEY = 'foodera_locale_v2';
+const LEGACY_STORAGE_KEYS = ['foodmax_locale_v1', 'foodera_locale_v1'];
 
 export const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 
 const resolveInitialLocale = (): SupportedLocale => {
   if (typeof window === 'undefined') {
-    return 'vi';
+    return 'en';
   }
 
-  const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-  if (stored === 'en' || stored === 'zh' || stored === 'vi') {
-    return stored;
+  try {
+    LEGACY_STORAGE_KEYS.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    // Ignore storage cleanup issues
   }
 
-  const browserLanguage = window.navigator.language.toLowerCase();
-  if (browserLanguage.startsWith('vi')) return 'vi';
-  if (browserLanguage.startsWith('zh')) return 'zh';
-  return 'vi';
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (stored === 'zh' || stored === 'en') {
+      return stored;
+    }
+
+    const browserLanguage = window.navigator.language?.toLowerCase() || '';
+    if (browserLanguage.startsWith('zh')) {
+      return 'zh';
+    }
+  } catch {
+    // Ignore access errors
+  }
+
+  return 'en';
 };
 
 export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,9 +44,14 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+      try {
+        window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+      } catch {
+        // Ignore storage errors
+      }
     }
-    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : locale === 'vi' ? 'vi-VN' : 'en';
+    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en';
+    document.documentElement.setAttribute('data-locale', locale);
   }, [locale]);
 
   const value = useMemo(

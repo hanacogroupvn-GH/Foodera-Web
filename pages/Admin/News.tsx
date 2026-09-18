@@ -889,16 +889,12 @@ const AdminNews: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-gray-500">
                 <span>{copy.cmsLanguage}</span>
-                <button type="button" onClick={() => setLocale('vi')} className={locale === 'vi' ? 'text-foodera-forest' : ''}>
-                  VIE
-                </button>
-                <span>/</span>
-                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest' : ''}>
+                <button type="button" onClick={() => setLocale('en')} className={locale === 'en' ? 'text-foodera-forest font-black' : 'hover:text-foodera-forest'}>
                   EN
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest' : ''}>
-                  CN
+                <button type="button" onClick={() => setLocale('zh')} className={locale === 'zh' ? 'text-foodera-forest font-black' : 'hover:text-foodera-forest'}>
+                  中文
                 </button>
               </div>
               <button 

@@ -71,54 +71,6 @@ const CommercialTool: React.FC = () => {
           panelNoData: '暂未映射',
           panelCloseAria: '关闭省域详情'
         }
-      : locale === 'vi'
-      ? {
-          brandEyebrow: 'FoodEra Origin Desk',
-          brandAlt: 'FoodEra',
-          copyrightLabel: MAP_COPYRIGHT,
-          brandTitle: 'Vùng trồng Nông sản Việt Nam',
-          backLabel: 'Quay lại',
-          backAria: 'Quay lại trang trước',
-          filterTitle: 'Bộ lọc Nông sản',
-          filterSubtitle: 'Làm nổi bật các tỉnh theo danh mục nông sản',
-          filterClear: 'Xóa lọc',
-          filterEmpty: 'Chưa có danh mục nào được liên kết.',
-          filterProvinceSingular: 'tỉnh',
-          filterProvincePlural: 'tỉnh thành',
-          filterTabProducts: 'Sản phẩm',
-          filterTabRegions: 'Vùng miền',
-          categoryRice: 'Lúa gạo',
-          categoryAgriculture: 'Trái cây & Nông sản',
-          categoryCoffee: 'Cà phê',
-          categoryCashew: 'Hạt điều',
-          legendTitle: 'Chú thích Vùng miền',
-          legendSubtitle: 'Hệ thống màu sắc phân bổ 6 vùng sinh thái nông nghiệp',
-          legendEmpty: 'Không có dữ liệu vùng.',
-          legendButton: 'Chú thích',
-          toggleLegendAria: 'Bật/tắt bảng chú thích',
-          closeLegendAria: 'Đóng bảng chú thích',
-          reopenLegendAria: 'Mở lại bảng chú thích',
-          resetAria: 'Đặt lại bản đồ Việt Nam',
-          editorAria: 'Mở trình chỉnh sửa nội dung',
-          regionAria: 'Mã màu 6 vùng sinh thái',
-          summaryTitle: 'Di chuột hoặc chọn tỉnh bất kỳ',
-          summaryText: 'Xem thông số diện tích, năng suất, mùa vụ được quản lý từ CMS.',
-          resetLabel: 'Toàn quốc',
-          loading: 'Đang tải bản đồ vùng trồng...',
-          loadError: 'Không thể tải dữ liệu bản đồ.',
-          panelKicker: 'Chi tiết tỉnh thành',
-          panelOverviewTitle: 'Đặc tính',
-          panelSpecsTitle: 'Thông số kỹ thuật',
-          panelCoordinatesLabel: 'Tọa độ GPS',
-          panelCultivatedAreaLabel: 'Diện tích gieo trồng (ha)',
-          panelAverageOutputLabel: 'Sản lượng bình quân (MT/năm)',
-          panelSowingPeriodLabel: 'Thời vụ xuống giống',
-          panelHarvestPeriodLabel: 'Thời vụ thu hoạch',
-          panelCropsPerYearLabel: 'Số vụ canh tác/năm',
-          panelVarietiesLabel: 'Giống cây trồng',
-          panelNoData: 'Đang cập nhật',
-          panelCloseAria: 'Đóng chi tiết'
-        }
       : {
           brandEyebrow: 'FoodEra Origin Desk',
           brandAlt: 'FoodEra',
@@ -179,7 +131,7 @@ const CommercialTool: React.FC = () => {
         }`}
       >
         <MapPin size={14} />
-        <span>{locale === 'zh' ? '种植区地图' : locale === 'vi' ? 'Bản đồ vùng trồng' : 'Growing Map'}</span>
+        <span>{locale === 'zh' ? '种植区地图' : 'Growing Map'}</span>
       </button>
       <button
         type="button"
@@ -191,7 +143,7 @@ const CommercialTool: React.FC = () => {
         }`}
       >
         <LineChart size={14} />
-        <span>{locale === 'zh' ? '出口产量统计' : locale === 'vi' ? 'Biểu đồ xuất khẩu' : 'Export Line Chart'}</span>
+        <span>{locale === 'zh' ? '出口产量统计' : 'Export Line Chart'}</span>
       </button>
     </div>
   );
@@ -215,7 +167,7 @@ const CommercialTool: React.FC = () => {
                   className="ptm-back-btn"
                   onClick={() => setViewMode('map')}
                   aria-label={copy.backAria}
-                  title={locale === 'vi' ? 'Quay lại bản đồ' : locale === 'zh' ? '返回地图' : 'Back to map'}
+                  title={locale === 'zh' ? '返回地图' : 'Back to map'}
                 >
                   <ArrowLeft size={18} />
                 </button>
@@ -224,15 +176,11 @@ const CommercialTool: React.FC = () => {
                   <h1 className="ptm-header-title">
                     {locale === 'zh'
                       ? '越南主要农产品出口统计与产量'
-                      : locale === 'vi'
-                      ? 'Biểu đồ Thống kê Xuất khẩu Nông sản Việt Nam'
                       : 'Vietnam Agricultural Export Statistics'}
                   </h1>
                   <span className="ptm-header-subtitle">
                     {locale === 'zh'
                       ? '越南海关总署官方数据报告 (2026年7月与累计)'
-                      : locale === 'vi'
-                      ? 'Số liệu chính thức Tổng cục Hải quan (T7/2026 & Lũy kế)'
                       : 'Official Customs Report (July 2026 & Cumulative)'}
                   </span>
                 </div>

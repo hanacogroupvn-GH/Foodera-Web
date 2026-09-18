@@ -190,7 +190,7 @@ const AppRoutes: React.FC = () => {
                   path={appRoutes.adminExportStats}
                   element={
                     <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载出口统计...' : locale === 'vi' ? 'Đang tải thống kê xuất khẩu...' : 'Loading export statistics...'} compact />}>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载出口统计...' : 'Loading export statistics...'} compact />}>
                         <AdminExportStats />
                       </Suspense>
                     </ProtectedRoute>
@@ -200,7 +200,7 @@ const AppRoutes: React.FC = () => {
                   path={appRoutes.adminGallery}
                   element={
                     <ProtectedRoute>
-                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载相册管理...' : locale === 'vi' ? 'Đang tải quản lý thư viện ảnh...' : 'Loading gallery CMS...'} compact />}>
+                      <Suspense fallback={<AppShellLoader label={locale === 'zh' ? '正在加载相册管理...' : 'Loading gallery CMS...'} compact />}>
                         <AdminGallery />
                       </Suspense>
                     </ProtectedRoute>

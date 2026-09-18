@@ -20,7 +20,7 @@ import { appRoutes } from '../lib/routes';
 import { preserveVietnamesePlaceNamesDeep } from '../lib/preserveVietnamesePlaceNames';
 
 const Footer: React.FC = () => {
-  const { locale } = useLocale();
+  const { locale, setLocale } = useLocale();
   const rawCopy = locale === 'zh'
     ? {
         quickLinks: '产品系列',
@@ -167,6 +167,23 @@ const Footer: React.FC = () => {
         <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">&copy; {new Date().getFullYear()} {copy.rights}</p>
           <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60 uppercase tracking-widest">
+              <button
+                type="button"
+                onClick={() => setLocale('en')}
+                className={`transition-colors ${locale === 'en' ? 'text-foodera-lime font-black' : 'hover:text-white'}`}
+              >
+                EN
+              </button>
+              <span>/</span>
+              <button
+                type="button"
+                onClick={() => setLocale('zh')}
+                className={`transition-colors ${locale === 'zh' ? 'text-foodera-lime font-black' : 'hover:text-white'}`}
+              >
+                中文
+              </button>
+            </div>
             <Link to={appRoutes.login} className="flex items-center gap-2 text-[10px] font-black text-white/60 hover:text-foodera-lime transition-colors uppercase tracking-widest">
               <Shield size={12} /> {copy.staffPortal}
             </Link>
