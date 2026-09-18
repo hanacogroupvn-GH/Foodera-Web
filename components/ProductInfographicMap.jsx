@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { ArrowLeft, Check, TrendingUp, Truck, Globe, Users, Mountain, Thermometer, Droplets, Target, Info, Sun, Map as MapIcon } from "lucide-react";
+import { ArrowLeft, Check, TrendingUp, Truck, Globe, Users, Mountain, Thermometer, Droplets, Target, Info, Sun, Map as MapIcon, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const Logo = "/logo-era.png";
 import { appRoutes } from "../lib/routes";
