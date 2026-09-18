@@ -33,13 +33,16 @@ const parsePeriodDetails = (periodStr?: string): PeriodDetails => {
   return { month: 7, year: 2026, raw: periodStr };
 };
 
-const formatPeriodDisplay = (periodStr: string, locale: string): string => {
+const formatPeriodDisplay = (periodStr: string, locale: string, short = false): string => {
   const { month, year, raw } = parsePeriodDetails(periodStr);
   if (!raw.includes('/')) return raw;
-  if (locale === 'vi') return `Tháng ${month < 10 ? `0${month}` : month}/${year}`;
+  if (locale === 'vi') {
+    const mStr = month < 10 ? `0${month}` : `${month}`;
+    return short ? `T${mStr}/${String(year).slice(-2)}` : `Tháng ${mStr}/${year}`;
+  }
   if (locale === 'zh') return `${year}年${month}月`;
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${monthNames[month - 1] || month} ${year}`;
+  return short ? `${monthNames[month - 1] || month} '${String(year).slice(-2)}` : `${monthNames[month - 1] || month} ${year}`;
 };
 
 type MetricType = 'volume' | 'value';
@@ -185,6 +188,16 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
       return pB.month - pA.month;
     });
   }, [rawData]);
+
+  // Chronological periods (oldest to newest for timeline presentation)
+  const chronologicalPeriods = useMemo(() => {
+    return [...availablePeriods].sort((a, b) => {
+      const pA = parsePeriodDetails(a);
+      const pB = parsePeriodDetails(b);
+      if (pA.year !== pB.year) return pA.year - pB.year;
+      return pA.month - pB.month;
+    });
+  }, [availablePeriods]);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
 
@@ -500,39 +513,24 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
             </div>
             {availablePeriods.length > 1 ? (
               <div className="flex items-center gap-1 flex-wrap">
-                {availablePeriods.slice(0, 4).map((p) => {
+                {chronologicalPeriods.map((p) => {
                   const isActive = selectedPeriod === p;
                   return (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setSelectedPeriod(p)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                         isActive
                           ? 'bg-emerald-900 text-white shadow-sm ring-1 ring-emerald-950'
                           : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
                       }`}
                     >
-                      {formatPeriodDisplay(p, locale)}
+                      <span className="hidden sm:inline">{formatPeriodDisplay(p, locale)}</span>
+                      <span className="sm:hidden">{formatPeriodDisplay(p, locale, true)}</span>
                     </button>
                   );
                 })}
-                {availablePeriods.length > 4 && (
-                  <div className="relative">
-                    <select
-                      value={selectedPeriod}
-                      onChange={(e) => setSelectedPeriod(e.target.value)}
-                      className="appearance-none bg-white text-xs font-bold text-emerald-950 pl-2.5 pr-7 py-1.5 rounded-xl border border-emerald-200 shadow-sm focus:outline-none cursor-pointer"
-                    >
-                      {availablePeriods.map((p) => (
-                        <option key={p} value={p}>
-                          {formatPeriodDisplay(p, locale)}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
-                  </div>
-                )}
               </div>
             ) : (
               <span className="px-3 py-1.5 bg-white rounded-xl text-xs font-black text-emerald-950 border border-emerald-200 shadow-xs">
@@ -556,39 +554,24 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
                 </div>
                 {availablePeriods.length > 1 ? (
                   <div className="flex items-center gap-1 flex-wrap">
-                    {availablePeriods.slice(0, 4).map((p) => {
+                    {chronologicalPeriods.map((p) => {
                       const isActive = selectedPeriod === p;
                       return (
                         <button
                           key={p}
                           type="button"
                           onClick={() => setSelectedPeriod(p)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                             isActive
                               ? 'bg-emerald-900 text-white shadow-sm'
                               : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
                           }`}
                         >
-                          {formatPeriodDisplay(p, locale)}
+                          <span className="hidden sm:inline">{formatPeriodDisplay(p, locale)}</span>
+                          <span className="sm:hidden">{formatPeriodDisplay(p, locale, true)}</span>
                         </button>
                       );
                     })}
-                    {availablePeriods.length > 4 && (
-                      <div className="relative">
-                        <select
-                          value={selectedPeriod}
-                          onChange={(e) => setSelectedPeriod(e.target.value)}
-                          className="appearance-none bg-white text-xs font-bold text-emerald-950 pl-2.5 pr-7 py-1 rounded-xl border border-emerald-200 shadow-sm focus:outline-none cursor-pointer"
-                        >
-                          {availablePeriods.map((p) => (
-                            <option key={p} value={p}>
-                              {formatPeriodDisplay(p, locale)}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-700 pointer-events-none" />
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <span className="px-2.5 py-1 bg-white rounded-xl text-xs font-black text-emerald-950 border border-emerald-200">
