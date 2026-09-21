@@ -10,67 +10,139 @@ export const BASE_REGIONS = [
   {
     regionKey: "trung-du-mien-nui-phia-bac",
     number: 1,
-    name: "Trung Du và Miền Núi Phía Bắc",
+    name: {
+      en: "Northern Midlands & Mountains",
+      zh: "北部中游与山区"
+    },
     nameEn: "Northern Midlands & Mountains",
-    area: "~9.6 triệu ha",
-    climate: "Khí hậu cận nhiệt đới, mùa đông lạnh, địa hình đồi núi",
+    area: {
+      en: "~9.6M ha",
+      zh: "~960万公顷"
+    },
+    climate: {
+      en: "Subtropical climate, cool winter, mountainous terrain",
+      zh: "亚热带气候，冬季凉爽，丘陵与山地地形"
+    },
     color: "#2f964f",
-    provinces: ["Sơn La", "Điện Biên", "Lai Châu", "Lào Cai", "Phú Thọ", "Thái Nguyên"],
+    provinces: {
+      en: ["Son La", "Dien Bien", "Lai Chau", "Lao Cai", "Phu Tho", "Thai Nguyen"],
+      zh: ["山罗", "奠边", "莱州", "老街", "富寿", "太原"]
+    },
     certificates: ["VietGAP", "4C"],
   },
   {
     regionKey: "dong-bang-song-hong",
     number: 2,
-    name: "Đồng Bằng Sông Hồng",
+    name: {
+      en: "Red River Delta",
+      zh: "红河三角洲"
+    },
     nameEn: "Red River Delta",
-    area: "~2.1 triệu ha",
-    climate: "Khí hậu nhiệt đới gió mùa, đất phù sa màu mỡ",
+    area: {
+      en: "~2.1M ha",
+      zh: "~210万公顷"
+    },
+    climate: {
+      en: "Tropical monsoon climate, rich fertile alluvial soil",
+      zh: "热带季风气候，肥沃冲积土壤"
+    },
     color: "#b1d127",
-    provinces: ["Hà Nội", "Hải Phòng", "Thái Bình", "Nam Định", "Hải Dương", "Hưng Yên"],
+    provinces: {
+      en: ["Ha Noi", "Hai Phong", "Thai Binh", "Nam Dinh", "Hai Duong", "Hung Yen"],
+      zh: ["河内", "海防", "太平", "南定", "海阳", "兴安"]
+    },
     certificates: ["VietGAP"],
   },
   {
     regionKey: "bac-trung-bo-duyen-hai-mien-trung",
     number: 3,
-    name: "Bắc Trung Bộ và Duyên Hải Miền Trung",
+    name: {
+      en: "North Central & Central Coast",
+      zh: "中北部与中部沿海"
+    },
     nameEn: "North Central & Central Coast",
-    area: "~9.6 triệu ha",
-    climate: "Khí hậu nhiệt đới gió mùa, nắng nóng, mùa mưa bão",
+    area: {
+      en: "~9.6M ha",
+      zh: "~960万公顷"
+    },
+    climate: {
+      en: "Tropical monsoon climate, high sunshine, coastal conditions",
+      zh: "热带季风气候，充足日照，沿海生态环境"
+    },
     color: "#ffd06b",
-    provinces: ["Thanh Hóa", "Nghệ An", "Quảng Trị", "Quảng Nam", "Quảng Ngãi", "Bình Định", "Khánh Hòa", "Bình Thuận"],
+    provinces: {
+      en: ["Thanh Hoa", "Nghe An", "Quang Tri", "Quang Nam", "Quang Ngai", "Binh Dinh", "Khanh Hoa", "Binh Thuan"],
+      zh: ["清化", "乂安", "广治", "广南", "广义", "平定", "庆和", "平顺"]
+    },
     certificates: ["VietGAP"],
   },
   {
     regionKey: "tay-nguyen",
     number: 4,
-    name: "Tây Nguyên",
+    name: {
+      en: "Central Highlands",
+      zh: "西原高原"
+    },
     nameEn: "Central Highlands",
-    area: "~5.5 triệu ha",
-    climate: "Đất đỏ bazan màu mỡ, độ cao 500–800m, khí hậu mát mẻ",
+    area: {
+      en: "~5.5M ha",
+      zh: "~550万公顷"
+    },
+    climate: {
+      en: "Fertile basalt red soil, 500–800m elevation, temperate climate",
+      zh: "肥沃红玄武岩土，海拔500–800米，温和高原气候"
+    },
     color: "#b48a58",
-    provinces: ["Đắk Lắk", "Đắk Nông", "Gia Lai", "Kon Tum", "Lâm Đồng"],
+    provinces: {
+      en: ["Dak Lak", "Dak Nong", "Gia Lai", "Kon Tum", "Lam Dong"],
+      zh: ["多乐", "达农", "嘉莱", "昆嵩", "林同"]
+    },
     certificates: ["4C", "Rainforest Alliance", "GlobalGAP"],
   },
   {
     regionKey: "dong-nam-bo",
     number: 5,
-    name: "Đông Nam Bộ",
+    name: {
+      en: "Southeast",
+      zh: "东南部"
+    },
     nameEn: "Southeast",
-    area: "~2.4 triệu ha",
-    climate: "Khí hậu nhiệt đới ổn định, đất đỏ và phù sa cổ",
+    area: {
+      en: "~2.4M ha",
+      zh: "~240万公顷"
+    },
+    climate: {
+      en: "Stable tropical climate, rich basalt & ancient alluvial soil",
+      zh: "稳定热带气候，玄武岩红土与古冲积土"
+    },
     color: "#d9e54d",
-    provinces: ["Bình Phước", "Đồng Nai", "Bà Rịa - Vũng Tàu", "Tây Ninh", "Bình Dương"],
+    provinces: {
+      en: ["Binh Phuoc", "Dong Nai", "Ba Ria - Vung Tau", "Tay Ninh", "Binh Duong"],
+      zh: ["平福", "同奈", "巴地头顿", "西宁", "平阳"]
+    },
     certificates: ["GlobalGAP", "BRC", "HACCP"],
   },
   {
     regionKey: "dong-bang-song-cuu-long",
     number: 6,
-    name: "Đồng Bằng Sông Cửu Long",
+    name: {
+      en: "Mekong Delta",
+      zh: "湄公河三角洲"
+    },
     nameEn: "Mekong Delta",
-    area: "~4.0 triệu ha",
-    climate: "Đất phù sa màu mỡ, hệ thống kênh rạch dày đặc",
+    area: {
+      en: "~4.0M ha",
+      zh: "~400万公顷"
+    },
+    climate: {
+      en: "Rich alluvial soil, extensive natural river & canal network",
+      zh: "肥沃水稻冲积土，密集纵横运河水道网络"
+    },
     color: "#ff8d43",
-    provinces: ["Cần Thơ", "An Giang", "Đồng Tháp", "Long An", "Tiền Giang", "Bến Tre", "Kiên Giang"],
+    provinces: {
+      en: ["Can Tho", "An Giang", "Dong Thap", "Long An", "Tien Giang", "Ben Tre", "Kien Giang"],
+      zh: ["芹苴", "安江", "同塔", "隆安", "前江", "槟椥", "坚江"]
+    },
     certificates: ["GlobalGAP", "SRP"],
   },
 ];
@@ -78,52 +150,64 @@ export const BASE_REGIONS = [
 /* ── Per-category varieties for each region ── */
 export const REGION_VARIETIES = {
   Rice: {
-    "trung-du-mien-nui-phia-bac": ["Lúa nương", "Séng cù", "Tám thơm"],
-    "dong-bang-song-hong": ["Bắc thơm 7", "Khang dân", "Nếp cái hoa vàng"],
-    "bac-trung-bo-duyen-hai-mien-trung": ["Khang dân 18", "TH5", "Lúa địa phương"],
-    "tay-nguyen": [],
-    "dong-nam-bo": [],
-    "dong-bang-song-cuu-long": ["OM 5451", "ST24", "ST25", "Đài thơm 8", "Jasmine 85"],
+    "trung-du-mien-nui-phia-bac": {
+      en: ["Highland Fragrant Rice", "Seng Cu", "Tam Thom"],
+      zh: ["高山香稻", "生拘香米", "八香米"]
+    },
+    "dong-bang-song-hong": {
+      en: ["Bac Thom 7", "Khang Dan", "Golden Flower Sticky Rice"],
+      zh: ["北香7号", "康民稻", "黄花优质糯米"]
+    },
+    "bac-trung-bo-duyen-hai-mien-trung": {
+      en: ["Khang Dan 18", "TH5", "Heritage Local Rice"],
+      zh: ["康民18号", "TH5优质米", "地方优选品种"]
+    },
+    "tay-nguyen": { en: [], zh: [] },
+    "dong-nam-bo": { en: [], zh: [] },
+    "dong-bang-song-cuu-long": {
+      en: ["OM 5451", "ST24", "ST25", "Dai Thom 8", "Jasmine 85"],
+      zh: ["OM 5451", "ST24", "ST25", "台香8号", "茉莉香米85"]
+    },
   },
   Coffee: {
-    "trung-du-mien-nui-phia-bac": ["Arabica"],
-    "dong-bang-song-hong": [],
-    "bac-trung-bo-duyen-hai-mien-trung": [],
-    "tay-nguyen": ["Robusta", "Arabica"],
-    "dong-nam-bo": [],
-    "dong-bang-song-cuu-long": [],
+    "trung-du-mien-nui-phia-bac": { en: ["Arabica"], zh: ["阿拉比卡 (Arabica)"] },
+    "dong-bang-song-hong": { en: [], zh: [] },
+    "bac-trung-bo-duyen-hai-mien-trung": { en: [], zh: [] },
+    "tay-nguyen": { en: ["Robusta", "Arabica"], zh: ["罗布斯塔 (Robusta)", "阿拉比卡 (Arabica)"] },
+    "dong-nam-bo": { en: [], zh: [] },
+    "dong-bang-song-cuu-long": { en: [], zh: [] },
   },
   Cashew: {
-    "trung-du-mien-nui-phia-bac": [],
-    "dong-bang-song-hong": [],
-    "bac-trung-bo-duyen-hai-mien-trung": ["PN1", "PN2"],
-    "tay-nguyen": ["PN1", "PN2", "AB29"],
-    "dong-nam-bo": ["PN1", "AB05-08", "AB29"],
-    "dong-bang-song-cuu-long": ["PN1", "AB05-08"],
+    "trung-du-mien-nui-phia-bac": { en: [], zh: [] },
+    "dong-bang-song-hong": { en: [], zh: [] },
+    "bac-trung-bo-duyen-hai-mien-trung": { en: ["PN1", "PN2"], zh: ["PN1", "PN2"] },
+    "tay-nguyen": { en: ["PN1", "PN2", "AB29"], zh: ["PN1", "PN2", "AB29"] },
+    "dong-nam-bo": { en: ["PN1", "AB05-08", "AB29"], zh: ["PN1", "AB05-08", "AB29"] },
+    "dong-bang-song-cuu-long": { en: ["PN1", "AB05-08"], zh: ["PN1", "AB05-08"] },
   },
   Pepper: {
-    "trung-du-mien-nui-phia-bac": [],
-    "dong-bang-song-hong": [],
-    "bac-trung-bo-duyen-hai-mien-trung": ["Vĩnh Linh", "Tiêu sẻ"],
-    "tay-nguyen": ["Vĩnh Linh", "Lộc Ninh", "Tiêu sẻ"],
-    "dong-nam-bo": ["Vĩnh Linh", "Lộc Ninh"],
-    "dong-bang-song-cuu-long": ["Vĩnh Linh", "Tiêu sẻ"],
+    "trung-du-mien-nui-phia-bac": { en: [], zh: [] },
+    "dong-bang-song-hong": { en: [], zh: [] },
+    "bac-trung-bo-duyen-hai-mien-trung": { en: ["Vinh Linh", "Se Small Berry"], zh: ["永灵优良种", "小粒胡椒"] },
+    "tay-nguyen": { en: ["Vinh Linh", "Loc Ninh", "Se Small Berry"], zh: ["永灵优良种", "禄宁种", "小粒胡椒"] },
+    "dong-nam-bo": { en: ["Vinh Linh", "Loc Ninh"], zh: ["永灵优良种", "禄宁种"] },
+    "dong-bang-song-cuu-long": { en: ["Vinh Linh", "Se Small Berry"], zh: ["永灵优良种", "小粒胡椒"] },
   },
   Durian: {
-    "trung-du-mien-nui-phia-bac": [],
-    "dong-bang-song-hong": [],
-    "bac-trung-bo-duyen-hai-mien-trung": ["Ri6", "Musang King"],
-    "tay-nguyen": ["Ri6", "Dona", "Musang King"],
-    "dong-nam-bo": ["Ri6", "Dona", "Musang King"],
-    "dong-bang-song-cuu-long": ["Ri6", "Monthong"],
+    "trung-du-mien-nui-phia-bac": { en: [], zh: [] },
+    "dong-bang-song-hong": { en: [], zh: [] },
+    "bac-trung-bo-duyen-hai-mien-trung": { en: ["Ri6", "Musang King"], zh: ["Ri6 金枕", "猫山王 (Musang King)"] },
+    "tay-nguyen": { en: ["Ri6", "Dona (Monthong)", "Musang King"], zh: ["Ri6 金枕", "Dona (Monthong)", "猫山王"] },
+    "dong-nam-bo": { en: ["Ri6", "Dona (Monthong)", "Musang King"], zh: ["Ri6 金枕", "Dona (Monthong)", "猫山王"] },
+    "dong-bang-song-cuu-long": { en: ["Ri6", "Monthong"], zh: ["Ri6 金枕", "金枕 (Monthong)"] },
   },
   Watermelon: {
-    "trung-du-mien-nui-phia-bac": ["Dưa hấu ruột đỏ"],
-    "dong-bang-song-hong": ["Dưa hấu ruột đỏ", "Dưa hấu không hạt"],
-    "bac-trung-bo-duyen-hai-mien-trung": ["Dưa hấu ruột đỏ", "Dưa hấu không hạt"],
-    "tay-nguyen": ["Dưa hấu ruột đỏ (IQF)"],
-    "dong-nam-bo": [],
-    "dong-bang-song-cuu-long": ["Dưa hấu ruột đỏ", "Dưa hấu ruột vàng"],
+    "trung-du-mien-nui-phia-bac": { en: ["Red-flesh Watermelon"], zh: ["红肉西瓜"] },
+    "dong-bang-song-hong": { en: ["Red-flesh Watermelon", "Seedless Watermelon"], zh: ["红肉西瓜", "无籽西瓜"] },
+    "bac-trung-bo-duyen-hai-mien-trung": { en: ["Red-flesh Watermelon", "Seedless Watermelon"], zh: ["红肉西瓜", "无籽西瓜"] },
+    "tay-nguyen": { en: ["Red-flesh Watermelon (IQF)"], zh: ["红肉西瓜 (IQF速冻)"] },
+    "dong-nam-bo": { en: [], zh: [] },
+    "dong-bang-song-cuu-long": { en: ["Red-flesh Watermelon", "Yellow-flesh Watermelon"], zh: ["红肉西瓜", "黄肉特选西瓜"] },
   },
 };
 
@@ -139,8 +223,8 @@ export const CATEGORY_BI_DATA = {
     },
     practiceCards: {
       en: [
-        { title: "Ideal Conditions", items: ["Hot humid monsoon climate", "Rich water from rivers & canals", "Alluvial soil in ĐBSCL & ĐBSH", "Centuries of farming experience"] },
-        { title: "Popular Varieties", items: ["Fragrant: ST24, ST25, Đài thơm 8", "High-quality: OM 5451, OM 18", "Glutinous: Nếp cái hoa vàng, Nếp 97", "Jasmine 85, Nàng hoa 9…"] },
+        { title: "Ideal Conditions", items: ["Hot humid monsoon climate", "Rich water from rivers & canals", "Alluvial soil in Mekong & Red River Deltas", "Centuries of farming experience"] },
+        { title: "Popular Varieties", items: ["Fragrant: ST24, ST25, Dai Thom 8", "High-quality: OM 5451, OM 18", "Glutinous: Golden Sticky Rice, Nep 97", "Jasmine 85, Nang Hoa 9…"] },
         { title: "Role & Value", items: ["Staple food for 100M Vietnamese", "Ensures national food security", "Top global rice exporter", "Livelihood for millions of farmers"] }
       ],
       zh: [
@@ -192,9 +276,9 @@ export const CATEGORY_BI_DATA = {
       ],
     },
     chart: { type: "donut", title: "Production Share by Province (2023)", data: [
-      { label: "Đắk Lắk", value: 41, color: "#b48a58" }, { label: "Lâm Đồng", value: 20, color: "#d9e54d" },
-      { label: "Gia Lai", value: 17, color: "#2f964f" }, { label: "Đắk Nông", value: 12, color: "#ff8d43" },
-      { label: "Sơn La", value: 10, color: "#133f6d" },
+      { label: "Dak Lak", value: 41, color: "#b48a58" }, { label: "Lam Dong", value: 20, color: "#d9e54d" },
+      { label: "Gia Lai", value: 17, color: "#2f964f" }, { label: "Dak Nong", value: 12, color: "#ff8d43" },
+      { label: "Son La", value: 10, color: "#133f6d" },
     ]},
   },
   Cashew: {
@@ -341,7 +425,11 @@ for (const key of CATEGORY_TABS) {
   // Only include regions that have varieties for this category
   const varieties = REGION_VARIETIES[key] ?? {};
   CATEGORY_TO_REGIONS[key] = BASE_REGIONS
-    .filter((r) => (varieties[r.regionKey] ?? []).length > 0)
+    .filter((r) => {
+      const v = varieties[r.regionKey];
+      if (Array.isArray(v)) return v.length > 0;
+      return (v?.en?.length ?? 0) > 0 || (v?.zh?.length ?? 0) > 0;
+    })
     .map((r) => r.regionKey);
 }
 
@@ -349,6 +437,8 @@ export function getRegionsForCategory(category) {
   return CATEGORY_TO_REGIONS[category] ?? [];
 }
 
-export function getVarietiesForRegion(category, regionKey) {
-  return REGION_VARIETIES[category]?.[regionKey] ?? [];
+export function getVarietiesForRegion(category, regionKey, locale = 'en') {
+  const v = REGION_VARIETIES[category]?.[regionKey];
+  if (Array.isArray(v)) return v;
+  return v?.[locale] ?? v?.en ?? [];
 }

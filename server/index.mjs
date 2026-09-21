@@ -1390,11 +1390,11 @@ export const createApp = async ({ serveStatic = true, enableLocalUploads = serve
         const resolvedContentType = String(contentType || mimeType || '').trim().toLowerCase();
 
         if (!JD_ALLOWED_CONTENT_TYPES.has(resolvedContentType)) {
-          throw new Error('Loại tệp không được hỗ trợ. Vui lòng chọn PDF, DOC, DOCX, XLS, XLSX, CSV, TXT hoặc ảnh.');
+          throw new Error('Unsupported file type. Please select PDF, DOC, DOCX, XLS, XLSX, CSV, TXT or image.');
         }
 
         if (buffer.length > MAX_JD_FILE_SIZE_BYTES) {
-          throw new Error('Tệp JD phải nhỏ hơn 15MB.');
+          throw new Error('JD file must be smaller than 15MB.');
         }
 
         const safeSegments = sanitizeUploadSegments(['careers', 'jd']);

@@ -17,8 +17,8 @@ const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 const ARCHIPELAGO_LABELS = [
-  { id: "hoang-sa", name: "QĐ. Hoàng Sa", coordinates: [16.85, 111.8] },
-  { id: "truong-sa", name: "QĐ. Trường Sa", coordinates: [9.8, 113.2] },
+  { id: "hoang-sa", name: "Hoang Sa Islands", nameZh: "西沙群岛 (Hoang Sa)", coordinates: [16.85, 111.8] },
+  { id: "truong-sa", name: "Truong Sa Islands", nameZh: "南沙群岛 (Truong Sa)", coordinates: [9.8, 113.2] },
 ];
 
 const ARCHIPELAGO_STYLE = {
@@ -149,13 +149,14 @@ function collectBounds(features) {
   return L.latLngBounds([minLat, minLng], [maxLat, maxLng]).pad(0.06);
 }
 
-function getProvinceTooltipContent(feature) {
+function getProvinceTooltipContent(feature, locale = 'en') {
   const provinceName = feature?.properties?.name ?? "Unknown";
   const regionMeta = getProvinceRegionMeta(feature?.properties?.id);
-  return `<strong>${provinceName}</strong><br/>${regionMeta.label}`;
+  const regionLabel = locale === 'zh' ? (regionMeta.labelZh || regionMeta.label) : regionMeta.label;
+  return `<strong>${provinceName}</strong><br/>${regionLabel}`;
 }
 
-export default function StaticMapView({ highlightedRegion, highlightedRegions, onProvinceHover, onProvinceLeave, onProvinceClick, copy, inSeasonRegions }) {
+export default function StaticMapView({ highlightedRegion, highlightedRegions, onProvinceHover, onProvinceLeave, onProvinceClick, copy, inSeasonRegions, locale = 'en' }) {
   const [provinceData, setProvinceData] = useState(null);
   const [archipelagoData, setArchipelagoData] = useState(null);
   const [hoveredProvinceId, setHoveredProvinceId] = useState(null);
@@ -208,7 +209,7 @@ export default function StaticMapView({ highlightedRegion, highlightedRegions, o
     const provinceId = feature?.properties?.id;
     provinceLayersRef.current.set(provinceId, layer);
 
-    layer.bindTooltip(getProvinceTooltipContent(feature), {
+    layer.bindTooltip(getProvinceTooltipContent(feature, locale), {
       sticky: true,
       direction: "top",
       className: "ig-map-tooltip",
@@ -231,7 +232,7 @@ export default function StaticMapView({ highlightedRegion, highlightedRegions, o
       const regionCode = getProvinceRegionCode(provinceId);
       if (onProvinceClick) onProvinceClick(provinceId, regionCode);
     });
-  }, [highlightedRegion, onProvinceHover, onProvinceLeave, onProvinceClick]);
+  }, [highlightedRegion, onProvinceHover, onProvinceLeave, onProvinceClick, locale]);
 
   const loadingText = copy?.loading || "Loading map...";
 
@@ -297,7 +298,7 @@ export default function StaticMapView({ highlightedRegion, highlightedRegions, o
             <Marker
               key={label.id}
               position={label.coordinates}
-              icon={createLabelIcon(label.name)}
+              icon={createLabelIcon(locale === 'zh' ? label.nameZh : label.name)}
               interactive={false}
             />
           ))}
@@ -312,7 +313,7 @@ export default function StaticMapView({ highlightedRegion, highlightedRegions, o
             className={`ig-legend-item ${highlightedRegion === region.key ? "is-active" : ""}`}
           >
             <span className="ig-legend-swatch" style={{ background: region.color }} />
-            <span className="ig-legend-label">{region.label}</span>
+            <span className="ig-legend-label">{locale === 'zh' ? (region.labelZh || region.label) : region.label}</span>
           </div>
         ))}
       </div>

@@ -477,7 +477,7 @@ export const seedDefaultCareers = async (client) => {
       title: 'Export Sales Manager',
       department: 'Sales',
       location: '6 Mac Dinh Chi, Sai Gon Ward, Ho Chi Minh City',
-      type: 'Toàn thời gian',
+      type: 'Full-time',
       description: "Develop and expand international customers for the company's Vietnamese agricultural export products, including rice, coffee, pepper, cashew nuts, and other agricultural products & spices.",
       requirements: [],
       is_active: 1,
@@ -908,17 +908,34 @@ export const listGalleryPhotos = async (client) => {
       }
     }
 
-    // Also sync album and albumTitle from static JSON for existing rows if currently missing
+    // Also sync album, albumTitle, caption, alt from static JSON for existing rows if currently missing or containing Vietnamese text
+    const viCharRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]/;
     for (const p of photos) {
-      if (!p.album) {
-        const def = defaultGalleryData.find((d) => d.id === p.id);
-        if (def && def.album) {
+      const def = defaultGalleryData.find((d) => d.id === p.id);
+      if (def) {
+        let needsUpdate = false;
+        if (!p.album && def.album) {
           p.album = def.album;
           p.albumTitle = def.albumTitle;
+          needsUpdate = true;
+        }
+        if (viCharRegex.test(p.caption || '') && def.caption) {
+          p.caption = def.caption;
+          needsUpdate = true;
+        }
+        if (viCharRegex.test(p.alt || '') && def.alt) {
+          p.alt = def.alt;
+          needsUpdate = true;
+        }
+        if (viCharRegex.test(p.albumTitle || '') && def.albumTitle) {
+          p.albumTitle = def.albumTitle;
+          needsUpdate = true;
+        }
+        if (needsUpdate) {
           try {
             await client.execute({
-              sql: 'update gallery_photos set album = ?, album_title = ? where id = ?',
-              args: [def.album, def.albumTitle || null, p.id]
+              sql: 'update gallery_photos set caption = ?, alt = ?, album = ?, album_title = ? where id = ?',
+              args: [p.caption, p.alt, p.album || null, p.albumTitle || null, p.id]
             });
           } catch {}
         }

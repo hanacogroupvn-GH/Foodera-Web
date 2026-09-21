@@ -214,18 +214,32 @@ const PHOTO_TRANSLATIONS: Record<string, PhotoTranslation> = {
   }
 };
 
+const defaultPhotosById = new Map<string, GalleryPhotoItem>(
+  (defaultGalleryData as unknown as GalleryPhotoItem[]).map((p) => [p.id, p])
+);
+
+const VI_CHAR_REGEX = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]/;
+
 const getPhotoCaption = (photo: GalleryPhotoItem, locale: SupportedLocale): string => {
   if (locale === 'zh' && PHOTO_TRANSLATIONS[photo.id]?.caption) {
     return PHOTO_TRANSLATIONS[photo.id].caption;
   }
-  return photo.caption || '';
+  const fallback = defaultPhotosById.get(photo.id)?.caption;
+  if (fallback && (!photo.caption || VI_CHAR_REGEX.test(photo.caption))) {
+    return fallback;
+  }
+  return photo.caption || fallback || '';
 };
 
 const getPhotoAlt = (photo: GalleryPhotoItem, locale: SupportedLocale): string => {
   if (locale === 'zh' && PHOTO_TRANSLATIONS[photo.id]?.alt) {
     return PHOTO_TRANSLATIONS[photo.id].alt;
   }
-  return photo.alt || photo.caption || '';
+  const fallback = defaultPhotosById.get(photo.id)?.alt;
+  if (fallback && (!photo.alt || VI_CHAR_REGEX.test(photo.alt))) {
+    return fallback;
+  }
+  return photo.alt || fallback || photo.caption || '';
 };
 
 const Gallery: React.FC = () => {
@@ -270,14 +284,21 @@ const Gallery: React.FC = () => {
 
   // Normalize photos so any legacy photos like gallery-18 are properly associated with an album
   const normalizedPhotos = photos.map((p) => {
-    if (p.id === 'gallery-18' && !p.album) {
-      return {
-        ...p,
-        album: 'slovakia-partner-visit',
-        albumTitle: 'Slovak Delegation Farm Inspection'
-      };
+    const staticItem = defaultPhotosById.get(p.id);
+    let album = p.album || staticItem?.album;
+    let albumTitle = p.albumTitle || staticItem?.albumTitle;
+    if (p.id === 'gallery-18') {
+      album = 'slovakia-partner-visit';
+      albumTitle = 'Slovak Delegation Farm Inspection';
     }
-    return p;
+    if (albumTitle && VI_CHAR_REGEX.test(albumTitle)) {
+      albumTitle = staticItem?.albumTitle || (album && FARM_ALBUMS[album]?.title?.en) || albumTitle;
+    }
+    return {
+      ...p,
+      album,
+      albumTitle
+    };
   });
 
   const availableCategories = (['activities', 'trade-fairs', 'farm-visits'] as GalleryCategory[]).filter(

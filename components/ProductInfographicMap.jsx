@@ -235,6 +235,7 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
             highlightedRegion={hoveredRegion}
             highlightedRegions={matchingRegions}
             copy={copy}
+            locale={locale}
             onProvinceHover={() => {}}
             onProvinceLeave={() => {}}
             onProvinceClick={() => {}}
@@ -249,6 +250,7 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
             onRegionClick={handleRegionClick}
             copy={copy}
             activeCategory={activeTab}
+            locale={locale}
           />
         </div>
       </section>

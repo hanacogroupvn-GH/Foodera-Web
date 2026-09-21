@@ -2,31 +2,37 @@ export const REGION_STYLE_ORDER = [
   {
     key: "trung-du-mien-nui-phia-bac",
     label: "Northern Midlands and Mountains",
+    labelZh: "北部中游与山区",
     color: "#2f964f",
   },
   {
     key: "dong-bang-song-hong",
     label: "Red River Delta",
+    labelZh: "红河三角洲",
     color: "#b1d127",
   },
   {
     key: "bac-trung-bo-duyen-hai-mien-trung",
     label: "North Central and Central Coast",
+    labelZh: "中北部与中部沿海",
     color: "#ffd06b",
   },
   {
     key: "tay-nguyen",
     label: "Central Highlands",
+    labelZh: "西原高原",
     color: "#b48a58",
   },
   {
     key: "dong-nam-bo",
     label: "Southeast",
+    labelZh: "东南部",
     color: "#d9e54d",
   },
   {
     key: "dong-bang-song-cuu-long",
     label: "Mekong Delta",
+    labelZh: "湄公河三角洲",
     color: "#ff8d43",
   },
 ];
