@@ -8,6 +8,7 @@ import { useLocale } from '../context/LocaleContext';
 import { formatDisplayDate, localizeNewsItem } from '../lib/contentLocalization';
 import { appRoutes } from '../lib/routes';
 import InteractiveMapSection from '../components/InteractiveMapSection';
+import AgriExportLineChart from '../components/AgriExportLineChart';
 
 type ContentBlock =
   | { type: 'heading'; text: string; id: string }
@@ -880,6 +881,13 @@ const NewsDetail: React.FC = () => {
           </section>
         </div>
       </article>
+
+       {/* ── Vietnam Agricultural Export Volume & Value Chart ── */}
+       <section className="relative overflow-hidden bg-white py-12 md:py-16 border-t border-gray-100">
+         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+           <AgriExportLineChart />
+         </div>
+       </section>
 
       {/* ── Interactive Growing Areas Map Section ── */}
       <InteractiveMapSection />

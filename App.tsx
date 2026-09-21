@@ -136,6 +136,8 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   }
                 />
+                <Route path="/cms" element={<Navigate to={appRoutes.login} replace />} />
+                <Route path="/cms/*" element={<Navigate to={appRoutes.login} replace />} />
                 <Route
                   path={appRoutes.admin}
                   element={
