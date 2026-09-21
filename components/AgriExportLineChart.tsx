@@ -258,7 +258,7 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
         millionUsd: '百万美元',
         chartLine: '折线图',
         chartBar: '柱状图',
-        periodLabel: '统计周期'
+        periodLabel: '选择月份'
       };
     }
     if (locale === 'vi') {
@@ -282,7 +282,7 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
         millionUsd: 'Triệu USD',
         chartLine: 'Đường',
         chartBar: 'Cột',
-        periodLabel: 'Kỳ báo cáo'
+        periodLabel: 'Tùy chọn mốc thời gian'
       };
     }
     return {
@@ -305,7 +305,7 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
       millionUsd: 'M USD',
       chartLine: 'Line',
       chartBar: 'Bar',
-      periodLabel: 'Period'
+      periodLabel: 'Select Month'
     };
   }, [locale, monthNum, yearNum, monthPadded, monthNameEn]);
 
@@ -512,25 +512,38 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
               <span>{copy.periodLabel}:</span>
             </div>
             {availablePeriods.length > 1 ? (
-              <div className="flex items-center gap-1 flex-wrap">
-                {chronologicalPeriods.map((p) => {
-                  const isActive = selectedPeriod === p;
-                  return (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setSelectedPeriod(p)}
-                      className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                        isActive
-                          ? 'bg-emerald-900 text-white shadow-sm ring-1 ring-emerald-950'
-                          : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
-                      }`}
-                    >
-                      <span className="hidden sm:inline">{formatPeriodDisplay(p, locale)}</span>
-                      <span className="sm:hidden">{formatPeriodDisplay(p, locale, true)}</span>
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-1.5 flex-wrap">
+                  {chronologicalPeriods.map((p) => {
+                    const isActive = selectedPeriod === p;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setSelectedPeriod(p)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          isActive
+                            ? 'bg-emerald-900 text-white shadow-sm ring-2 ring-emerald-950/30 scale-105'
+                            : 'bg-white text-emerald-950 hover:bg-emerald-100/80 border border-emerald-200/80 hover:border-emerald-300'
+                        }`}
+                      >
+                        {formatPeriodDisplay(p, locale)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  aria-label={copy.periodLabel}
+                  className="md:hidden px-3 py-1.5 rounded-xl text-xs font-black bg-white text-emerald-950 border border-emerald-300 shadow-xs outline-none focus:ring-2 focus:ring-emerald-700"
+                >
+                  {chronologicalPeriods.map((p) => (
+                    <option key={p} value={p}>
+                      {formatPeriodDisplay(p, locale)}
+                    </option>
+                  ))}
+                </select>
               </div>
             ) : (
               <span className="px-3 py-1.5 bg-white rounded-xl text-xs font-black text-emerald-950 border border-emerald-200 shadow-xs">
@@ -553,25 +566,38 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
                   <span>{copy.periodLabel}:</span>
                 </div>
                 {availablePeriods.length > 1 ? (
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {chronologicalPeriods.map((p) => {
-                      const isActive = selectedPeriod === p;
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setSelectedPeriod(p)}
-                          className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                            isActive
-                              ? 'bg-emerald-900 text-white shadow-sm'
-                              : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
-                          }`}
-                        >
-                          <span className="hidden sm:inline">{formatPeriodDisplay(p, locale)}</span>
-                          <span className="sm:hidden">{formatPeriodDisplay(p, locale, true)}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-1 flex-wrap">
+                      {chronologicalPeriods.map((p) => {
+                        const isActive = selectedPeriod === p;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setSelectedPeriod(p)}
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                              isActive
+                                ? 'bg-emerald-900 text-white shadow-sm ring-1 ring-emerald-950'
+                                : 'bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-200/60'
+                            }`}
+                          >
+                            {formatPeriodDisplay(p, locale)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <select
+                      value={selectedPeriod}
+                      onChange={(e) => setSelectedPeriod(e.target.value)}
+                      aria-label={copy.periodLabel}
+                      className="md:hidden px-2.5 py-1.5 rounded-xl text-xs font-black bg-white text-emerald-950 border border-emerald-300 shadow-xs outline-none focus:ring-2 focus:ring-emerald-700"
+                    >
+                      {chronologicalPeriods.map((p) => (
+                        <option key={p} value={p}>
+                          {formatPeriodDisplay(p, locale)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 ) : (
                   <span className="px-2.5 py-1 bg-white rounded-xl text-xs font-black text-emerald-950 border border-emerald-200">

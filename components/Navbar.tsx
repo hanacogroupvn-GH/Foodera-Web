@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, Mail, Phone, BarChart3, Globe, Search, ArrowRight, FileText, Sparkles, Package, Shield } from 'lucide-react';
+import { Menu, X, ChevronDown, Mail, Phone, MapPin, Globe, Search, ArrowRight, FileText, Sparkles, Package, Shield } from 'lucide-react';
 import { Product, SupportedLocale } from '../types';
 const Logo = '/logo-era.png';
 import { useData } from '../context/DataContext';
@@ -205,7 +205,7 @@ const Navbar: React.FC = () => {
             
             <div className="flex items-center space-x-3 sm:space-x-5">
               <Link to={appRoutes.commercialTool} className="flex items-center gap-2 text-[11px] font-black text-foodera-forest hover:text-foodera-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                <BarChart3 size={14} />
+                <MapPin size={14} />
                 {copy.commercialTool}
               </Link>
               <Link to={appRoutes.login} className="flex items-center gap-1.5 text-[11px] font-black text-foodera-forest hover:bg-foodera-forest hover:text-white transition-all uppercase tracking-widest bg-foodera-forest/10 px-3 py-1 rounded-full border border-foodera-forest/25 shadow-xs" title={copy.cmsLogin}>
@@ -375,9 +375,17 @@ const Navbar: React.FC = () => {
                 <Link to={appRoutes.news} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.news}</Link>
                 <Link to={appRoutes.gallery} className="whitespace-nowrap text-xs font-black text-gray-700 hover:text-foodera-forest tracking-[0.2em] uppercase">{copy.gallery}</Link>
 
-              <div className="flex items-center space-x-6">
-                  <Link to={appRoutes.contact} className="px-7 py-3 bg-foodera-forest text-white rounded-xl text-xs font-black hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-lg active:scale-95 tracking-[0.2em] uppercase">
+                <div className="flex items-center space-x-3 xl:space-x-4">
+                  <Link to={appRoutes.contact} className="px-6 py-2.5 bg-foodera-forest text-white rounded-xl text-xs font-black hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-md active:scale-95 tracking-[0.2em] uppercase">
                     {copy.contact}
+                  </Link>
+                  <Link
+                    to={appRoutes.login}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-gray-700 hover:text-foodera-forest hover:bg-foodera-forest/5 transition-all border border-gray-200 tracking-wider uppercase"
+                    title={copy.cmsLogin}
+                  >
+                    <Shield size={13} className="text-foodera-forest" />
+                    <span>CMS</span>
                   </Link>
                   <button
                     type="button"
@@ -427,7 +435,7 @@ const Navbar: React.FC = () => {
                     <Phone className="text-foodera-forest" size={20} /> +84 964 791 902
                   </a>
                   <Link to={appRoutes.commercialTool} className="flex items-center gap-3 text-lg font-black text-foodera-forest mt-4" onClick={() => setIsOpen(false)}>
-                    <BarChart3 size={20} /> {copy.commercialTool}
+                    <MapPin size={20} /> {copy.commercialTool}
                   </Link>
                   <Link to={appRoutes.login} className="flex items-center gap-3 text-lg font-black text-gray-700 hover:text-foodera-forest mt-3" onClick={() => setIsOpen(false)}>
                     <Shield size={20} className="text-foodera-forest" /> {copy.cmsLogin}
