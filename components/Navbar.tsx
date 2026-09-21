@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, Mail, Phone, MapPin, Globe, Search, ArrowRight, FileText, Sparkles, Package, Shield } from 'lucide-react';
+import { Menu, X, ChevronDown, Mail, Phone, MapPin, Globe, Search, ArrowRight, FileText, Sparkles, Package } from 'lucide-react';
 import { Product, SupportedLocale } from '../types';
 const Logo = '/logo-era.png';
 import { useData } from '../context/DataContext';
@@ -90,8 +90,7 @@ const Navbar: React.FC = () => {
         privateLabelTitle: '定制品牌服务',
         privateLabelDesc: '专属包装、配方与品牌定制，打造您自己的产品线。',
         privateLabelCta: '了解更多',
-        privateLabelBadge: '热门',
-        cmsLogin: 'CMS 登录'
+        privateLabelBadge: '热门'
       }
     : {
         rice: 'Rice',
@@ -123,8 +122,7 @@ const Navbar: React.FC = () => {
         privateLabelTitle: 'Private Label Service',
         privateLabelDesc: 'Custom packaging, formulation, and branding to build your own product line.',
         privateLabelCta: 'Learn More',
-        privateLabelBadge: 'Popular',
-        cmsLogin: 'CMS Login'
+        privateLabelBadge: 'Popular'
       };
 
 
@@ -207,10 +205,6 @@ const Navbar: React.FC = () => {
               <Link to={appRoutes.commercialTool} className="flex items-center gap-2 text-[11px] font-black text-foodera-forest hover:text-foodera-lime transition-all uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                 <MapPin size={14} />
                 {copy.commercialTool}
-              </Link>
-              <Link to={appRoutes.login} className="flex items-center gap-1.5 text-[11px] font-black text-foodera-forest hover:bg-foodera-forest hover:text-white transition-all uppercase tracking-widest bg-foodera-forest/10 px-3 py-1 rounded-full border border-foodera-forest/25 shadow-xs" title={copy.cmsLogin}>
-                <Shield size={12} />
-                <span>{copy.cmsLogin}</span>
               </Link>
               <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <Globe size={12} />
@@ -379,14 +373,6 @@ const Navbar: React.FC = () => {
                   <Link to={appRoutes.contact} className="px-6 py-2.5 bg-foodera-forest text-white rounded-xl text-xs font-black hover:bg-foodera-lime hover:text-foodera-forest transition-all shadow-md active:scale-95 tracking-[0.2em] uppercase">
                     {copy.contact}
                   </Link>
-                  <Link
-                    to={appRoutes.login}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-gray-700 hover:text-foodera-forest hover:bg-foodera-forest/5 transition-all border border-gray-200 tracking-wider uppercase"
-                    title={copy.cmsLogin}
-                  >
-                    <Shield size={13} className="text-foodera-forest" />
-                    <span>CMS</span>
-                  </Link>
                   <button
                     type="button"
                     onClick={() => setIsSearchOpen(true)}
@@ -436,9 +422,6 @@ const Navbar: React.FC = () => {
                   </a>
                   <Link to={appRoutes.commercialTool} className="flex items-center gap-3 text-lg font-black text-foodera-forest mt-4" onClick={() => setIsOpen(false)}>
                     <MapPin size={20} /> {copy.commercialTool}
-                  </Link>
-                  <Link to={appRoutes.login} className="flex items-center gap-3 text-lg font-black text-gray-700 hover:text-foodera-forest mt-3" onClick={() => setIsOpen(false)}>
-                    <Shield size={20} className="text-foodera-forest" /> {copy.cmsLogin}
                   </Link>
                   <div className="flex items-center gap-3 text-sm font-black text-gray-500 mt-4">
                     <Globe size={18} className="text-foodera-forest" />

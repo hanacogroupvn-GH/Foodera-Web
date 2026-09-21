@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
         repOfficeLabel: '代表处 · 澳大利亚',
         repOfficeAddress: '269 North Terrace, Adelaide SA 5000, Australia',
         rights: 'VIET NAM FOOD ERA COMPANY LIMITED 保留所有权利。',
-        staffPortal: 'CMS 管理后台 / 员工登录'
+        staffPortal: 'CMS 登录'
       }
     : {
         quickLinks: 'Product Portfolios',
@@ -54,7 +54,7 @@ const Footer: React.FC = () => {
         repOfficeLabel: 'Rep Office · Australia',
         repOfficeAddress: '269 North Terrace, Adelaide SA 5000, Australia',
         rights: 'VIET NAM FOOD ERA COMPANY LIMITED All Rights Reserved.',
-        staffPortal: 'CMS Login / Staff Portal'
+        staffPortal: 'CMS Login'
       };
   const copy = locale === 'zh' ? preserveVietnamesePlaceNamesDeep(rawCopy) : rawCopy;
 
@@ -186,7 +186,7 @@ const Footer: React.FC = () => {
             </div>
             <Link
               to={appRoutes.login}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-foodera-lime hover:text-foodera-forest text-white/90 text-[11px] font-bold uppercase tracking-wider transition-all border border-white/20 shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-foodera-lime hover:text-foodera-forest text-white/90 text-[11px] font-bold uppercase tracking-wider transition-all border border-white/20 shadow-xs"
               title={copy.staffPortal}
             >
               <Shield size={13} className="text-foodera-lime" />
