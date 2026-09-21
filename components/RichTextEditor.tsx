@@ -97,7 +97,7 @@ const CtaButtonNode = TiptapNode.create({
       wrapper.appendChild(link);
 
       // Click to delete
-      wrapper.title = 'Click để xóa CTA button này';
+      wrapper.title = 'Double-click to delete this CTA button';
       wrapper.addEventListener('dblclick', () => {
         if (typeof getPos === 'function') {
           const pos = getPos();
@@ -176,7 +176,7 @@ const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
   return (
     <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-white rounded-2xl border border-gray-200 shadow-xl p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Chèn liên kết</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Insert Link</span>
         <button type="button" onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
           <X size={14} />
         </button>
@@ -197,7 +197,7 @@ const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
           onChange={(e) => setOpenInNewTab(e.target.checked)}
           className="rounded"
         />
-        Mở trong tab mới
+        Open in new tab
       </label>
       <div className="flex gap-2 pt-1">
         <button
@@ -205,7 +205,7 @@ const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
           onClick={handleApply}
           className="flex-1 px-3 py-2 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all"
         >
-          Áp dụng
+          Apply
         </button>
         {editor.isActive('link') && (
           <button
@@ -213,7 +213,7 @@ const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
             onClick={handleRemove}
             className="px-3 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all"
           >
-            Xóa link
+            Remove link
           </button>
         )}
       </div>
@@ -258,7 +258,7 @@ const ImageDialog: React.FC<ImageDialogProps> = ({ editor, onClose, articleSlug,
       ]);
       insertImage(publicUrl, alt || file.name.replace(/\.[^.]+$/, ''));
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : 'Upload thất bại';
+      const errMsg = err instanceof Error ? err.message : 'Upload failed';
       onUploadError?.(errMsg);
       onClose();
     } finally {
@@ -269,7 +269,7 @@ const ImageDialog: React.FC<ImageDialogProps> = ({ editor, onClose, articleSlug,
   return (
     <div className="absolute top-full left-0 mt-2 z-50 w-96 bg-white rounded-2xl border border-gray-200 shadow-xl p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Chèn hình ảnh</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Insert Image</span>
         <button type="button" onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
           <X size={14} />
         </button>
@@ -289,14 +289,14 @@ const ImageDialog: React.FC<ImageDialogProps> = ({ editor, onClose, articleSlug,
         />
         <Upload size={20} className="mx-auto mb-2 text-gray-400" />
         <p className="text-xs font-bold text-gray-500">
-          {isUploading ? 'Đang tải lên...' : 'Tải ảnh từ máy tính'}
+          {isUploading ? 'Uploading...' : 'Upload image from computer'}
         </p>
-        <p className="text-[10px] text-gray-400">JPG, PNG, WebP — tối đa 5MB</p>
+        <p className="text-[10px] text-gray-400">JPG, PNG, WebP — max 5MB</p>
       </div>
 
       <div className="flex items-center gap-2">
         <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-[10px] text-gray-400 font-bold">hoặc nhập URL</span>
+        <span className="text-[10px] text-gray-400 font-bold">or enter URL</span>
         <div className="flex-1 h-px bg-gray-200" />
       </div>
 
@@ -312,7 +312,7 @@ const ImageDialog: React.FC<ImageDialogProps> = ({ editor, onClose, articleSlug,
         type="text"
         value={alt}
         onChange={(e) => setAlt(e.target.value)}
-        placeholder="Alt text (SEO) — mô tả nội dung ảnh"
+        placeholder="Alt text (SEO) — image description"
         className="w-full px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-foodera-forest/30"
       />
       <button
@@ -321,7 +321,7 @@ const ImageDialog: React.FC<ImageDialogProps> = ({ editor, onClose, articleSlug,
         disabled={!url.trim()}
         className="w-full px-3 py-2 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all disabled:opacity-40"
       >
-        Chèn ảnh từ URL
+        Insert image from URL
       </button>
     </div>
   );
@@ -334,7 +334,7 @@ interface CtaButtonDialogProps {
 }
 
 const CtaButtonDialog: React.FC<CtaButtonDialogProps> = ({ editor, onClose }) => {
-  const [text, setText] = React.useState('Liên hệ ngay');
+  const [text, setText] = React.useState('Contact Us');
   const [link, setLink] = React.useState('/contact');
 
   const handleInsert = () => {
@@ -352,31 +352,31 @@ const CtaButtonDialog: React.FC<CtaButtonDialogProps> = ({ editor, onClose }) =>
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Chèn CTA Button</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Insert CTA Button</span>
         <button type="button" onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg text-gray-400">
           <X size={14} />
         </button>
       </div>
       <div>
-        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Nội dung nút</label>
+        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Button text</label>
         <input
           autoFocus
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleInsert(); if (e.key === 'Escape') onClose(); }}
-          placeholder="Liên hệ ngay"
+          placeholder="Contact Us"
           className="w-full px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-foodera-forest/30"
         />
       </div>
       <div>
-        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">URL đích</label>
+        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Target URL</label>
         <input
           type="text"
           value={link}
           onChange={(e) => setLink(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleInsert(); if (e.key === 'Escape') onClose(); }}
-          placeholder="/contact hoặc https://..."
+          placeholder="/contact or https://..."
           className="w-full px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-foodera-forest/30"
         />
       </div>
@@ -386,9 +386,9 @@ const CtaButtonDialog: React.FC<CtaButtonDialogProps> = ({ editor, onClose }) =>
         disabled={!text.trim() || !link.trim()}
         className="w-full px-3 py-2 bg-foodera-forest text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-foodera-lime hover:text-foodera-forest transition-all disabled:opacity-40"
       >
-        Chèn CTA Button
+        Insert CTA Button
       </button>
-      <p className="text-[10px] text-gray-400 text-center">Double-click vào block để xóa</p>
+      <p className="text-[10px] text-gray-400 text-center">Double-click block to delete</p>
     </div>
   );
 };
@@ -397,7 +397,7 @@ const CtaButtonDialog: React.FC<CtaButtonDialogProps> = ({ editor, onClose }) =>
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   value,
   onChange,
-  placeholder = 'Soạn nội dung bài viết...',
+  placeholder = 'Write article content...',
   articleSlug,
   onImageUploadError,
 }) => {
@@ -555,10 +555,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <div ref={toolbarRef} className="relative">
         <div className="flex flex-wrap items-center gap-0.5 p-2 bg-gray-50 border-b border-gray-200 rounded-t-xl">
           {/* Undo / Redo */}
-          <ToolbarButton title="Hoàn tác (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
+          <ToolbarButton title="Undo (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
             <Undo2 size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Làm lại (Ctrl+Y)" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>
+          <ToolbarButton title="Redo (Ctrl+Y)" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>
             <Redo2 size={16} />
           </ToolbarButton>
 
@@ -566,16 +566,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
 
           {/* Headings + Paragraph reset */}
-          <ToolbarButton title="Đoạn văn thường (P)" isActive={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>
+          <ToolbarButton title="Paragraph (P)" isActive={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>
             <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>P</span>
           </ToolbarButton>
-          <ToolbarButton title="Tiêu đề H1" isActive={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+          <ToolbarButton title="Heading 1" isActive={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
             <Heading1 size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Tiêu đề H2" isActive={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+          <ToolbarButton title="Heading 2" isActive={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
             <Heading2 size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Tiêu đề H3" isActive={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+          <ToolbarButton title="Heading 3" isActive={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
             <Heading3 size={16} />
           </ToolbarButton>
 
@@ -583,45 +583,45 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <ToolbarSep />
 
           {/* Formatting */}
-          <ToolbarButton title="In đậm (Ctrl+B)" isActive={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+          <ToolbarButton title="Bold (Ctrl+B)" isActive={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
             <Bold size={16} />
           </ToolbarButton>
-          <ToolbarButton title="In nghiêng (Ctrl+I)" isActive={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+          <ToolbarButton title="Italic (Ctrl+I)" isActive={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
             <Italic size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Gạch chân (Ctrl+U)" isActive={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+          <ToolbarButton title="Underline (Ctrl+U)" isActive={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
             <UnderlineIcon size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Gạch ngang" isActive={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
+          <ToolbarButton title="Strikethrough" isActive={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
             <Strikethrough size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Code inline" isActive={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
+          <ToolbarButton title="Inline Code" isActive={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
             <Code size={16} />
           </ToolbarButton>
 
           <ToolbarSep />
 
           {/* Lists */}
-          <ToolbarButton title="Danh sách dấu chấm" isActive={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+          <ToolbarButton title="Bullet List" isActive={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
             <List size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Danh sách đánh số" isActive={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+          <ToolbarButton title="Numbered List" isActive={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
             <ListOrdered size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Trích dẫn" isActive={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+          <ToolbarButton title="Blockquote" isActive={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
             <Quote size={16} />
           </ToolbarButton>
 
           <ToolbarSep />
 
           {/* Alignment */}
-          <ToolbarButton title="Căn trái" isActive={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}>
+          <ToolbarButton title="Align Left" isActive={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}>
             <AlignLeft size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Căn giữa" isActive={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()}>
+          <ToolbarButton title="Align Center" isActive={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()}>
             <AlignCenter size={16} />
           </ToolbarButton>
-          <ToolbarButton title="Căn phải" isActive={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()}>
+          <ToolbarButton title="Align Right" isActive={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()}>
             <AlignRight size={16} />
           </ToolbarButton>
 
@@ -630,7 +630,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           {/* Link */}
           <div className="relative">
             <ToolbarButton
-              title="Chèn liên kết (Ctrl+K)"
+              title="Insert Link (Ctrl+K)"
               isActive={editor.isActive('link') || showLinkDialog}
               onClick={() => { setShowLinkDialog(v => !v); setShowImageDialog(false); }}
             >
@@ -644,7 +644,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           {/* Image */}
           <div className="relative">
             <ToolbarButton
-              title="Chèn hình ảnh"
+              title="Insert Image"
               isActive={showImageDialog}
               onClick={() => { setShowImageDialog(v => !v); setShowLinkDialog(false); }}
             >
@@ -661,12 +661,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           </div>
 
           {/* Table */}
-          <ToolbarButton title="Chèn bảng" isActive={editor.isActive('table')} onClick={handleTableInsert}>
+          <ToolbarButton title="Insert Table" isActive={editor.isActive('table')} onClick={handleTableInsert}>
             <Table2 size={16} />
           </ToolbarButton>
 
           {/* Horizontal Rule */}
-          <ToolbarButton title="Đường phân cách" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+          <ToolbarButton title="Horizontal Rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
             <Minus size={16} />
           </ToolbarButton>
 
@@ -675,7 +675,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           {/* CTA Button */}
           <div className="relative">
             <ToolbarButton
-              title="Chèn CTA Button (Call-to-Action)"
+              title="Insert CTA Button"
               isActive={showCtaDialog}
               onClick={() => { setShowCtaDialog(v => !v); setShowLinkDialog(false); setShowImageDialog(false); }}
             >
@@ -693,14 +693,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         {/* Table context menu when inside a table */}
         {editor.isActive('table') && (
           <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-amber-50 border-b border-amber-200 text-[10px]">
-            <span className="font-black text-amber-600 uppercase tracking-widest mr-1">Bảng:</span>
-            <button type="button" onClick={() => editor.chain().focus().addColumnBefore().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Cột trước</button>
-            <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Cột sau</button>
-            <button type="button" onClick={() => editor.chain().focus().addRowBefore().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Hàng trên</button>
-            <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Hàng dưới</button>
-            <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className="px-2 py-1 bg-white border border-red-200 rounded-lg font-bold text-red-500 hover:bg-red-50 transition-colors">− Xóa cột</button>
-            <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className="px-2 py-1 bg-white border border-red-200 rounded-lg font-bold text-red-500 hover:bg-red-50 transition-colors">− Xóa hàng</button>
-            <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="px-2 py-1 bg-red-50 border border-red-200 rounded-lg font-bold text-red-600 hover:bg-red-100 transition-colors">✕ Xóa bảng</button>
+            <span className="font-black text-amber-600 uppercase tracking-widest mr-1">Table:</span>
+            <button type="button" onClick={() => editor.chain().focus().addColumnBefore().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Column Before</button>
+            <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Column After</button>
+            <button type="button" onClick={() => editor.chain().focus().addRowBefore().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Row Above</button>
+            <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-2 py-1 bg-white border border-amber-200 rounded-lg font-bold text-amber-700 hover:bg-amber-100 transition-colors">+ Row Below</button>
+            <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className="px-2 py-1 bg-white border border-red-200 rounded-lg font-bold text-red-500 hover:bg-red-50 transition-colors">− Delete Column</button>
+            <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className="px-2 py-1 bg-white border border-red-200 rounded-lg font-bold text-red-500 hover:bg-red-50 transition-colors">− Delete Row</button>
+            <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="px-2 py-1 bg-red-50 border border-red-200 rounded-lg font-bold text-red-600 hover:bg-red-100 transition-colors">✕ Delete Table</button>
           </div>
         )}
       </div>
@@ -711,9 +711,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* ── Status Bar ─────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-200 rounded-b-xl">
         <div className="flex items-center gap-4">
-          <span className="text-[10px] font-bold text-gray-400">{wordCount} từ</span>
-          <span className="text-[10px] font-bold text-gray-400">{charCount} ký tự</span>
-          <span className="text-[10px] font-bold text-gray-400">~{readTime} phút đọc</span>
+          <span className="text-[10px] font-bold text-gray-400">{wordCount} words</span>
+          <span className="text-[10px] font-bold text-gray-400">{charCount} characters</span>
+          <span className="text-[10px] font-bold text-gray-400">~{readTime} min read</span>
         </div>
         {wordCount > 0 && (
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -721,7 +721,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               ? 'bg-green-50 text-green-600'
               : 'bg-amber-50 text-amber-600'
           }`}>
-            {wordCount >= 300 ? '✓ Đủ nội dung SEO' : `Còn thiếu ${300 - wordCount} từ cho SEO`}
+            {wordCount >= 300 ? '✓ SEO Content Ready' : `${300 - wordCount} words needed for SEO`}
           </span>
         )}
       </div>

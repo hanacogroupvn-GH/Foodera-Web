@@ -36,10 +36,6 @@ const parsePeriodDetails = (periodStr?: string): PeriodDetails => {
 const formatPeriodDisplay = (periodStr: string, locale: string, short = false): string => {
   const { month, year, raw } = parsePeriodDetails(periodStr);
   if (!raw.includes('/')) return raw;
-  if (locale === 'vi') {
-    const mStr = month < 10 ? `0${month}` : `${month}`;
-    return short ? `T${mStr}/${String(year).slice(-2)}` : `Tháng ${mStr}/${year}`;
-  }
   if (locale === 'zh') return `${year}年${month}月`;
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return short ? `${monthNames[month - 1] || month} '${String(year).slice(-2)}` : `${monthNames[month - 1] || month} ${year}`;
@@ -261,30 +257,6 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
         periodLabel: '选择月份'
       };
     }
-    if (locale === 'vi') {
-      return {
-        defaultTitle: 'Biểu đồ Sản lượng & Kim ngạch Xuất khẩu Nông sản',
-        defaultSubtitle: `Số liệu chính thức từ Tổng cục Hải quan Việt Nam (Tháng ${monthPadded}/${yearNum} & Lũy kế)`,
-        metricVolume: 'Sản lượng (Tấn)',
-        metricValue: 'Kim ngạch (Triệu USD)',
-        seriesBoth: 'Cả tháng & năm',
-        seriesMonth: `Tháng ${monthPadded}/${yearNum}`,
-        seriesYear: `Lũy kế ${monthNum}T`,
-        monthLegend: `Tháng ${monthPadded}/${yearNum}`,
-        yearLegend: `Lũy kế ${monthNum} tháng ${yearNum}`,
-        totalVolume: `Tổng sản lượng ${monthNum}T`,
-        totalValue: `Tổng kim ngạch ${monthNum}T`,
-        topCommodity: 'Mặt hàng dẫn đầu',
-        sourceNote: 'Nguồn: Tổng cục Hải quan (Biểu số 14B/TCHQ)',
-        momLabel: 'So với tháng trước',
-        yoyLabel: 'So với cùng kỳ năm trước',
-        tons: 'Tấn',
-        millionUsd: 'Triệu USD',
-        chartLine: 'Đường',
-        chartBar: 'Cột',
-        periodLabel: 'Tùy chọn mốc thời gian'
-      };
-    }
     return {
       defaultTitle: 'Vietnam Agricultural Export Volume & Value',
       defaultSubtitle: `Official Statistics by Vietnam General Department of Customs (${monthNameEn} ${yearNum} & YTD)`,
@@ -310,7 +282,6 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
   }, [locale, monthNum, yearNum, monthPadded, monthNameEn]);
 
   const getItemName = (item: ExportStatItem) => {
-    if (locale === 'vi') return item.commodityNameVi || item.commodityNameEn;
     if (locale === 'zh') return item.commodityNameZh || item.commodityNameEn;
     return item.commodityNameEn;
   };
@@ -505,7 +476,7 @@ export const AgriExportLineChart: React.FC<AgriExportLineChartProps> = ({
             </p>
           </div>
 
-          {/* Period Selector (Kỳ báo cáo) */}
+          {/* Period Selector */}
           <div className="flex flex-wrap items-center gap-1.5 bg-emerald-50/90 border border-emerald-200/80 p-1.5 rounded-2xl shadow-sm self-start lg:self-center">
             <div className="flex items-center gap-1.5 pl-2.5 pr-1 text-xs font-black text-emerald-900 uppercase tracking-wider">
               <Calendar size={14} className="text-emerald-700 flex-shrink-0" />

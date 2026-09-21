@@ -227,7 +227,7 @@ const News: React.FC = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          Interactive Growing Areas Map (Bên dưới các bài news)
+          Interactive Growing Areas Map (Below news articles)
       ═══════════════════════════════════════════════════════ */}
       <InteractiveMapSection />
 

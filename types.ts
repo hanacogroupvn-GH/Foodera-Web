@@ -270,8 +270,8 @@ export interface ExportStatItem {
   monthValueUsd: number;   // USD
   yearVolume?: number;     // Ton
   yearValueUsd: number;    // USD
-  momGrowthPercent?: number; // % so với tháng trước
-  yoyGrowthPercent?: number; // % so với cùng kỳ năm trước
+  momGrowthPercent?: number; // % MoM growth
+  yoyGrowthPercent?: number; // % YoY growth
   sortOrder: number;
   isActive: boolean;
   notes?: string;

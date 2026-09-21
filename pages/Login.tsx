@@ -32,20 +32,6 @@ const Login: React.FC = () => {
           sampleAccount: '管理员账号',
           fillSample: '一键填入'
         }
-      : locale === 'vi'
-      ? {
-          title: 'Đăng nhập Quản trị (CMS)',
-          subtitle: 'Đăng nhập vào tài khoản quản trị hệ thống FoodEra',
-          email: 'Email',
-          password: 'Mật khẩu',
-          emailPlaceholder: 'hanacogroupvn@gmail.com',
-          passwordPlaceholder: 'Nhập mật khẩu',
-          signingIn: 'Đang đăng nhập...',
-          signIn: 'Đăng nhập',
-          loginFailed: 'Email hoặc mật khẩu không chính xác',
-          sampleAccount: 'Tài khoản quản trị',
-          fillSample: 'Điền nhanh'
-        }
       : {
           title: 'Admin Login',
           subtitle: 'Sign in with your FoodEra admin account',

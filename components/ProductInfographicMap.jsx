@@ -167,7 +167,6 @@ export default function ProductInfographicMap({ copy, locale = "en", headerActio
   const tabLabels = {
     en: { Rice: "Rice", Coffee: "Coffee", Cashew: "Cashew", Pepper: "Pepper", Durian: "Durian", Watermelon: "Watermelon" },
     zh: { Rice: "大米", Coffee: "咖啡", Cashew: "腰果", Pepper: "胡椒", Durian: "榴莲", Watermelon: "西瓜" },
-    vi: { Rice: "Lúa gạo", Coffee: "Cà phê", Cashew: "Hạt điều", Pepper: "Hồ tiêu", Durian: "Sầu riêng", Watermelon: "Dưa hấu" },
   };
 
   return (

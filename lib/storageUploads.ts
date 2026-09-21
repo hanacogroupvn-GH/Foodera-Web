@@ -64,7 +64,7 @@ const MAX_JD_FILE_SIZE_BYTES = 15 * 1024 * 1024;
  */
 export const uploadCareerJdFile = async (file: File): Promise<{ publicUrl: string; fileName: string }> => {
   if (file.size > MAX_JD_FILE_SIZE_BYTES) {
-    throw new Error('Tệp JD phải nhỏ hơn 15MB.');
+    throw new Error('JD file must be smaller than 15MB.');
   }
 
   const publicUrl = await uploadRawToCloudinary(file, ['careers', 'jd']);

@@ -19,13 +19,13 @@ import { useLocale } from '../context/LocaleContext';
 
 interface AdminSidebarProps {
   onLogout: () => void;
-  /** Called when "Tạo bài viết" is clicked under Product */
+  /** Called when "Create post" is clicked under Product */
   onOpenInventoryForm?: () => void;
-  /** Called when "Quản lí bài đăng" is clicked under Product (closes form) */
+  /** Called when "Manage posts" is clicked under Product (closes form) */
   onCloseInventoryForm?: () => void;
-  /** Called when "Tạo bài viết" is clicked under SEO */
+  /** Called when "Create post" is clicked under SEO */
   onOpenNewsForm?: () => void;
-  /** Called when "Quản lí bài đăng" is clicked under SEO (closes form) */
+  /** Called when "Manage posts" is clicked under SEO (closes form) */
   onCloseNewsForm?: () => void;
   /** True when the Inventory create/edit form is currently open */
   isInventoryFormOpen?: boolean;
@@ -46,20 +46,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const location = useLocation();
 
   const copy = {
-    vi: {
-      dashboard: 'Tổng quan',
-      product: 'Sản phẩm',
-      managePosts: 'Quản lý bài đăng',
-      createPost: 'Tạo bài viết',
-      seo: 'SEO',
-      mapContent: 'Nội dung bản đồ',
-      exportStats: 'Biểu đồ sản lượng',
-      careers: 'Tuyển dụng',
-      gallery: 'Thư viện ảnh',
-      staffPortal: 'Trang nhân viên',
-      operationsPortal: 'Cổng vận hành',
-      exitHome: 'Quay lại Trang chủ',
-    },
     en: {
       dashboard: 'Dashboard',
       product: 'Product',
@@ -158,7 +144,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </button>
           {productOpen && (
             <div className="mt-1 space-y-0.5">
-              {/* Quản lí bài đăng */}
+              {/* Manage posts */}
               {isSection(appRoutes.adminInventory) ? (
                 // Same page: only close form if it's open; otherwise just show active style
                 isInventoryFormOpen && onCloseInventoryForm ? (
@@ -186,7 +172,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 </Link>
               )}
 
-              {/* Tạo bài viết */}
+              {/* Create post */}
               {isSection(appRoutes.adminInventory) && onOpenInventoryForm ? (
                 <button
                   type="button"
@@ -232,7 +218,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </button>
           {seoOpen && (
             <div className="mt-1 space-y-0.5">
-              {/* Quản lí bài đăng */}
+              {/* Manage posts */}
               {isSection(appRoutes.adminNews) ? (
                 // Same page: only close form if it's open; otherwise just show active style
                 isNewsFormOpen && onCloseNewsForm ? (
@@ -260,7 +246,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 </Link>
               )}
 
-              {/* Tạo bài viết */}
+              {/* Create post */}
               {isSection(appRoutes.adminNews) && onOpenNewsForm ? (
                 <button
                   type="button"
@@ -307,7 +293,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           {copy.exportStats}
         </Link>
 
-        {/* Careers (Tuyển dụng) */}
+        {/* Careers */}
         <Link
           to={appRoutes.adminCareers}
           className={`${linkBase} ${
@@ -318,7 +304,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           {copy.careers}
         </Link>
 
-        {/* Gallery (Thư viện ảnh) */}
+        {/* Gallery */}
         <Link
           to={appRoutes.adminGallery}
           className={`${linkBase} ${

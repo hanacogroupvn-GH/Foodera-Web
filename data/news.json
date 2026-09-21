@@ -29,7 +29,7 @@
     "category": "Market Insight",
     "excerpt": "FoodEra's team attended the Vietnam International Drink & Supplies Expo 2026, discovering new processing technologies, sourcing premium ingredients, and building strategic F&B partnerships.",
     "content": [
-      "From August 6 to August 8, 2026, our dedicated team at FoodEra had the pleasure of attending the prestigious Vietnam International Drink & Supplies Expo (Triển lãm Quốc Tế Đồ Uống và Thiết Bị Cung Ứng) — a leading specialized industry event connecting key players across the beverage, ingredients, and processing supply chains.",
+      "From August 6 to August 8, 2026, our dedicated team at FoodEra had the pleasure of attending the prestigious Vietnam International Drink & Supplies Expo — a leading specialized industry event connecting key players across the beverage, ingredients, and processing supply chains.",
       "Unlocking New Potentials in the F&B Industry",
       "As the food and beverage landscape continues to evolve rapidly with increasing demand for sustainable, high-quality, and health-conscious solutions, staying ahead of market trends is at the core of FoodEra's mission.",
       "During our three-day journey at the expo, our team engaged in valuable activities:",
@@ -48,28 +48,59 @@
     ],
     "image": "/media/news/vietnam-drink-supplies-expo-2026.webp",
     "imageAlt": "FoodEra team at the Vietnam International Drink & Supplies Expo 2026",
-    "translations": {}
+    "translations": {
+      "zh": {
+        "title": "FoodEra 亮相 2026 越南国际饮品与供应链展会：探索创新与拓宽视野",
+        "excerpt": "FoodEra 团队受邀参加 2026 越南国际饮品与供应链展会，深入探索先进加工工艺、对接高端原料资源并建立战略伙伴关系。",
+        "content": [
+          "2026年8月6日至8日，FoodEra 团队出席了备受瞩目的 2026 越南国际饮品与供应链展会 (Vietnam International Drink & Supplies Expo)。该展会汇聚了全球饮料、天然原料及加工设备产业链的核心企业。",
+          "挖掘食品饮料行业新潜能",
+          "面对健康、天然与可持续食品饮料消费趋势的快速发展，敏锐把握前沿市场动态是 FoodEra 的核心使命。",
+          "在为期三天的展会中，团队开展了多项深度交流：",
+          "• 探索前沿科技：实地了解国内外顶尖生产商在加工工艺、环保包装及智能供应链方面的最新突破。",
+          "• 对接优质原料：与多家知名原料供应商深入洽商，进一步丰富 FoodEra 的原料矩阵与品控标准。",
+          "• 拓展行业战略合作：与行业领军企业展开富有成效的对接，共同探讨新兴市场需求与未来合作可能。",
+          "FoodEra 的长远承诺",
+          "通过持续吸收行业前沿知识与拓展全球合作伙伴网络，FoodEra 始终坚守为客户提供高标准、安全可靠且具创新性的全方位解决方案。",
+          "感谢主办方与所有参展伙伴的热情交流，FoodEra 期待与各方携手推进务实合作！"
+        ]
+      }
+    }
   },
   {
     "id": "slovakia-delegation-dak-lak-coffee-farm-visit",
     "slug": "slovakia-delegation-dak-lak-coffee-farm-visit",
-    "title": "Slovak Import Partners Visit FoodEra's Robusta Farms in Đắk Lắk",
+    "title": "Slovak Import Partners Visit FoodEra's Robusta Farms in Dak Lak",
     "isActive": true,
     "date": "August 28, 2026",
     "category": "Market Insight",
-    "excerpt": "FoodEra welcomed a delegation of coffee buyers from Slovakia on a hands-on visit to our Robusta growing regions in Đắk Lắk, strengthening trust through direct, on-the-ground quality verification.",
+    "excerpt": "FoodEra welcomed a delegation of coffee buyers from Slovakia on a hands-on visit to our Robusta growing regions in Dak Lak, strengthening trust through direct, on-the-ground quality verification.",
     "content": [
-      "FoodEra recently welcomed a delegation of coffee import partners from Slovakia on a farm visit to Đắk Lắk, the heart of Vietnam's Robusta coffee country. The trip gave our Slovak partners a firsthand look at the growing regions, harvest practices, and quality controls behind the green coffee beans that reach their roasteries.",
-      "Guided by the FoodEra team, the delegation walked through Robusta plantations near Buôn Ma Thuột, inspecting ripening cherries on the branch and discussing the agronomic factors — soil, altitude, and seasonal rainfall — that shape cup quality long before the beans ever reach a warehouse.",
+      "FoodEra recently welcomed a delegation of coffee import partners from Slovakia on a farm visit to Dak Lak, the heart of Vietnam's Robusta coffee country. The trip gave our Slovak partners a firsthand look at the growing regions, harvest practices, and quality controls behind the green coffee beans that reach their roasteries.",
+      "Guided by the FoodEra team, the delegation walked through Robusta plantations near Buon Ma Thuot, inspecting ripening cherries on the branch and discussing the agronomic factors — soil, altitude, and seasonal rainfall — that shape cup quality long before the beans ever reach a warehouse.",
       "Key Highlights of the Visit",
       "• Farm-to-Export Transparency: Partners traced the coffee's journey from cherry to green bean, reinforcing FoodEra's commitment to full supply chain visibility.",
       "• On-the-Ground Quality Assessment: Direct inspection of cherry ripeness and plant health gave the delegation confidence in the consistency behind every Robusta grade FoodEra exports.",
       "• Strengthening a Long-Term Partnership: The visit deepened trust between FoodEra and our Slovak partners, laying the groundwork for continued collaboration in the European coffee market.",
-      "We thank our Slovak partners for making the journey to Đắk Lắk and look forward to building on this visit as we continue supplying premium Vietnamese Robusta to markets across Europe."
+      "We thank our Slovak partners for making the journey to Dak Lak and look forward to building on this visit as we continue supplying premium Vietnamese Robusta to markets across Europe."
     ],
     "image": "/media/news/slovakia-delegation-dak-lak-coffee-farm.webp",
-    "imageAlt": "FoodEra team hosting Slovak coffee import partners at a Robusta farm in Đắk Lắk, Vietnam",
-    "translations": {}
+    "imageAlt": "FoodEra team hosting Slovak coffee import partners at a Robusta farm in Dak Lak, Vietnam",
+    "translations": {
+      "zh": {
+        "title": "斯洛伐克采购商代表团实地考察 FoodEra 得乐省罗布斯塔咖啡基地",
+        "excerpt": "FoodEra 热情接待了来自斯洛伐克的咖啡采购商代表团，实地走访得乐省罗布斯塔核心种植区，通过产地直观检验深化合作互信。",
+        "content": [
+          "近日，FoodEra 热情接待了来自斯洛伐克的咖啡进口合作伙伴代表团，深入越南罗布斯塔咖啡核心产区——得乐省进行实地走访。此次考察让斯洛伐克合作伙伴直观了解了从咖啡生豆种植、规范化采收到全流程品控的每道环节。",
+          "在 FoodEra 专业团队的陪同下，代表团走访了邦美蜀周边的罗布斯塔种植庄园，现场检查树上成熟咖啡果，并深入研讨了土壤微气候、海拔与季风降水对杯测风味的决定性影响。",
+          "考察亮点",
+          "• 产地到出口全程透明：代表团深入了解了从鲜果采摘到咖啡生豆出口的全链条，印证了 FoodEra 对供应链可视化的承诺。",
+          "• 产地直观品质评估：实地查看果实成熟度与树体健康状况，让合作伙伴对 FoodEra 罗布斯塔出口品质的稳定性充满信心。",
+          "• 深化长期战略合作：此次实地考察加深了彼此信任，为开拓欧洲高品质咖啡市场奠定了坚实基础。",
+          "衷心感谢斯洛伐克合作伙伴远道而来，FoodEra 将持续为欧洲及全球市场提供优质越南罗布斯塔咖啡豆。"
+        ]
+      }
+    }
   },
   {
     "id": "sourcing-vietnam-export-forum-2026",
@@ -89,16 +120,37 @@
       "• Real-Time Sample Discussions: Buyers reviewed packaging, specifications, and pricing on the spot, accelerating the path from introduction to purchase order.",
       "Exploring Vietnam's Regional Pavilions",
       "Beyond the meeting tables, our team toured the exhibition floor, visiting regional and provincial pavilions that showcase the depth of Vietnam's export capacity.",
-      "• Đắk Lắk Pavilion: Under the theme \"Đắk Lắk – Connecting and Reaching Further,\" we explored coffee, cashew, and specialty agricultural products from one of our core sourcing regions.",
+      "• Dak Lak Pavilion: Under the theme \"Dak Lak – Connecting and Reaching Further,\" we explored coffee, cashew, and specialty agricultural products from one of our core sourcing regions.",
       "• Ho Chi Minh City Pavilion: We visited established exporters such as VISSAN and other canned and processed food producers representing the city's manufacturing strength.",
-      "• Rice and Spice Exhibits: Our team examined premium rice varieties — from ST25 to fragrant Jasmine and black rice — alongside seasoning and spice suppliers like Minh Hân, comparing production capabilities and OEM/ODM offerings.",
+      "• Rice and Spice Exhibits: Our team examined premium rice varieties — from ST25 to fragrant Jasmine and black rice — alongside seasoning and spice suppliers like Minh Han, comparing production capabilities and OEM/ODM offerings.",
       "A Platform for Growth",
       "Events like Sourcing Vietnam – Export Forum 2026 reinforce why face-to-face trade forums remain essential in a digital-first industry: they compress months of prospecting into days of direct, high-value conversation.",
       "We thank the organizers, fellow exhibitors, and every buyer who took the time to meet with us. We look forward to converting these new connections into long-term partnerships and continuing to bring Vietnamese agricultural quality to markets worldwide."
     ],
     "image": "/media/news/sourcing-vietnam-export-forum-2026.webp",
     "imageAlt": "FoodEra representatives at the Sourcing Vietnam – Export Forum 2026 entrance in Ho Chi Minh City",
-    "translations": {}
+    "translations": {
+      "zh": {
+        "title": "FoodEra 出席 2026 越南国际采购出口论坛：携手全球买家共创商机",
+        "excerpt": "FoodEra 团队亮相胡志明市 2026 越南国际采购出口论坛，与国际采购商展开多场 B2B 商贸配对，全方位推介大米、咖啡及香料产品。",
+        "content": [
+          "2026年9月3日至5日，FoodEra 团队积极参与了在胡志明市西贡会展中心举行的 2026 越南国际采购出口论坛 (Sourcing Vietnam – Export Forum 2026)，与来自世界各地的采购商、零售巨头和供应链代表展开深入洽谈。",
+          "作为越南极具影响力的出口贸易对接盛会，展会汇聚了全球数百家优质参展商与国际采购代表团，涵盖食品、饮料及特色农产。",
+          "为期三天的 B2B 商贸对接",
+          "在企业商务对接区，FoodEra 团队与包括阿联酋 Lulu 国际零售集团在内的多个海外采购团进行了面对面的深度磋商。",
+          "• 针对性专场洽谈：精准对接意向买家，系统介绍 FoodEra 大米、咖啡及优质香料出口规格与供应链保障能力。",
+          "• 拓展多元国际市场：洽谈覆盖中东、东南亚及欧美等关键区域，拓展多方长期分销合作。",
+          "• 样品即时评估：现场提供标准化样品供买家审阅质检报告与包装方案，高效推动采购意向落地。",
+          "考察各省农产展馆",
+          "除商务会谈外，团队还深入走访了各大区域特色展馆：",
+          "• 得乐省展馆：围绕“得乐—联结与远航”主题，深入交流咖啡、腰果等核心产区的源头合作优势。",
+          "• 胡志明市综合展馆：走访 VISSAN 等知名加工食品企业，了解深加工农产的国际贸易趋势。",
+          "• 大米与香料展区：实地评估 ST25、茉莉香米、黑米以及明汉等胡椒调料展品，对比代工与出口技术规范。",
+          "共创合作共赢新机遇",
+          "面对面的商贸对接为深耕国际市场提供了宝贵契机。衷心感谢主办方与所有莅临洽谈的采购代表，FoodEra 将持续推进商务落地，将越南优质农产品推向全球更广阔市场。"
+        ]
+      }
+    }
   },
   {
     "id": "coffee-cupping-technique-2024",

@@ -20,22 +20,22 @@ const FARM_ALBUMS: Record<string, FarmAlbumMeta> = {
   'durian-farm-visit': {
     key: 'durian-farm-visit',
     title: {
-      vi: 'Khảo sát Vùng trồng Sầu riêng Xuất khẩu',
+      vi: 'Durian Plantation Field Inspection',
       en: 'Durian Plantation Field Inspection',
       zh: '榴莲种植园实地考察'
     },
     shortLabel: {
-      vi: 'Vườn Sầu Riêng',
+      vi: 'Durian Plantation',
       en: 'Durian Plantation',
       zh: '榴莲果园'
     },
     badge: {
-      vi: 'Vườn Sầu Riêng',
+      vi: 'Durian Plantation',
       en: 'Durian Plantation',
       zh: '榴莲果园'
     },
     desc: {
-      vi: 'Khảo sát thực địa vùng trồng sầu riêng Ri6 và Monthong tại Tây Nguyên, kiểm tra quy trình chăm sóc cây đại thụ, độ phát triển chùm quả và chuẩn hóa thu hoạch phân loại quả loại 1 xuất khẩu.',
+      vi: 'Field inspection of partner durian orchards in the Central Highlands, assessing mature tree health, fruit cluster development, and export grading standards for Ri6 & Monthong varieties.',
       en: 'Field inspection of partner durian orchards in the Central Highlands, assessing mature tree health, fruit cluster development, and export grading standards for Ri6 & Monthong varieties.',
       zh: '实地考察西原地区 Ri6 与 Monthong 优质榴莲合作果园，严格检验树体养护、挂果密度与一级出口鲜果采收标准。'
     },
@@ -45,23 +45,23 @@ const FARM_ALBUMS: Record<string, FarmAlbumMeta> = {
   'coffee-farm-visit': {
     key: 'coffee-farm-visit',
     title: {
-      vi: 'Khảo sát Vùng nguyên liệu Cà phê Robusta',
+      vi: 'Robusta Coffee Plantation Inspection',
       en: 'Robusta Coffee Plantation Inspection',
       zh: '罗布斯塔咖啡原料产地考察'
     },
     shortLabel: {
-      vi: 'Nông Trường Cà Phê',
+      vi: 'Coffee Plantation',
       en: 'Coffee Plantation',
       zh: '咖啡庄园'
     },
     badge: {
-      vi: 'Nông Trường Cà Phê',
+      vi: 'Coffee Plantation',
       en: 'Coffee Plantation',
       zh: '咖啡庄园'
     },
     desc: {
-      vi: 'Khảo sát thực địa vùng nguyên liệu cà phê Robusta trọng điểm tại Đắk Lắk, đánh giá tỷ lệ đậu quả, độ đồng đều hạt và quy trình canh tác bền vững cùng nông dân liên kết.',
-      en: 'Field survey of key Robusta coffee plantations in Đắk Lắk province, evaluating cherry set density, bean uniformity, and sustainable farming practices with partner growers.',
+      vi: 'Field survey of key Robusta coffee plantations in Dak Lak province, evaluating cherry set density, bean uniformity, and sustainable farming practices with partner growers.',
+      en: 'Field survey of key Robusta coffee plantations in Dak Lak province, evaluating cherry set density, bean uniformity, and sustainable farming practices with partner growers.',
       zh: '深入考察得乐省核心罗布斯塔咖啡种植基地，实地评估咖啡果串密度、颗粒均匀度及规范化可持续种植管理。'
     },
     icon: '☕',
@@ -70,28 +70,162 @@ const FARM_ALBUMS: Record<string, FarmAlbumMeta> = {
   'slovakia-partner-visit': {
     key: 'slovakia-partner-visit',
     title: {
-      vi: 'Đoàn Đối tác Slovakia Khảo sát Nông trại',
+      vi: 'Slovak Delegation Farm Inspection',
       en: 'Slovak Delegation Farm Inspection',
       zh: '斯洛伐克采购代表团产地走访'
     },
     shortLabel: {
-      vi: 'Đối Tác Quốc Tế',
-      en: 'Intl Delegation',
+      vi: 'Partner Delegation',
+      en: 'Partner Delegation',
       zh: '国际代表团'
     },
     badge: {
-      vi: 'Đối Tác Quốc Tế',
-      en: 'Intl Delegation',
+      vi: 'Partner Delegation',
+      en: 'Partner Delegation',
       zh: '国际代表团'
     },
     desc: {
-      vi: 'Đoàn đối tác nhập khẩu cà phê từ Slovakia đến thăm và làm việc thực địa tại vùng trồng cà phê Robusta Đắk Lắk cùng đại diện FoodEra.',
-      en: 'Coffee import partners from Slovakia visiting our Robusta coffee farms in Đắk Lắk, Vietnam with the FoodEra team.',
+      vi: 'Coffee import partners from Slovakia visiting our Robusta coffee farms in Dak Lak, Vietnam with the FoodEra team.',
+      en: 'Coffee import partners from Slovakia visiting our Robusta coffee farms in Dak Lak, Vietnam with the FoodEra team.',
       zh: '来自斯洛伐克的咖啡采购商代表团深入得乐省罗布斯塔咖啡农庄，实地考察原料品质与供应链合作。'
     },
     icon: '🤝',
     badgeClass: 'bg-blue-100 text-blue-800 border-blue-200'
   }
+};
+
+interface PhotoTranslation {
+  caption: string;
+  alt: string;
+}
+
+const PHOTO_TRANSLATIONS: Record<string, PhotoTranslation> = {
+  'gallery-01': {
+    caption: 'FoodEra 核心团队合影',
+    alt: 'FoodEra 核心团队合影'
+  },
+  'gallery-02': {
+    caption: '团队研讨 FoodEra 出口产品矩阵',
+    alt: '团队研讨 FoodEra 出口产品矩阵'
+  },
+  'gallery-03': {
+    caption: '销售与农产品出口业务研讨会',
+    alt: '销售与农产品出口业务研讨会'
+  },
+  'gallery-04': {
+    caption: '腰果、大米及黑胡椒出口样品陈列',
+    alt: '腰果、大米及黑胡椒出口样品陈列'
+  },
+  'gallery-05': {
+    caption: '出口级腰果 WW320 样品品质检测',
+    alt: '出口级腰果 WW320 样品品质检测'
+  },
+  'gallery-06': {
+    caption: '水洗阿拉比卡咖啡豆 S13 样品检验',
+    alt: '水洗阿拉比卡咖啡豆 S13 样品检验'
+  },
+  'gallery-07': {
+    caption: '越南优质圆粒大米 (Japonica) 5% 碎米样品',
+    alt: '越南优质圆粒大米 (Japonica) 5% 碎米样品'
+  },
+  'gallery-08': {
+    caption: '圆粒大米出口品质与白度检验',
+    alt: '圆粒大米出口品质与白度检验'
+  },
+  'gallery-09': {
+    caption: 'FoodEra 出席 2026 越南国际采购出口论坛',
+    alt: 'FoodEra 出席 2026 越南国际采购出口论坛'
+  },
+  'gallery-10': {
+    caption: '展会现场考察多种特色大米展品',
+    alt: '展会现场考察多种特色大米展品'
+  },
+  'gallery-11': {
+    caption: '展会现场评测出口大米样品质量',
+    alt: '展会现场评测出口大米样品质量'
+  },
+  'gallery-12': {
+    caption: '得乐省特色农产展馆 — 联结与远航',
+    alt: '得乐省特色农产展馆 — 联结与远航'
+  },
+  'gallery-13': {
+    caption: '胡志明市经贸合作展馆',
+    alt: '胡志明市经贸合作展馆'
+  },
+  'gallery-14': {
+    caption: '与胡椒香料合作伙伴明汉公司现场洽谈',
+    alt: '与胡椒香料合作伙伴明汉公司现场洽谈'
+  },
+  'gallery-15': {
+    caption: '2026 越南国际采购论坛企业对接交流区',
+    alt: '2026 越南国际采购论坛企业对接交流区'
+  },
+  'gallery-16': {
+    caption: '与国际采购商进行 B2B 出口商贸对接',
+    alt: '与国际采购商进行 B2B 出口商贸对接'
+  },
+  'gallery-17': {
+    caption: '深入洽谈农产品长期进出口合作机遇',
+    alt: '深入洽谈农产品长期进出口合作机遇'
+  },
+  'gallery-18': {
+    caption: '斯洛伐克采购代表团实地考察得乐省罗布斯塔咖啡庄园',
+    alt: '斯洛伐克采购代表团实地考察得乐省罗布斯塔咖啡庄园'
+  },
+  'gallery-farm-durian-01': {
+    caption: '合作果园老树榴莲丰产挂果，配备规范化支撑支架保护',
+    alt: '合作果园老树榴莲丰产挂果，配备规范化支撑支架保护'
+  },
+  'gallery-farm-durian-02': {
+    caption: 'Ri6 与 Monthong 优质榴莲果串达到最佳成熟度，准备采收',
+    alt: 'Ri6 与 Monthong 优质榴莲果串达到最佳成熟度，准备采收'
+  },
+  'gallery-farm-durian-03': {
+    caption: 'FoodEra 农艺专家实地评估单果尺寸、果形饱满度与果皮健康',
+    alt: 'FoodEra 农艺专家实地评估单果尺寸、果形饱满度与果皮健康'
+  },
+  'gallery-farm-durian-04': {
+    caption: '刚采收的一级鲜榴莲集中在果园通道，进行初道品质分选',
+    alt: '刚采收的一级鲜榴莲集中在果园通道，进行初道品质分选'
+  },
+  'gallery-farm-durian-05': {
+    caption: '精选出口级 A 等优质榴莲陈列展示与 FoodEra 品牌标识',
+    alt: '精选出口级 A 等优质榴莲陈列展示与 FoodEra 品牌标识'
+  },
+  'gallery-farm-coffee-01': {
+    caption: '罗布斯塔咖啡示范园高产树形，整枝挂果紧密饱满',
+    alt: '罗布斯塔咖啡示范园高产树形，整枝挂果紧密饱满'
+  },
+  'gallery-farm-coffee-02': {
+    caption: '采收前严谨评估咖啡果串密度、颗粒均匀度与转色进度',
+    alt: '采收前严谨评估咖啡果串密度、颗粒均匀度与转色进度'
+  },
+  'gallery-farm-coffee-03': {
+    caption: '近距离检测优质咖啡果节节点，达到高标准出口采收要求',
+    alt: '近距离检测优质咖啡果节节点，达到高标准出口采收要求'
+  },
+  'gallery-farm-coffee-04': {
+    caption: 'FoodEra 团队在西原产区实地察看早熟咖啡果串长势',
+    alt: 'FoodEra 团队在西原产区实地察看早熟咖啡果串长势'
+  },
+  'gallery-farm-coffee-05': {
+    caption: 'FoodEra 团队深入咖啡核心带，与当地种植户现场技术交流',
+    alt: 'FoodEra 团队深入咖啡核心带，与当地种植户现场技术交流'
+  }
+};
+
+const getPhotoCaption = (photo: GalleryPhotoItem, locale: SupportedLocale): string => {
+  if (locale === 'zh' && PHOTO_TRANSLATIONS[photo.id]?.caption) {
+    return PHOTO_TRANSLATIONS[photo.id].caption;
+  }
+  return photo.caption || '';
+};
+
+const getPhotoAlt = (photo: GalleryPhotoItem, locale: SupportedLocale): string => {
+  if (locale === 'zh' && PHOTO_TRANSLATIONS[photo.id]?.alt) {
+    return PHOTO_TRANSLATIONS[photo.id].alt;
+  }
+  return photo.alt || photo.caption || '';
 };
 
 const Gallery: React.FC = () => {
@@ -193,6 +327,7 @@ const Gallery: React.FC = () => {
           'farm-visits': '产地拜访',
         } as Record<GalleryCategory | 'all', string>,
         allAlbums: '全部产地考察',
+        albumLabel: '相册专辑:',
         viewAlbum: '查看相册',
         photosCount: '张照片'
       }
@@ -208,6 +343,7 @@ const Gallery: React.FC = () => {
           'farm-visits': 'Farm Visits',
         } as Record<GalleryCategory | 'all', string>,
         allAlbums: 'All Farm Visits',
+        albumLabel: 'Albums:',
         viewAlbum: 'View Album',
         photosCount: 'photos'
       };
@@ -256,7 +392,7 @@ const Gallery: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2 p-3 mb-8 bg-gray-50/80 rounded-2xl border border-gray-200/70">
               <span className="text-xs font-bold text-gray-500 mr-2 flex items-center gap-1.5 pl-1">
                 <Layers size={14} className="text-foodera-forest" />
-                Bộ ảnh:
+                {copy.albumLabel}
               </span>
               <button
                 type="button"
@@ -331,7 +467,7 @@ const Gallery: React.FC = () => {
                 >
                   <img
                     src={photo.src}
-                    alt={photo.alt || photo.caption || ''}
+                    alt={getPhotoAlt(photo, locale)}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -342,10 +478,10 @@ const Gallery: React.FC = () => {
                       {FARM_ALBUMS[photo.album]?.shortLabel?.[locale] || FARM_ALBUMS[photo.album]?.shortLabel?.en || photo.albumTitle || photo.album}
                     </span>
                   )}
-                  {/* Caption overlay at the bottom matching user screenshot */}
+                  {/* Caption overlay at the bottom */}
                   {photo.caption && (
                     <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent text-white text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2.5 sm:py-3 text-left line-clamp-2 drop-shadow-sm">
-                      {photo.caption}
+                      {getPhotoCaption(photo, locale)}
                     </span>
                   )}
                 </button>
@@ -384,7 +520,7 @@ const Gallery: React.FC = () => {
             <div className="rounded-2xl overflow-hidden shadow-2xl bg-black/30">
               <img
                 src={activePhoto.src}
-                alt={activePhoto.alt}
+                alt={getPhotoAlt(activePhoto, locale)}
                 className="relative w-full max-h-[80vh] object-contain rounded-2xl mx-auto"
               />
             </div>
@@ -417,7 +553,7 @@ const Gallery: React.FC = () => {
               )}
               {activePhoto.caption && (
                 <p className="text-white text-sm md:text-base font-bold drop-shadow-sm">
-                  {activePhoto.caption}
+                  {getPhotoCaption(activePhoto, locale)}
                 </p>
               )}
             </div>

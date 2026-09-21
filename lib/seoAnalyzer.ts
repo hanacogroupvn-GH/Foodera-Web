@@ -156,9 +156,9 @@ const checkParaStructure: CF = (i) => {
 
 const checkLinks: CF = (i) => {
   // Detect:
-  // 1. HTML <a href="..."> (nếu content chưa qua htmlToSeoText)
+  // 1. HTML <a href="..."> (if content not parsed by htmlToSeoText)
   // 2. Markdown [text](url)
-  // 3. "text (url)" — format xuất ra bởi htmlToSeoText
+  // 3. "text (url)" — format output by htmlToSeoText
   const n = (i.content.match(/\[.*?\]\(.*?\)|<a\s[^>]*href|(https?:\/\/[^\s)\]]+)/gi) || []).length;
   if (n === 0) return { id: 'internal-links', label: 'Internal Links', severity: 'warning', score: 40, message: 'No links. Add internal links to products/articles.' };
   return { id: 'internal-links', label: 'Internal Links', severity: 'good', score: 100, message: `${n} link(s) found.` };

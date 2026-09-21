@@ -30,14 +30,14 @@ const CATEGORY_LABELS: Record<SupportedLocale, Record<CategoryType, string>> = {
     Spices: '\u9999\u6599'
   },
   vi: {
-    Rice: 'Gạo',
-    Coffee: 'Cà phê',
-    Cashew: 'Hạt điều',
-    Agriculture: 'Nông sản',
-    Pepper: 'Hạt tiêu',
-    Coconut: 'Dừa',
-    Durian: 'Sầu riêng',
-    Spices: 'Gia vị'
+    Rice: 'Rice',
+    Coffee: 'Coffee',
+    Cashew: 'Cashew',
+    Agriculture: 'Agriculture',
+    Pepper: 'Pepper',
+    Coconut: 'Coconut',
+    Durian: 'Durian',
+    Spices: 'Spices'
   }
 };
 
@@ -53,9 +53,9 @@ const NEWS_CATEGORY_LABELS: Record<SupportedLocale, Record<NewsCategory, string>
     'Market Insight': '\u5e02\u573a\u6d1e\u5bdf',
   },
   vi: {
-    'Product': 'Sản phẩm',
+    'Product': 'Product',
     'Logistics': 'Logistics',
-    'Market Insight': 'Nhận định thị trường',
+    'Market Insight': 'Market Insight',
   }
 };
 
